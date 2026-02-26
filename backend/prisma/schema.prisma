@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum PipelineStage {
+  FIRMA_IDENTIFIZIERT
+  FIRMA_KONTAKTIERT
+  VERHANDLUNG
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum EntityType {
+  COMPANY
+  CONTACT
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          Role      @default(USER)
+  refreshToken  String?
+  createdAt     DateTime  @default(now())
+  lastLogin     DateTime?
+
+  assignedCompanies Company[] @relation("AssignedTo")
+  createdCompanies  Company[] @relation("CreatedBy")
+  comments          Comment[]
+  createdTasks      Task[]    @relation("TaskCreatedBy")
+  assignedTasks     Task[]    @relation("TaskAssignedTo")
+
+  @@map("users")
+}
+
+model Company {
+  id            String        @id @default(uuid())
+  name          String
+  website       String?
+  city          String?
+  pipelineStage PipelineStage?
+
+  perplexityResult   String?
+  perplexityFetchedAt DateTime?
+
+  eigenkapital   String?
+  verlustvortrag String?
+  gewinnvortrag  String?
+
+  expectedRevenue  Float?
+  uisSchwierigkeiten Boolean @default(false)
+  uisReason        String?
+
+  assignedToId  String?
+  assignedTo    User?         @relation("AssignedTo", fields: [assignedToId], references: [id])
+
+  createdById   String
+  createdBy     User          @relation("CreatedBy", fields: [createdById], references: [id])
+
+  contacts      Contact[]
+  tasks         Task[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("companies")
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  position  String?
+
+  perplexityResult    String?
+  perplexityFetchedAt DateTime?
+
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  createdAt DateTime @default(now())
+
+  @@map("contacts")
+}
+
+model Comment {
+  id         String     @id @default(uuid())
+  content    String
+  entityType EntityType
+  entityId   String
+
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime   @default(now())
+
+  @@index([entityType, entityId])
+  @@map("comments")
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  done        Boolean   @default(false)
+  doneAt      DateTime?
+
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  createdById  String
+  createdBy    User     @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  assignedToId String?
+  assignedTo   User?    @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([contactId])
+  @@index([done, dueDate])
+  @@map("tasks")
+}
