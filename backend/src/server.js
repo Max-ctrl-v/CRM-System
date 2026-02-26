@@ -17,7 +17,11 @@ const app = express();
 
 // Security
 app.use(helmet());
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+const allowedOrigins = CORS_ORIGIN.split(',').map(o => o.trim());
+app.use(cors({
+  origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Rate limiting for login only (not all auth routes)
