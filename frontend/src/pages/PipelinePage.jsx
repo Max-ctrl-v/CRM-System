@@ -147,7 +147,7 @@ export default function PipelinePage() {
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex-1 overflow-x-auto px-5 py-5 bg-surface-base">
-          <div className="flex gap-3 h-full min-w-max">
+          <div className="flex gap-3 h-full">
             {/* Main pipeline columns */}
             {PIPELINE_STAGES.map((stage) => {
               const stageCompanies = filtered.filter((c) => c.pipelineStage === stage.key);
@@ -157,7 +157,7 @@ export default function PipelinePage() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className="w-[272px] flex flex-col rounded-xl"
+                      className="flex-1 min-w-0 flex flex-col rounded-xl"
                       style={{
                         background: snapshot.isDraggingOver ? stage.bgLight : stage.bgColumn,
                         border: snapshot.isDraggingOver ? `2px solid ${stage.borderColor}` : `1px solid ${stage.borderColor}30`,
@@ -260,7 +260,7 @@ export default function PipelinePage() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className="w-[272px] flex flex-col rounded-xl"
+                      className="flex-1 min-w-0 flex flex-col rounded-xl"
                       style={{
                         background: snapshot.isDraggingOver ? stage.bgLight : stage.bgColumn,
                         border: snapshot.isDraggingOver ? `2px solid ${stage.borderColor}` : `1px solid ${stage.borderColor}30`,
