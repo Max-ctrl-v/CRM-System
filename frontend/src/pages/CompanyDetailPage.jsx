@@ -25,6 +25,7 @@ import {
   RefreshCw,
   CheckCircle,
   CheckSquare,
+  PhoneOff,
 } from 'lucide-react';
 
 const STAGES = [
@@ -120,6 +121,15 @@ export default function CompanyDetailPage() {
     }
   }
 
+  async function toggleDoNotCall() {
+    try {
+      const { data } = await api.patch(`/companies/${id}/do-not-call`, { doNotCall: !company.doNotCall });
+      setCompany(data);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Fehler beim Ändern.');
+    }
+  }
+
   async function recheckUiS() {
     setCheckingUiS(true);
     try {
@@ -161,6 +171,24 @@ export default function CompanyDetailPage() {
         <ArrowLeft className="w-4 h-4" />
         Zurück
       </button>
+
+      {/* Do Not Call Banner */}
+      {company.doNotCall && (
+        <div
+          className="flex items-center gap-3 bg-red-50 border border-red-300 rounded-xl p-4 mb-5"
+          style={{ boxShadow: '0 1px 3px rgba(239,68,68,0.15)' }}
+        >
+          <PhoneOff className="w-5 h-5 text-red-600 shrink-0" />
+          <p className="text-[14px] font-display font-bold text-red-700 flex-1">Nicht mehr anrufen!</p>
+          <button
+            onClick={toggleDoNotCall}
+            className="text-[12px] text-red-500 hover:text-red-700 font-body font-semibold underline rounded focus-visible:ring-2 focus-visible:ring-red-300 px-2 py-1"
+            style={{ transition: 'color 150ms ease' }}
+          >
+            Aufheben
+          </button>
+        </div>
+      )}
 
       {/* UiS Warning Banner */}
       {company.uisSchwierigkeiten && (
@@ -284,6 +312,19 @@ export default function CompanyDetailPage() {
 
           {!editing && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={toggleDoNotCall}
+                className={`flex items-center gap-1.5 text-[13px] px-3 py-2 rounded-lg font-semibold font-body focus-visible:ring-2 focus-visible:ring-red-300 active:scale-95 ${
+                  company.doNotCall
+                    ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                }`}
+                style={{ transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, color 150ms ease' }}
+                title={company.doNotCall ? 'Anrufsperre aufheben' : 'Nicht mehr anrufen'}
+              >
+                <PhoneOff className="w-3.5 h-3.5" />
+                {company.doNotCall ? 'Anrufsperre aktiv' : 'Do Not Call'}
+              </button>
               <button onClick={() => setEditing(true)} className="btn-secondary flex items-center gap-1.5 text-[13px]"><Edit3 className="w-3.5 h-3.5" /> Bearbeiten</button>
               <button onClick={handleDelete} className="btn-danger flex items-center gap-1.5 text-[13px] px-3"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>

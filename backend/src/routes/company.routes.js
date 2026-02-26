@@ -39,6 +39,13 @@ router.patch('/:id/stage', asyncHandler(async (req, res) => {
   res.json(company);
 }));
 
+// PATCH /api/companies/:id/do-not-call
+router.patch('/:id/do-not-call', asyncHandler(async (req, res) => {
+  const { doNotCall } = req.body;
+  const company = await companyService.update(req.params.id, { doNotCall: !!doNotCall });
+  res.json(company);
+}));
+
 // DELETE /api/companies/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
   await companyService.remove(req.params.id);

@@ -16,6 +16,7 @@ import {
   Euro,
   AlertTriangle,
   Clock,
+  PhoneOff,
 } from 'lucide-react';
 
 const PIPELINE_STAGES = [
@@ -208,21 +209,27 @@ export default function PipelinePage() {
                               <div
                                 ref={prov.innerRef}
                                 {...prov.draggableProps}
-                                className={`bg-white rounded-lg p-3.5 cursor-pointer border border-border-light ${snap.isDragging ? '' : 'pipeline-card'}`}
+                                className={`rounded-lg p-3.5 cursor-pointer border ${company.doNotCall ? 'bg-red-50 border-red-200' : 'bg-white border-border-light'} ${snap.isDragging ? '' : 'pipeline-card'}`}
                                 style={{
                                   ...prov.draggableProps.style,
                                   boxShadow: snap.isDragging
                                     ? `0 8px 28px rgba(0,0,0,0.15), 0 0 0 2px ${stage.color}50`
-                                    : undefined,
+                                    : company.doNotCall ? '0 1px 3px rgba(239,68,68,0.1)' : undefined,
                                 }}
                                 onClick={() => navigate(`/company/${company.id}`)}
                               >
+                                {company.doNotCall && (
+                                  <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-red-600 font-body">
+                                    <PhoneOff className="w-3 h-3" />
+                                    <span>Nicht mehr anrufen!</span>
+                                  </div>
+                                )}
                                 <div className="flex items-start gap-2.5">
                                   <div {...prov.dragHandleProps} className="mt-0.5 text-gray-300 hover:text-gray-500 rounded focus-visible:ring-2 focus-visible:ring-brand-300">
                                     <GripVertical className="w-3.5 h-3.5" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <span className="font-display font-semibold text-[13px] text-gray-900 truncate block">{company.name}</span>
+                                    <span className={`font-display font-semibold text-[13px] truncate block ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>{company.name}</span>
                                     {company.website && <p className="text-[11px] text-gray-400 truncate font-body mt-0.5">{company.website}</p>}
                                     <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
                                       {company.contacts && company.contacts.length > 0 && (
@@ -314,21 +321,27 @@ export default function PipelinePage() {
                               <div
                                 ref={prov.innerRef}
                                 {...prov.draggableProps}
-                                className={`bg-white rounded-lg p-3 cursor-pointer border border-border-light ${snap.isDragging ? '' : 'pipeline-card'}`}
+                                className={`rounded-lg p-3 cursor-pointer border ${company.doNotCall ? 'bg-red-50 border-red-200' : 'bg-white border-border-light'} ${snap.isDragging ? '' : 'pipeline-card'}`}
                                 style={{
                                   ...prov.draggableProps.style,
                                   boxShadow: snap.isDragging
                                     ? `0 8px 28px rgba(0,0,0,0.15), 0 0 0 2px ${stage.color}50`
-                                    : undefined,
+                                    : company.doNotCall ? '0 1px 3px rgba(239,68,68,0.1)' : undefined,
                                 }}
                                 onClick={() => navigate(`/company/${company.id}`)}
                               >
+                                {company.doNotCall && (
+                                  <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-red-600 font-body">
+                                    <PhoneOff className="w-3 h-3" />
+                                    <span>Nicht mehr anrufen!</span>
+                                  </div>
+                                )}
                                 <div className="flex items-start gap-2.5">
                                   <div {...prov.dragHandleProps} className="mt-0.5 text-gray-300 hover:text-gray-500 rounded focus-visible:ring-2 focus-visible:ring-brand-300">
                                     <GripVertical className="w-3.5 h-3.5" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <span className="font-display font-semibold text-[13px] text-gray-900 truncate block">{company.name}</span>
+                                    <span className={`font-display font-semibold text-[13px] truncate block ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>{company.name}</span>
                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                       {company.assignedTo && (
                                         <span className="text-[11px] px-2 py-0.5 rounded-md font-medium" style={{ background: stage.bgLight, color: stage.color }}>{company.assignedTo.name}</span>

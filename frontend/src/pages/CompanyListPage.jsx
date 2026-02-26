@@ -12,6 +12,7 @@ import {
   Plus,
   CircleOff,
   Clock,
+  PhoneOff,
 } from 'lucide-react';
 
 const STAGE_LABELS = {
@@ -172,19 +173,27 @@ export default function CompanyListPage() {
                   style={{
                     borderBottom: idx < filtered.length - 1 ? '1px solid #e5e7ee' : 'none',
                     transition: 'background-color 150ms ease',
+                    backgroundColor: company.doNotCall ? '#fef2f2' : '',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fc'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = company.doNotCall ? '#fee2e2' : '#f8f9fc'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = company.doNotCall ? '#fef2f2' : ''}
                 >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #e8fafb, #c5f2f3)' }}
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0`}
+                        style={{ background: company.doNotCall ? 'linear-gradient(135deg, #fee2e2, #fecaca)' : 'linear-gradient(135deg, #e8fafb, #c5f2f3)' }}
                       >
-                        <Building2 className="w-4 h-4 text-brand-600" />
+                        {company.doNotCall ? <PhoneOff className="w-4 h-4 text-red-600" /> : <Building2 className="w-4 h-4 text-brand-600" />}
                       </div>
-                      <span className="font-display font-semibold text-[13px] text-gray-900">{company.name}</span>
+                      <div className="min-w-0">
+                        <span className={`font-display font-semibold text-[13px] block ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>{company.name}</span>
+                        {company.doNotCall && (
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 font-body mt-0.5">
+                            <PhoneOff className="w-2.5 h-2.5" /> Nicht mehr anrufen!
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">

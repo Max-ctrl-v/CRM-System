@@ -67,6 +67,7 @@ async function update(id, data) {
       ...(data.expectedRevenue !== undefined && { expectedRevenue: data.expectedRevenue ? parseFloat(data.expectedRevenue) : null }),
       ...(data.uisSchwierigkeiten !== undefined && { uisSchwierigkeiten: !!data.uisSchwierigkeiten }),
       ...(data.uisReason !== undefined && { uisReason: data.uisReason }),
+      ...(data.doNotCall !== undefined && { doNotCall: !!data.doNotCall }),
     },
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },
