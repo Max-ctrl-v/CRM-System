@@ -11,6 +11,7 @@ import {
   ArrowUpDown,
   Plus,
   CircleOff,
+  Clock,
 } from 'lucide-react';
 
 const STAGE_LABELS = {
@@ -20,6 +21,20 @@ const STAGE_LABELS = {
   CLOSED_WON: { label: 'Won', color: '#10b981', bg: '#ecfdf5' },
   CLOSED_LOST: { label: 'Lost', color: '#ef4444', bg: '#fef2f2' },
 };
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '—';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'gerade eben';
+  if (mins < 60) return `vor ${mins} Min.`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `vor ${days} T.`;
+  const weeks = Math.floor(days / 7);
+  return `vor ${weeks} Wo.`;
+}
 
 export default function CompanyListPage() {
   const navigate = useNavigate();
@@ -72,6 +87,7 @@ export default function CompanyListPage() {
       else if (sortBy === 'stage') { valA = a.pipelineStage || 'zzz'; valB = b.pipelineStage || 'zzz'; }
       else if (sortBy === 'date') { valA = a.createdAt; valB = b.createdAt; }
       else if (sortBy === 'assigned') { valA = a.assignedTo?.name?.toLowerCase() || 'zzz'; valB = b.assignedTo?.name?.toLowerCase() || 'zzz'; }
+      else if (sortBy === 'updated') { valA = a.updatedAt || ''; valB = b.updatedAt || ''; }
       if (valA < valB) return sortDir === 'asc' ? -1 : 1;
       if (valA > valB) return sortDir === 'asc' ? 1 : -1;
       return 0;
@@ -126,6 +142,7 @@ export default function CompanyListPage() {
                 { key: 'assigned', label: 'Zugewiesen' },
                 { key: null, label: 'Kontakte' },
                 { key: 'date', label: 'Erstellt' },
+                { key: 'updated', label: 'Zuletzt' },
               ].map((col, i) => (
                 <th
                   key={i}
@@ -209,6 +226,12 @@ export default function CompanyListPage() {
                   </td>
                   <td className="px-5 py-3.5 text-[13px] text-gray-500 font-body">
                     {new Date(company.createdAt).toLocaleDateString('de-DE')}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span className="flex items-center gap-1.5 text-[13px] text-gray-500 font-body">
+                      <Clock className="w-3.5 h-3.5 text-gray-400" />
+                      {timeAgo(company.updatedAt)}
+                    </span>
                   </td>
                   <td className="px-5 py-3.5">
                     <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-500" style={{ transition: 'color 150ms ease' }} />
