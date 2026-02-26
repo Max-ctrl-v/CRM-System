@@ -15,6 +15,7 @@ import {
   Trash2,
   Euro,
   AlertTriangle,
+  Clock,
 } from 'lucide-react';
 
 const PIPELINE_STAGES = [
@@ -37,6 +38,20 @@ function formatEuro(value) {
 
 function stageSum(companies) {
   return companies.reduce((sum, c) => sum + (c.expectedRevenue || 0), 0);
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return null;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'gerade eben';
+  if (mins < 60) return `vor ${mins} Min.`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `vor ${days} T.`;
+  const weeks = Math.floor(days / 7);
+  return `vor ${weeks} Wo.`;
 }
 
 export default function PipelinePage() {
@@ -230,6 +245,12 @@ export default function PipelinePage() {
                                         {company.gewinnvortrag && <span className="text-green-500">GV: {company.gewinnvortrag}</span>}
                                       </div>
                                     )}
+                                    {company.updatedAt && (
+                                      <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-body">
+                                        <Clock className="w-3 h-3" />
+                                        <span>Zuletzt: {timeAgo(company.updatedAt)}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -319,6 +340,12 @@ export default function PipelinePage() {
                                         <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 font-body" title={company.uisReason || 'Unternehmen in Schwierigkeiten'}><AlertTriangle className="w-3 h-3" />UiS</span>
                                       )}
                                     </div>
+                                    {company.updatedAt && (
+                                      <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-body">
+                                        <Clock className="w-3 h-3" />
+                                        <span>Zuletzt: {timeAgo(company.updatedAt)}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
