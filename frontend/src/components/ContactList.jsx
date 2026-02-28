@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import CommentSection from './CommentSection';
 import {
   UserPlus,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function ContactList({ companyId, companyName }) {
+  const { addToast } = useToast();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -56,7 +58,7 @@ export default function ContactList({ companyId, companyName }) {
         setContacts((prev) => [data, ...prev]);
       }
       resetForm();
-    } catch (err) { alert(err.response?.data?.error || 'Fehler.'); }
+    } catch (err) { addToast(err.response?.data?.error || 'Fehler.', 'error'); }
   }
 
   function handleEdit(contact) {
@@ -68,7 +70,7 @@ export default function ContactList({ companyId, companyName }) {
   async function handleDelete(id) {
     if (!window.confirm('Kontakt wirklich löschen?')) return;
     try { await api.delete(`/contacts/${id}`); setContacts((prev) => prev.filter((c) => c.id !== id)); }
-    catch { alert('Fehler beim Löschen.'); }
+    catch { addToast('Fehler beim Löschen.', 'error'); }
   }
 
   if (loading) return <div className="animate-pulse text-gray-400 font-body">Kontakte laden...</div>;

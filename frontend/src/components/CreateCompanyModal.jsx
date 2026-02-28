@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { X, Building2, Sparkles } from 'lucide-react';
 
 const PIPELINE_OPTIONS = [
@@ -14,6 +15,7 @@ const PIPELINE_OPTIONS = [
 
 export default function CreateCompanyModal({ onClose, onCreated, showPipelineOption = false }) {
   const { user } = useAuth();
+  const { dark } = useTheme();
   const [name, setName] = useState('');
   const [website, setWebsite] = useState('');
   const [city, setCity] = useState('');
@@ -67,7 +69,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
         className="bg-white rounded-2xl w-full max-w-md mx-4 p-7 border border-border-light"
-        style={{ boxShadow: '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)' }}
+        style={{ boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">

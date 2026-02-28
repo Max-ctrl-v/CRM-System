@@ -1,10 +1,13 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, LogOut, List, KanbanSquare, CheckSquare } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { LayoutDashboard, LogOut, List, KanbanSquare, CheckSquare, Search, Moon, Sun } from 'lucide-react';
 import OverdueNotification from './OverdueNotification';
+import CommandPalette from './CommandPalette';
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Pipeline', icon: KanbanSquare },
+  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { path: '/companies', label: 'Alle Firmen', icon: List },
   { path: '/aufgaben', label: 'Aufgaben', icon: CheckSquare },
 ];
@@ -12,6 +15,7 @@ const NAV_ITEMS = [
 export default function Layout() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const { dark, toggleDark } = useTheme();
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-base">
@@ -78,6 +82,20 @@ export default function Layout() {
 
           <div className="flex-1" />
 
+          {/* Search trigger */}
+          <button
+            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/8 mr-3
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+            style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="text-[12px] font-body">Suche</span>
+            <kbd className="text-[9px] font-mono font-semibold bg-white/10 px-1.5 py-0.5 rounded border border-white/15">
+              Ctrl+K
+            </kbd>
+          </button>
+
           {/* User Section */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
@@ -101,6 +119,17 @@ export default function Layout() {
             <div className="w-px h-6 bg-white/10 mx-1" />
 
             <button
+              onClick={toggleDark}
+              className="p-2 rounded-lg text-white/35 hover:text-white hover:bg-white/10
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300
+                active:scale-95"
+              title={dark ? 'Light Mode' : 'Dark Mode'}
+              style={{ transition: 'background-color 150ms ease, color 150ms ease, transform 100ms ease' }}
+            >
+              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            <button
               onClick={logout}
               className="p-2 rounded-lg text-white/35 hover:text-white hover:bg-white/10
                 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300
@@ -118,6 +147,8 @@ export default function Layout() {
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
+
+      <CommandPalette />
     </div>
   );
 }

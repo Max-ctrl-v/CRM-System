@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const contactService = require('../services/contact.service');
 const authenticate = require('../middleware/auth');
+const activityService = require('../services/activity.service');
 
 router.use(authenticate);
 
@@ -27,6 +28,7 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Vorname, Nachname und Firma erforderlich.' });
   }
   const contact = await contactService.create(req.body);
+  activityService.log('CONTACT_ADDED', 'COMPANY', contact.companyId, req.user.id, { contactName: `${contact.firstName} ${contact.lastName}` }).catch(() => {});
   res.status(201).json(contact);
 }));
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const taskService = require('../services/task.service');
 const authenticate = require('../middleware/auth');
+const activityService = require('../services/activity.service');
 
 router.use(authenticate);
 
@@ -42,6 +43,9 @@ router.patch('/:id/done', asyncHandler(async (req, res) => {
   const { done } = req.body;
   if (done === undefined) return res.status(400).json({ error: 'done-Wert erforderlich.' });
   const task = await taskService.toggleDone(req.params.id, done);
+  if (done && task.companyId) {
+    activityService.log('TASK_COMPLETED', 'COMPANY', task.companyId, req.user.id, { taskTitle: task.title }).catch(() => {});
+  }
   res.json(task);
 }));
 

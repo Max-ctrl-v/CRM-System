@@ -38,4 +38,18 @@ async function remove(id, userId, userRole) {
   return prisma.comment.delete({ where: { id } });
 }
 
-module.exports = { getByEntity, create, remove };
+async function getLatestBatch(entityType, entityIds) {
+  // Get all comments for these entities, then pick latest per entityId
+  const comments = await prisma.comment.findMany({
+    where: { entityType, entityId: { in: entityIds } },
+    include: { user: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+  const map = {};
+  for (const c of comments) {
+    if (!map[c.entityId]) map[c.entityId] = c;
+  }
+  return map;
+}
+
+module.exports = { getByEntity, create, remove, getLatestBatch };

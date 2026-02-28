@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 import CommentSection from '../components/CommentSection';
 import ContactList from '../components/ContactList';
 import PerplexityPanel from '../components/PerplexityPanel';
 import BundesanzeigerPanel from '../components/BundesanzeigerPanel';
 import TaskList from '../components/TaskList';
+import ActivityTimeline from '../components/ActivityTimeline';
 import {
   ArrowLeft,
   Building2,
@@ -27,6 +30,7 @@ import {
   CheckSquare,
   PhoneOff,
   Shield,
+  Clock,
 } from 'lucide-react';
 
 const STAGES = [
@@ -44,6 +48,7 @@ const TABS = [
   { key: 'perplexity', label: 'KI-Recherche', icon: Sparkles },
   { key: 'bundesanzeiger', label: 'Jahresabschluss', icon: FileText },
   { key: 'tasks', label: 'Aufgaben', icon: CheckSquare },
+  { key: 'activities', label: 'Aktivitäten', icon: Clock },
 ];
 
 function formatEuro(value) {
@@ -55,6 +60,8 @@ export default function CompanyDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToast } = useToast();
+  const { dark } = useTheme();
 
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +106,7 @@ export default function CompanyDetailPage() {
       setCompany(data);
       setEditing(false);
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Speichern.');
+      addToast(err.response?.data?.error || 'Fehler beim Speichern.', 'error');
     }
   }
 
@@ -108,7 +115,7 @@ export default function CompanyDetailPage() {
       const { data } = await api.patch(`/companies/${id}/stage`, { stage });
       setCompany(data);
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Ändern der Stufe.');
+      addToast(err.response?.data?.error || 'Fehler beim Ändern der Stufe.', 'error');
     }
   }
 
@@ -118,7 +125,7 @@ export default function CompanyDetailPage() {
       await api.delete(`/companies/${id}`);
       navigate('/');
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Löschen.');
+      addToast(err.response?.data?.error || 'Fehler beim Löschen.', 'error');
     }
   }
 
@@ -127,7 +134,7 @@ export default function CompanyDetailPage() {
       const { data } = await api.patch(`/companies/${id}/do-not-call`, { doNotCall: !company.doNotCall });
       setCompany(data);
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Ändern.');
+      addToast(err.response?.data?.error || 'Fehler beim Ändern.', 'error');
     }
   }
 
@@ -136,7 +143,7 @@ export default function CompanyDetailPage() {
       const { data } = await api.put(`/companies/${id}`, { adminPipeline: !company.adminPipeline });
       setCompany((prev) => ({ ...prev, adminPipeline: data.adminPipeline }));
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Ändern.');
+      addToast(err.response?.data?.error || 'Fehler beim Ändern.', 'error');
     }
   }
 
@@ -155,7 +162,7 @@ export default function CompanyDetailPage() {
         ...(data.city && !prev.city ? { city: data.city } : {}),
       }));
     } catch {
-      alert('UiS-Prüfung fehlgeschlagen.');
+      addToast('UiS-Prüfung fehlgeschlagen.', 'error');
     } finally {
       setCheckingUiS(false);
     }
@@ -186,7 +193,7 @@ export default function CompanyDetailPage() {
       {company.doNotCall && (
         <div
           className="flex items-center gap-3 bg-red-50 border border-red-300 rounded-xl p-4 mb-5"
-          style={{ boxShadow: '0 1px 3px rgba(239,68,68,0.15)' }}
+          style={{ boxShadow: dark ? '0 1px 3px rgba(239,68,68,0.3)' : '0 1px 3px rgba(239,68,68,0.15)' }}
         >
           <PhoneOff className="w-5 h-5 text-red-600 shrink-0" />
           <p className="text-[14px] font-display font-bold text-red-700 flex-1">Nicht mehr anrufen!</p>
@@ -204,7 +211,7 @@ export default function CompanyDetailPage() {
       {company.uisSchwierigkeiten && (
         <div
           className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5"
-          style={{ boxShadow: '0 1px 3px rgba(245,158,11,0.1)' }}
+          style={{ boxShadow: dark ? '0 1px 3px rgba(245,158,11,0.25)' : '0 1px 3px rgba(245,158,11,0.1)' }}
         >
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -225,7 +232,7 @@ export default function CompanyDetailPage() {
       {/* Header Card */}
       <div
         className="bg-white rounded-xl p-6 mb-5 border border-border-light"
-        style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)' }}
+        style={{ boxShadow: dark ? '0 1px 2px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)' }}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -255,8 +262,8 @@ export default function CompanyDetailPage() {
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                     style={{
-                      background: 'linear-gradient(135deg, #e8fafb, #c5f2f3)',
-                      boxShadow: '0 2px 6px rgba(13,115,119,0.12)',
+                      background: dark ? 'linear-gradient(135deg, rgba(13,115,119,0.18), rgba(13,115,119,0.1))' : 'linear-gradient(135deg, #e8fafb, #c5f2f3)',
+                      boxShadow: `0 2px 6px rgba(13,115,119,${dark ? '0.25' : '0.12'})`,
                     }}
                   >
                     <Building2 className="w-5 h-5 text-brand-600" />
@@ -368,12 +375,12 @@ export default function CompanyDetailPage() {
                   onClick={() => handleStageChange(stage.key)}
                   className="px-4 py-2 rounded-lg text-[12px] font-semibold font-body focus-visible:ring-2 focus-visible:ring-brand-300 active:scale-95"
                   style={{
-                    background: isActive ? stage.color : '#f0f1f5',
-                    color: isActive ? '#fff' : '#6b7280',
-                    border: isActive ? 'none' : '1px solid #e2e5eb',
+                    background: isActive ? stage.color : (dark ? '#252838' : '#f0f1f5'),
+                    color: isActive ? '#fff' : (dark ? '#9ca1b0' : '#6b7280'),
+                    border: isActive ? 'none' : `1px solid ${dark ? '#2a2d3d' : '#e2e5eb'}`,
                     boxShadow: isActive
                       ? `0 2px 8px ${stage.color}40, inset 0 1px 0 rgba(255,255,255,0.2)`
-                      : 'inset 0 1px 3px rgba(0,0,0,0.08)',
+                      : `inset 0 1px 3px rgba(0,0,0,${dark ? '0.2' : '0.08'})`,
                     transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, color 150ms ease, box-shadow 150ms ease',
                   }}
                 >
@@ -389,7 +396,7 @@ export default function CompanyDetailPage() {
       {/* Tabs */}
       <div
         className="flex gap-1 mb-5 bg-white rounded-xl p-1.5 w-fit border border-border-light"
-        style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.03)' }}
+        style={{ boxShadow: dark ? '0 1px 2px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.03)' }}
       >
         {TABS.map((tab) => (
           <button
@@ -401,8 +408,8 @@ export default function CompanyDetailPage() {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
             style={{
-              background: activeTab === tab.key ? '#e8fafb' : 'transparent',
-              boxShadow: activeTab === tab.key ? '0 1px 2px rgba(13,115,119,0.08)' : 'none',
+              background: activeTab === tab.key ? (dark ? 'rgba(13,115,119,0.12)' : '#e8fafb') : 'transparent',
+              boxShadow: activeTab === tab.key ? `0 1px 2px rgba(13,115,119,${dark ? '0.2' : '0.08'})` : 'none',
               transition: 'background-color 150ms ease, color 150ms ease, box-shadow 150ms ease',
             }}
           >
@@ -415,13 +422,14 @@ export default function CompanyDetailPage() {
       {/* Tab Content */}
       <div
         className="bg-white rounded-xl p-6 border border-border-light"
-        style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)' }}
+        style={{ boxShadow: dark ? '0 1px 2px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)' }}
       >
         {activeTab === 'contacts' && <ContactList companyId={company.id} companyName={company.name} />}
         {activeTab === 'comments' && <CommentSection entityType="COMPANY" entityId={company.id} />}
         {activeTab === 'perplexity' && <PerplexityPanel companyId={company.id} companyName={company.name} website={company.website} />}
         {activeTab === 'bundesanzeiger' && <BundesanzeigerPanel companyName={company.name} />}
         {activeTab === 'tasks' && <TaskList companyId={company.id} />}
+        {activeTab === 'activities' && <ActivityTimeline entityType="COMPANY" entityId={company.id} />}
       </div>
     </div>
   );

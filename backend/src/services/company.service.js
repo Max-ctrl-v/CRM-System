@@ -106,4 +106,18 @@ async function remove(id) {
   return prisma.company.delete({ where: { id } });
 }
 
-module.exports = { getAll, getById, create, update, updateStage, remove };
+async function bulkUpdateStage(ids, stage) {
+  const validStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST', null];
+  if (!validStages.includes(stage)) throw new AppError('Ungültige Pipeline-Stufe.', 400);
+  return prisma.company.updateMany({ where: { id: { in: ids } }, data: { pipelineStage: stage } });
+}
+
+async function bulkAssign(ids, assignedToId) {
+  return prisma.company.updateMany({ where: { id: { in: ids } }, data: { assignedToId } });
+}
+
+async function bulkDelete(ids) {
+  return prisma.company.deleteMany({ where: { id: { in: ids } } });
+}
+
+module.exports = { getAll, getById, create, update, updateStage, remove, bulkUpdateStage, bulkAssign, bulkDelete };

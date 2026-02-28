@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const commentService = require('../services/comment.service');
 const authenticate = require('../middleware/auth');
+const activityService = require('../services/activity.service');
 
 router.use(authenticate);
 
@@ -16,6 +17,17 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json(comments);
 }));
 
+// GET /api/comments/latest-batch?entityType=COMPANY&entityIds=id1,id2,id3
+router.get('/latest-batch', asyncHandler(async (req, res) => {
+  const { entityType, entityIds } = req.query;
+  if (!entityType || !entityIds) {
+    return res.status(400).json({ error: 'entityType und entityIds erforderlich.' });
+  }
+  const ids = entityIds.split(',').filter(Boolean);
+  const latest = await commentService.getLatestBatch(entityType, ids);
+  res.json(latest);
+}));
+
 // POST /api/comments
 router.post('/', asyncHandler(async (req, res) => {
   const { content, entityType, entityId } = req.body;
@@ -23,6 +35,7 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Inhalt, entityType und entityId erforderlich.' });
   }
   const comment = await commentService.create(req.body, req.user.id);
+  activityService.log('COMMENT_ADDED', entityType, entityId, req.user.id, { commentId: comment.id }).catch(() => {});
   res.status(201).json(comment);
 }));
 

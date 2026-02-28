@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Send, Trash2, MessageSquare } from 'lucide-react';
 
 export default function CommentSection({ entityType, entityId }) {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
@@ -39,7 +41,7 @@ export default function CommentSection({ entityType, entityId }) {
       setComments((prev) => [data, ...prev]);
       setContent('');
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Speichern.');
+      addToast(err.response?.data?.error || 'Fehler beim Speichern.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -51,7 +53,7 @@ export default function CommentSection({ entityType, entityId }) {
       await api.delete(`/comments/${id}`);
       setComments((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Löschen.');
+      addToast(err.response?.data?.error || 'Fehler beim Löschen.', 'error');
     }
   }
 

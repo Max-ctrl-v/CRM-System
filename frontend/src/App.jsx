@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const PipelinePage = lazy(() => import('./pages/PipelinePage'));
 const CompanyListPage = lazy(() => import('./pages/CompanyListPage'));
 const CompanyDetailPage = lazy(() => import('./pages/CompanyDetailPage'));
@@ -40,7 +41,8 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<PipelinePage />} />
+          <Route index element={<DashboardPage />} />
+          <Route path="pipeline" element={<PipelinePage />} />
           <Route path="companies" element={<CompanyListPage />} />
           <Route path="company/:id" element={<CompanyDetailPage />} />
           <Route path="aufgaben" element={<AufgabenPage />} />

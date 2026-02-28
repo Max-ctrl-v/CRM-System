@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { CompaniesProvider } from './context/CompaniesContext';
+import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
@@ -23,12 +25,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
       <BrowserRouter>
-        <AuthProvider>
-          <CompaniesProvider>
-            <App />
-            <GrainTexture />
-          </CompaniesProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CompaniesProvider>
+              <ToastProvider>
+                <App />
+                <GrainTexture />
+              </ToastProvider>
+            </CompaniesProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>

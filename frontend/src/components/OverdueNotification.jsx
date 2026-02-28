@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 import { Bell, AlertCircle, X, ChevronRight } from 'lucide-react';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 
 export default function OverdueNotification() {
   const navigate = useNavigate();
+  const { dark } = useTheme();
   const [overdue, setOverdue] = useState([]);
   const [open, setOpen] = useState(false);
 
@@ -40,7 +42,7 @@ export default function OverdueNotification() {
         <Bell className="w-4 h-4" />
         <span
           className="absolute -top-0.5 -right-0.5 flex items-center justify-center
-            w-4 h-4 rounded-full text-[9px] font-bold text-white"
+            w-4 h-4 rounded-full text-[9px] font-bold text-white overdue-pulse"
           style={{ background: '#ef4444' }}
         >
           {overdue.length > 9 ? '9+' : overdue.length}
@@ -52,7 +54,7 @@ export default function OverdueNotification() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl border border-border-light z-50 overflow-hidden"
-            style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 8px 32px rgba(0,0,0,0.08)' }}
+            style={{ boxShadow: dark ? '0 4px 16px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.12), 0 8px 32px rgba(0,0,0,0.08)' }}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-light">
               <div className="flex items-center gap-2">

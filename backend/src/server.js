@@ -12,6 +12,9 @@ const commentRoutes = require('./routes/comment.routes');
 const perplexityRoutes = require('./routes/perplexity.routes');
 const bundesanzeigerRoutes = require('./routes/bundesanzeiger.routes');
 const taskRoutes = require('./routes/task.routes');
+const activityRoutes = require('./routes/activity.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
+const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 
@@ -41,6 +44,9 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/perplexity', perplexityRoutes);
 app.use('/api/bundesanzeiger', bundesanzeigerRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

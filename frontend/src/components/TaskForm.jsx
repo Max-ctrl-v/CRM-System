@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Save, X, Plus } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { Save, X, Plus, ChevronDown } from 'lucide-react';
 
 export default function TaskForm({ initial, defaultCompanyId, defaultContactId, onSaved, onCancel }) {
+  const { addToast } = useToast();
   const [companies, setCompanies] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [users, setUsers] = useState([]);
@@ -107,7 +109,7 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
         : await api.post('/tasks', payload);
       onSaved(data);
     } catch (err) {
-      alert(err.response?.data?.error || 'Fehler beim Speichern.');
+      addToast(err.response?.data?.error || 'Fehler beim Speichern.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -118,16 +120,19 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-gray-50 rounded-xl p-5 mb-5 border border-gray-200"
-      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+      className="rounded-xl p-5 mb-4 border border-brand-200/50"
+      style={{
+        background: 'linear-gradient(135deg, rgba(232,250,251,0.4) 0%, rgba(243,244,248,0.6) 100%)',
+        boxShadow: '0 1px 3px rgba(13,115,119,0.06), 0 4px 12px rgba(13,115,119,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
+      }}
     >
-      <h4 className="text-sm font-display font-bold text-gray-800 mb-3 tracking-display">
+      <h4 className="text-sm font-display font-bold text-gray-800 mb-4 tracking-display">
         {initial ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}
       </h4>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Titel *</label>
+          <label className="block text-[11px] font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Titel *</label>
           <input
             type="text"
             value={form.title}
@@ -140,7 +145,7 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
         </div>
 
         <div className="col-span-2">
-          <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Beschreibung</label>
+          <label className="block text-[11px] font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Beschreibung</label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -151,33 +156,60 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Fälligkeitsdatum</label>
+          <label className="block text-[11px] font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Fälligkeitsdatum</label>
           <input
             type="date"
             value={form.dueDate}
             onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
             className="input-field text-sm"
           />
+          <div className="flex gap-1.5 mt-1.5">
+            {[
+              { label: 'Heute', days: 0 },
+              { label: 'Morgen', days: 1 },
+              { label: 'Nä. Woche', days: 7 },
+            ].map((opt) => {
+              const d = new Date();
+              d.setDate(d.getDate() + opt.days);
+              const val = d.toISOString().slice(0, 10);
+              return (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setForm({ ...form, dueDate: val })}
+                  className={`text-[10px] font-semibold font-body px-2 py-0.5 rounded-md border ${
+                    form.dueDate === val
+                      ? 'bg-brand-50 text-brand-600 border-brand-200'
+                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200'
+                  }`}
+                  style={{ transition: 'background-color 150ms ease, color 150ms ease, border-color 150ms ease' }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Zugewiesen an</label>
+        <div className="relative">
+          <label className="block text-[11px] font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Zugewiesen an</label>
           <select
             value={form.assignedToId}
             onChange={(e) => setForm({ ...form, assignedToId: e.target.value })}
-            className="input-field text-sm"
+            className="input-field text-sm appearance-none pr-8"
           >
             <option value="">— Nicht zugewiesen —</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>{u.name}</option>
             ))}
           </select>
+          <ChevronDown className="absolute right-3 bottom-3 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
 
         {/* Company picker with inline create */}
         {!defaultCompanyId && (
           <div className="col-span-2">
-            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Firma</label>
+            <label className="block text-[11px] font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Firma</label>
             {!creatingCompany ? (
               <select
                 value={form.companyId}
@@ -192,8 +224,8 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
               </select>
             ) : (
               <div
-                className="rounded-lg border border-brand-200 bg-brand-50/30 p-3 space-y-2"
-                style={{ boxShadow: 'inset 0 1px 2px rgba(13,115,119,0.06)' }}
+                className="rounded-lg border border-brand-200 p-3 space-y-2"
+                style={{ background: 'rgba(232,250,251,0.3)', boxShadow: 'inset 0 1px 2px rgba(13,115,119,0.06)' }}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Plus className="w-3.5 h-3.5 text-brand-500" />
@@ -230,7 +262,7 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
         {/* Contact picker with inline create */}
         {!defaultContactId && (activeCompanyId || creatingCompany) && (
           <div className="col-span-2">
-            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Kontakt</label>
+            <label className="block text-[11px] font-semibold text-gray-500 mb-1 uppercase tracking-wider font-body">Kontakt</label>
             {!creatingContact ? (
               <select
                 value={form.contactId}
@@ -246,8 +278,8 @@ export default function TaskForm({ initial, defaultCompanyId, defaultContactId, 
               </select>
             ) : (
               <div
-                className="rounded-lg border border-brand-200 bg-brand-50/30 p-3 space-y-2"
-                style={{ boxShadow: 'inset 0 1px 2px rgba(13,115,119,0.06)' }}
+                className="rounded-lg border border-brand-200 p-3 space-y-2"
+                style={{ background: 'rgba(232,250,251,0.3)', boxShadow: 'inset 0 1px 2px rgba(13,115,119,0.06)' }}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Plus className="w-3.5 h-3.5 text-brand-500" />
