@@ -6,10 +6,10 @@ const authenticate = require('../middleware/auth');
 
 router.use(authenticate);
 
-// GET /api/tasks?companyId=&contactId=&done=
+// GET /api/tasks?companyId=&contactId=&assignedToId=&done=
 router.get('/', asyncHandler(async (req, res) => {
-  const { companyId, contactId, done } = req.query;
-  const tasks = await taskService.getAll({ companyId, contactId, done });
+  const { companyId, contactId, assignedToId, done } = req.query;
+  const tasks = await taskService.getAll({ companyId, contactId, assignedToId, done });
   res.json(tasks);
 }));
 

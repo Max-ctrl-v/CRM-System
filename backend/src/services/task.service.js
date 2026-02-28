@@ -14,6 +14,7 @@ async function getAll(filters = {}) {
   const where = {};
   if (filters.companyId) where.companyId = filters.companyId;
   if (filters.contactId) where.contactId = filters.contactId;
+  if (filters.assignedToId) where.assignedToId = filters.assignedToId;
   if (filters.done !== undefined) where.done = filters.done === 'true';
 
   return prisma.task.findMany({

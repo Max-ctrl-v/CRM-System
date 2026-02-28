@@ -14,14 +14,14 @@ import {
   User,
 } from 'lucide-react';
 
-export default function TaskList({ companyId, contactId, showLinks = false }) {
+export default function TaskList({ companyId, contactId, assignedToId, showLinks = false }) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
-  useEffect(() => { loadTasks(); }, [companyId, contactId]);
+  useEffect(() => { loadTasks(); }, [companyId, contactId, assignedToId]);
 
   async function loadTasks() {
     setLoading(true);
@@ -29,6 +29,7 @@ export default function TaskList({ companyId, contactId, showLinks = false }) {
       const params = new URLSearchParams();
       if (companyId) params.set('companyId', companyId);
       if (contactId) params.set('contactId', contactId);
+      if (assignedToId) params.set('assignedToId', assignedToId);
       const { data } = await api.get(`/tasks?${params}`);
       setTasks(data);
     } catch {
