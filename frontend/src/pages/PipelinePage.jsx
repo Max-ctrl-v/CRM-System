@@ -98,6 +98,8 @@ export default function PipelinePage() {
   const companiesWithPipeline = companies.filter((c) => c.pipelineStage);
   const pipelineCompanies = selectedUserId === 'ALL'
     ? companiesWithPipeline
+    : selectedUserId === 'ADMIN_ONLY'
+    ? companiesWithPipeline.filter((c) => c.assignedToId === user?.id)
     : companiesWithPipeline.filter((c) => c.assignedToId === selectedUserId || c.createdById === selectedUserId);
 
   const filtered = search
@@ -136,6 +138,7 @@ export default function PipelinePage() {
               className="input-field py-2 text-sm pr-8 pl-3 w-48 appearance-none cursor-pointer font-medium"
             >
               <option value={user?.id}>Meine Pipeline</option>
+              {user?.role === 'ADMIN' && <option value="ADMIN_ONLY">Admin Pipeline</option>}
               <option value="ALL">Alle Mitarbeiter</option>
               {allUsers.filter((u) => u.id !== user?.id).map((u) => (
                 <option key={u.id} value={u.id}>{u.name}</option>
