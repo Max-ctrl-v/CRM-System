@@ -96,8 +96,10 @@ export default function PipelinePage() {
   }
 
   const companiesWithPipeline = companies.filter((c) => c.pipelineStage);
-  const pipelineCompanies = selectedUserId === 'ALL' || selectedUserId === 'ADMIN_ONLY'
+  const pipelineCompanies = selectedUserId === 'ALL'
     ? companiesWithPipeline
+    : selectedUserId === 'ADMIN_ONLY'
+    ? companiesWithPipeline.filter((c) => c.adminPipeline)
     : companiesWithPipeline.filter((c) => c.assignedToId === selectedUserId);
 
   const filtered = search

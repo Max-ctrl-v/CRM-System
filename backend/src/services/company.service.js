@@ -50,6 +50,7 @@ async function create(data, userId) {
       city: data.city || null,
       pipelineStage: data.pipelineStage || null,
       assignedToId: data.assignedToId || null,
+      adminPipeline: !!data.adminPipeline,
       createdById: userId,
     },
     include: {
@@ -75,6 +76,7 @@ async function update(id, data) {
       ...(data.uisSchwierigkeiten !== undefined && { uisSchwierigkeiten: !!data.uisSchwierigkeiten }),
       ...(data.uisReason !== undefined && { uisReason: data.uisReason }),
       ...(data.doNotCall !== undefined && { doNotCall: !!data.doNotCall }),
+      ...(data.adminPipeline !== undefined && { adminPipeline: !!data.adminPipeline }),
     },
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },

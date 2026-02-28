@@ -62,6 +62,7 @@ model Company {
   uisSchwierigkeiten Boolean @default(false)
   uisReason        String?
   doNotCall        Boolean @default(false)
+  adminPipeline    Boolean @default(false)
 
   assignedToId  String?
   assignedTo    User?         @relation("AssignedTo", fields: [assignedToId], references: [id])

@@ -20,6 +20,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   const [assignedToId, setAssignedToId] = useState('');
   const [pipelineStage, setPipelineStage] = useState(showPipelineOption ? '' : 'FIRMA_IDENTIFIZIERT');
   const [users, setUsers] = useState([]);
+  const [adminPipeline, setAdminPipeline] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,6 +45,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
         city: city.trim() || null,
         assignedToId: assignedToId || null,
         pipelineStage: pipelineStage || null,
+        adminPipeline,
       });
       // Fire Perplexity research in background (no need to wait)
       if (website.trim()) {
@@ -123,6 +125,13 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
               {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           </div>
+
+          {user?.role === 'ADMIN' && (
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked={adminPipeline} onChange={(e) => setAdminPipeline(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+              <span className="text-sm font-semibold text-gray-700 font-body">Admin Pipeline</span>
+            </label>
+          )}
 
           {showPipelineOption && (
             <div>

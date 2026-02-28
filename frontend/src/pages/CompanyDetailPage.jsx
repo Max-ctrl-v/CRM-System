@@ -26,6 +26,7 @@ import {
   CheckCircle,
   CheckSquare,
   PhoneOff,
+  Shield,
 } from 'lucide-react';
 
 const STAGES = [
@@ -125,6 +126,15 @@ export default function CompanyDetailPage() {
     try {
       const { data } = await api.patch(`/companies/${id}/do-not-call`, { doNotCall: !company.doNotCall });
       setCompany(data);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Fehler beim Ändern.');
+    }
+  }
+
+  async function toggleAdminPipeline() {
+    try {
+      const { data } = await api.put(`/companies/${id}`, { adminPipeline: !company.adminPipeline });
+      setCompany((prev) => ({ ...prev, adminPipeline: data.adminPipeline }));
     } catch (err) {
       alert(err.response?.data?.error || 'Fehler beim Ändern.');
     }
@@ -312,6 +322,21 @@ export default function CompanyDetailPage() {
 
           {!editing && (
             <div className="flex items-center gap-2">
+              {user?.role === 'ADMIN' && (
+                <button
+                  onClick={toggleAdminPipeline}
+                  className={`flex items-center gap-1.5 text-[13px] px-3 py-2 rounded-lg font-semibold font-body focus-visible:ring-2 focus-visible:ring-brand-300 active:scale-95 ${
+                    company.adminPipeline
+                      ? 'bg-brand-100 text-brand-700 border border-brand-300 hover:bg-brand-200'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200'
+                  }`}
+                  style={{ transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, color 150ms ease' }}
+                  title={company.adminPipeline ? 'Aus Admin Pipeline entfernen' : 'Zur Admin Pipeline hinzufügen'}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  {company.adminPipeline ? 'Admin Pipeline' : 'Admin Pipeline'}
+                </button>
+              )}
               <button
                 onClick={toggleDoNotCall}
                 className={`flex items-center gap-1.5 text-[13px] px-3 py-2 rounded-lg font-semibold font-body focus-visible:ring-2 focus-visible:ring-red-300 active:scale-95 ${
