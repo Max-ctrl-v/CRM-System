@@ -18,8 +18,8 @@ export default function CommentSection({ entityType, entityId }) {
     try {
       const { data } = await api.get(`/comments?entityType=${entityType}&entityId=${entityId}`);
       setComments(data);
-    } catch (err) {
-      console.error('Fehler beim Laden der Kommentare:', err);
+    } catch {
+      /* silently fail */
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const companyService = require('../services/company.service');
 const authenticate = require('../middleware/auth');
+const { auditLog } = require('../utils/auditLog');
 
 router.use(authenticate);
 
@@ -32,6 +33,7 @@ router.post('/', asyncHandler(async (req, res) => {
 // PUT /api/companies/:id
 router.put('/:id', asyncHandler(async (req, res) => {
   const company = await companyService.update(req.params.id, req.body);
+  auditLog('COMPANY_UPDATE', req.user.id, { companyId: req.params.id });
   res.json(company);
 }));
 
@@ -40,6 +42,7 @@ router.patch('/:id/stage', asyncHandler(async (req, res) => {
   const { stage } = req.body;
   if (stage === undefined) return res.status(400).json({ error: 'Pipeline-Stufe erforderlich.' });
   const company = await companyService.updateStage(req.params.id, stage);
+  auditLog('STAGE_CHANGE', req.user.id, { companyId: req.params.id, stage });
   res.json(company);
 }));
 
@@ -53,6 +56,7 @@ router.patch('/:id/do-not-call', asyncHandler(async (req, res) => {
 // DELETE /api/companies/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
   await companyService.remove(req.params.id);
+  auditLog('COMPANY_DELETE', req.user.id, { companyId: req.params.id });
   res.json({ message: 'Firma gelöscht.' });
 }));
 

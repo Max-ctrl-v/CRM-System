@@ -31,8 +31,8 @@ export default function TaskList({ companyId, contactId, showLinks = false }) {
       if (contactId) params.set('contactId', contactId);
       const { data } = await api.get(`/tasks?${params}`);
       setTasks(data);
-    } catch (err) {
-      console.error('Fehler beim Laden der Aufgaben:', err);
+    } catch {
+      /* silently fail */
     } finally {
       setLoading(false);
     }

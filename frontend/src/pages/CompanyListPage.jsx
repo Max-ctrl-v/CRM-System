@@ -51,7 +51,7 @@ export default function CompanyListPage() {
   function loadCompanies() {
     api.get('/companies')
       .then(({ data }) => setCompanies(data))
-      .catch((err) => console.error('Fehler:', err))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }
 

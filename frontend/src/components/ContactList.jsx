@@ -35,7 +35,7 @@ export default function ContactList({ companyId, companyName }) {
     try {
       const { data } = await api.get(`/contacts?companyId=${companyId}`);
       setContacts(data);
-    } catch (err) { console.error('Fehler:', err); }
+    } catch { /* silently fail */ }
     finally { setLoading(false); }
   }
 
@@ -115,7 +115,7 @@ export default function ContactList({ companyId, companyName }) {
             >
               <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-display font-bold text-sm">{contact.firstName[0]}{contact.lastName[0]}</div>
+                  <div className="w-10 h-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center font-display font-bold text-sm">{contact.firstName?.[0] || ''}{contact.lastName?.[0] || ''}</div>
                   <div>
                     <div className="font-display font-bold text-sm text-gray-900 tracking-display">{contact.firstName} {contact.lastName}</div>
                     <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5 font-body">

@@ -31,7 +31,12 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore errors — clear local state regardless
+    }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     setUser(null);

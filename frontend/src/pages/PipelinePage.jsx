@@ -72,13 +72,13 @@ export default function PipelinePage() {
         setCompanies(companiesRes.data);
         setSelectedUserId(user?.id || '');
       })
-      .catch((err) => console.error('Fehler:', err))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [user?.id]);
 
   async function loadCompanies() {
     try { const { data } = await api.get('/companies'); setCompanies(data); }
-    catch (err) { console.error('Fehler:', err); }
+    catch { /* silently fail */ }
   }
 
   async function handleDragEnd(result) {

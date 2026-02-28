@@ -82,6 +82,13 @@ async function createUser(email, password, name, role = 'USER') {
   });
 }
 
+async function logout(userId) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { refreshToken: null },
+  });
+}
+
 async function getAllUsers() {
   return prisma.user.findMany({
     select: { id: true, email: true, name: true, role: true, lastLogin: true, createdAt: true },
@@ -89,4 +96,4 @@ async function getAllUsers() {
   });
 }
 
-module.exports = { login, refresh, createUser, getAllUsers };
+module.exports = { login, refresh, logout, createUser, getAllUsers };

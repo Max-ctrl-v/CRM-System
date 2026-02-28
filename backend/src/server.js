@@ -24,17 +24,17 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting for login only (not all auth routes)
-const loginLimiter = rateLimit({
+// Rate limiting for login and refresh endpoints
+const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 50,
-  message: { error: 'Zu viele Anmeldeversuche. Bitte später erneut versuchen.' },
+  message: { error: 'Zu viele Anfragen. Bitte später erneut versuchen.' },
   keyGenerator: (req) => req.ip,
-  skip: (req) => req.path !== '/login',
+  skip: (req) => req.path !== '/login' && req.path !== '/refresh',
 });
 
 // Routes
-app.use('/api/auth', loginLimiter, authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/comments', commentRoutes);
