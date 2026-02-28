@@ -3,12 +3,19 @@ const { AppError } = require('../middleware/errorHandler');
 
 const prisma = new PrismaClient();
 
-async function getAll(filters = {}) {
+async function getAll(filters = {}, requestingUser = null) {
   const where = {};
   if (filters.stage) where.pipelineStage = filters.stage;
   if (filters.assignedToId) where.assignedToId = filters.assignedToId;
   if (filters.search) {
     where.name = { contains: filters.search };
+  }
+
+  // Non-admin users cannot see companies assigned to an admin
+  if (requestingUser && requestingUser.role !== 'ADMIN') {
+    where.NOT = {
+      assignedTo: { role: 'ADMIN' },
+    };
   }
 
   return prisma.company.findMany({
@@ -26,7 +33,7 @@ async function getById(id) {
   const company = await prisma.company.findUnique({
     where: { id },
     include: {
-      assignedTo: { select: { id: true, name: true, email: true } },
+      assignedTo: { select: { id: true, name: true, email: true, role: true } },
       createdBy: { select: { id: true, name: true } },
       contacts: { orderBy: { createdAt: 'desc' } },
     },

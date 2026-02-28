@@ -9,13 +9,17 @@ router.use(authenticate);
 // GET /api/companies
 router.get('/', asyncHandler(async (req, res) => {
   const { stage, assignedToId, search } = req.query;
-  const companies = await companyService.getAll({ stage, assignedToId, search });
+  const companies = await companyService.getAll({ stage, assignedToId, search }, req.user);
   res.json(companies);
 }));
 
 // GET /api/companies/:id
 router.get('/:id', asyncHandler(async (req, res) => {
   const company = await companyService.getById(req.params.id);
+  // Non-admin users cannot view companies assigned to an admin
+  if (req.user.role !== 'ADMIN' && company.assignedTo?.role === 'ADMIN') {
+    return res.status(403).json({ error: 'Kein Zugriff auf diese Firma.' });
+  }
   res.json(company);
 }));
 
