@@ -24,7 +24,4 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY || '',
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@example.com',
-  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123',
-  ADMIN_NAME: process.env.ADMIN_NAME || 'Admin',
 };
