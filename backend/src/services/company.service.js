@@ -23,7 +23,8 @@ async function getAll(filters = {}, requestingUser = null) {
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },
       createdBy: { select: { id: true, name: true } },
-      contacts: { select: { id: true, firstName: true, lastName: true } },
+      contacts: { select: { firstName: true, lastName: true } },
+      _count: { select: { contacts: true } },
     },
     orderBy: { updatedAt: 'desc' },
   });

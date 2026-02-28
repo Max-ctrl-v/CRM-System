@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
@@ -95,23 +95,23 @@ export default function PipelinePage() {
     setShowCreate(false);
   }
 
-  const companiesWithPipeline = companies.filter((c) => c.pipelineStage);
-  const pipelineCompanies = selectedUserId === 'ALL'
-    ? companiesWithPipeline
-    : selectedUserId === 'ADMIN_ONLY'
-    ? companiesWithPipeline.filter((c) => c.adminPipeline)
-    : companiesWithPipeline.filter((c) => c.assignedToId === selectedUserId);
-
-  const filtered = search
-    ? pipelineCompanies.filter((c) => {
-        const q = search.toLowerCase();
-        const contactMatch = c.contacts?.some((ct) =>
-          (ct.firstName && ct.firstName.toLowerCase().includes(q)) ||
-          (ct.lastName && ct.lastName.toLowerCase().includes(q))
-        );
-        return c.name.toLowerCase().includes(q) || contactMatch;
-      })
-    : pipelineCompanies;
+  const filtered = useMemo(() => {
+    const withPipeline = companies.filter((c) => c.pipelineStage);
+    const byUser = selectedUserId === 'ALL'
+      ? withPipeline
+      : selectedUserId === 'ADMIN_ONLY'
+      ? withPipeline.filter((c) => c.adminPipeline)
+      : withPipeline.filter((c) => c.assignedToId === selectedUserId);
+    if (!search) return byUser;
+    const q = search.toLowerCase();
+    return byUser.filter((c) => {
+      const contactMatch = c.contacts?.some((ct) =>
+        (ct.firstName && ct.firstName.toLowerCase().includes(q)) ||
+        (ct.lastName && ct.lastName.toLowerCase().includes(q))
+      );
+      return c.name.toLowerCase().includes(q) || contactMatch;
+    });
+  }, [companies, selectedUserId, search]);
 
   if (loading) {
     return (
@@ -235,8 +235,8 @@ export default function PipelinePage() {
                                     <span className={`font-display font-semibold text-[13px] truncate block ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>{company.name}</span>
                                     {company.website && <p className="text-[11px] text-gray-400 truncate font-body mt-0.5">{company.website}</p>}
                                     <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
-                                      {company.contacts && company.contacts.length > 0 && (
-                                        <span className="flex items-center gap-1 text-[11px] text-gray-500 font-body"><Users className="w-3 h-3" /> {company.contacts.length}</span>
+                                      {(company._count?.contacts || 0) > 0 && (
+                                        <span className="flex items-center gap-1 text-[11px] text-gray-500 font-body"><Users className="w-3 h-3" /> {company._count.contacts}</span>
                                       )}
                                       {company.assignedTo && (
                                         <span className="text-[11px] px-2 py-0.5 rounded-md font-medium" style={{ background: stage.bgLight, color: stage.color }}>{company.assignedTo.name}</span>

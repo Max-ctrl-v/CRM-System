@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import CreateCompanyModal from '../components/CreateCompanyModal';
@@ -65,8 +65,8 @@ export default function CompanyListPage() {
     else { setSortBy(field); setSortDir('asc'); }
   }
 
-  const filtered = companies
-    .filter((c) => {
+  const filtered = useMemo(() => {
+    const searched = companies.filter((c) => {
       if (!search) return true;
       const q = search.toLowerCase();
       const contactMatch = c.contacts?.some((ct) =>
@@ -81,8 +81,8 @@ export default function CompanyListPage() {
         (!c.pipelineStage && 'keine pipeline'.includes(q)) ||
         contactMatch
       );
-    })
-    .sort((a, b) => {
+    });
+    return searched.sort((a, b) => {
       let valA, valB;
       if (sortBy === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
       else if (sortBy === 'stage') { valA = a.pipelineStage || 'zzz'; valB = b.pipelineStage || 'zzz'; }
@@ -93,6 +93,7 @@ export default function CompanyListPage() {
       if (valA > valB) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
+  }, [companies, search, sortBy, sortDir]);
 
   if (loading) {
     return (
@@ -230,7 +231,7 @@ export default function CompanyListPage() {
                   <td className="px-5 py-3.5">
                     <span className="flex items-center gap-1.5 text-[13px] text-gray-500 font-body">
                       <Users className="w-3.5 h-3.5 text-gray-400" />
-                      {company.contacts?.length || 0}
+                      {company._count?.contacts || 0}
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-[13px] text-gray-500 font-body">

@@ -31,8 +31,6 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
     }).catch(() => {});
   }, [user?.id]);
 
-  const [uisChecking, setUisChecking] = useState(false);
-
   async function handleSubmit(e) {
     e.preventDefault();
     if (!name.trim()) return;
@@ -47,32 +45,21 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
         pipelineStage: pipelineStage || null,
         adminPipeline,
       });
-      // Fire Perplexity research in background (no need to wait)
+      // Close modal immediately — run background tasks after
+      onCreated(data);
+      // Fire Perplexity research + UiS check in background (non-blocking)
       if (website.trim()) {
         api.post('/perplexity/research', { companyId: data.id, companyName: data.name, website: website.trim() }).catch(() => {});
       }
-      // Await UiS check + city detection so result is immediately visible
-      setUisChecking(true);
-      let updatedCompany = data;
-      try {
-        const uisRes = await api.post('/perplexity/check-uis', {
-          companyId: data.id,
-          companyName: data.name,
-          website: website.trim() || null,
-        });
-        updatedCompany = {
-          ...data,
-          uisSchwierigkeiten: uisRes.data.uisSchwierigkeiten,
-          uisReason: uisRes.data.uisReason,
-          ...(uisRes.data.city && !data.city ? { city: uisRes.data.city } : {}),
-        };
-      } catch {}
-      onCreated(updatedCompany);
+      api.post('/perplexity/check-uis', {
+        companyId: data.id,
+        companyName: data.name,
+        website: website.trim() || null,
+      }).catch(() => {});
     } catch (err) {
       setError(err.response?.data?.error || 'Fehler beim Erstellen.');
     } finally {
       setLoading(false);
-      setUisChecking(false);
     }
   }
 
@@ -145,7 +132,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
-            <button type="submit" disabled={loading} className="btn-primary flex-1">{uisChecking ? 'KI-Prüfung...' : loading ? 'Erstellen...' : 'Erstellen'}</button>
+            <button type="submit" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
           </div>
         </form>
       </div>
