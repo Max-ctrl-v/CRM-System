@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useCompanies } from '../context/CompaniesContext';
 import CreateCompanyModal from '../components/CreateCompanyModal';
 import {
   Plus,
@@ -58,40 +59,26 @@ function timeAgo(dateStr) {
 export default function PipelinePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [companies, setCompanies] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { companies, allUsers, loading, refresh, updateCompany, addCompany } = useCompanies();
   const [showCreate, setShowCreate] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
 
   useEffect(() => {
-    Promise.all([api.get('/auth/users'), api.get('/companies')])
-      .then(([usersRes, companiesRes]) => {
-        setAllUsers(usersRes.data);
-        setCompanies(companiesRes.data);
-        setSelectedUserId(user?.id || '');
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [user?.id]);
-
-  async function loadCompanies() {
-    try { const { data } = await api.get('/companies'); setCompanies(data); }
-    catch { /* silently fail */ }
-  }
+    if (user?.id && !selectedUserId) setSelectedUserId(user.id);
+  }, [user?.id, selectedUserId]);
 
   async function handleDragEnd(result) {
     if (!result.destination) return;
     const { draggableId, destination } = result;
     const newStage = destination.droppableId;
-    setCompanies((prev) => prev.map((c) => (c.id === draggableId ? { ...c, pipelineStage: newStage } : c)));
+    updateCompany({ ...companies.find((c) => c.id === draggableId), pipelineStage: newStage });
     try { await api.patch(`/companies/${draggableId}/stage`, { stage: newStage }); }
-    catch { loadCompanies(); }
+    catch { refresh(); }
   }
 
   function handleCompanyCreated(company) {
-    setCompanies((prev) => [company, ...prev]);
+    addCompany(company);
     setShowCreate(false);
   }
 

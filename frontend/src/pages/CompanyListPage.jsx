@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import { useCompanies } from '../context/CompaniesContext';
 import CreateCompanyModal from '../components/CreateCompanyModal';
 import {
   Search,
@@ -39,24 +39,14 @@ function timeAgo(dateStr) {
 
 export default function CompanyListPage() {
   const navigate = useNavigate();
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { companies, loading, addCompany } = useCompanies();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [showCreate, setShowCreate] = useState(false);
 
-  useEffect(() => { loadCompanies(); }, []);
-
-  function loadCompanies() {
-    api.get('/companies')
-      .then(({ data }) => setCompanies(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }
-
   function handleCompanyCreated(company) {
-    setCompanies((prev) => [company, ...prev]);
+    addCompany(company);
     setShowCreate(false);
   }
 

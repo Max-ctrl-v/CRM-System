@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { CompaniesProvider } from './context/CompaniesContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
@@ -23,8 +24,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <App />
-          <GrainTexture />
+          <CompaniesProvider>
+            <App />
+            <GrainTexture />
+          </CompaniesProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>
