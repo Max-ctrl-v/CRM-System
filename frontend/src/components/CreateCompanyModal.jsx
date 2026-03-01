@@ -86,7 +86,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
         className="bg-white rounded-2xl w-full max-w-lg mx-4 border border-border-light"
         style={{
           display: 'grid',
-          gridTemplateRows: 'auto 1fr auto',
+          gridTemplateRows: 'auto minmax(0, 1fr) auto',
           maxHeight: '85vh',
           overflow: 'hidden',
           padding: '20px 24px',
