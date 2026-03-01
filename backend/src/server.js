@@ -42,13 +42,13 @@ app.use(express.json({ limit: '1mb' }));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Rate limiting for login and refresh endpoints
+// Rate limiting for login, 2FA, and refresh endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50,
-  message: { error: 'Zu viele Anfragen. Bitte später erneut versuchen.' },
+  max: 10,
+  message: { error: 'Zu viele Anmeldeversuche. Bitte in 15 Minuten erneut versuchen.' },
   keyGenerator: (req) => req.ip,
-  skip: (req) => req.path !== '/login' && req.path !== '/refresh',
+  skip: (req) => !['/login', '/login/2fa', '/refresh'].includes(req.path),
 });
 
 // General API rate limiting

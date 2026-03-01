@@ -113,7 +113,23 @@ async function refresh(refreshToken) {
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 }
 
+function validatePassword(password) {
+  if (!password || password.length < 8) {
+    throw new AppError('Passwort muss mindestens 8 Zeichen lang sein.', 400);
+  }
+  if (!/[A-Z]/.test(password)) {
+    throw new AppError('Passwort muss mindestens einen Großbuchstaben enthalten.', 400);
+  }
+  if (!/[a-z]/.test(password)) {
+    throw new AppError('Passwort muss mindestens einen Kleinbuchstaben enthalten.', 400);
+  }
+  if (!/[0-9]/.test(password)) {
+    throw new AppError('Passwort muss mindestens eine Zahl enthalten.', 400);
+  }
+}
+
 async function createUser(email, password, name, role = 'USER') {
+  validatePassword(password);
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   return prisma.user.create({
     data: { email, passwordHash, name, role },
@@ -135,4 +151,4 @@ async function getAllUsers() {
   });
 }
 
-module.exports = { login, verify2FA, refresh, logout, createUser, getAllUsers };
+module.exports = { login, verify2FA, refresh, logout, createUser, getAllUsers, validatePassword };

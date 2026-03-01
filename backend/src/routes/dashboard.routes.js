@@ -20,6 +20,14 @@ router.get('/stats', asyncHandler(async (req, res) => {
   const dateFilter = dateFrom ? { createdAt: { gte: dateFrom } } : {};
   const companyDateFilter = dateFrom ? { createdAt: { gte: dateFrom } } : {};
 
+  // Non-admin users only see stats for companies assigned to or created by them
+  const companyScope = req.user.role === 'ADMIN' ? {} : {
+    OR: [{ assignedToId: req.user.id }, { createdById: req.user.id }],
+  };
+  const taskScope = req.user.role === 'ADMIN' ? {} : {
+    company: companyScope,
+  };
+
   const [
     totalCompanies,
     stageGroups,
@@ -29,17 +37,18 @@ router.get('/stats', asyncHandler(async (req, res) => {
     newCompanies,
     completedTasks,
   ] = await Promise.all([
-    prisma.company.count(),
+    prisma.company.count({ where: companyScope }),
     prisma.company.groupBy({
       by: ['pipelineStage'],
       _count: { id: true },
       _sum: { expectedRevenue: true },
+      where: companyScope,
     }),
     prisma.task.count({
-      where: { done: false, dueDate: { lt: new Date() } },
+      where: { done: false, dueDate: { lt: new Date() }, ...taskScope },
     }),
     prisma.activity.findMany({
-      where: dateFilter,
+      where: { ...dateFilter, ...(req.user.role !== 'ADMIN' ? { userId: req.user.id } : {}) },
       include: { user: { select: { id: true, name: true } } },
       orderBy: { createdAt: 'desc' },
       take: 15,
@@ -48,10 +57,11 @@ router.get('/stats', asyncHandler(async (req, res) => {
       _sum: { expectedRevenue: true },
       where: {
         pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
+        ...companyScope,
       },
     }),
-    prisma.company.count({ where: companyDateFilter }),
-    prisma.task.count({ where: { done: true, ...dateFilter } }),
+    prisma.company.count({ where: { ...companyDateFilter, ...companyScope } }),
+    prisma.task.count({ where: { done: true, ...dateFilter, ...taskScope } }),
   ]);
 
   const openDeals = stageGroups
@@ -78,6 +88,9 @@ router.get('/stats', asyncHandler(async (req, res) => {
 router.get('/revenue-forecast', asyncHandler(async (req, res) => {
   const now = new Date();
   const months = [];
+  const companyScope = req.user.role === 'ADMIN' ? {} : {
+    OR: [{ assignedToId: req.user.id }, { createdById: req.user.id }],
+  };
 
   for (let i = 5; i >= 0; i--) {
     const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -90,6 +103,7 @@ router.get('/revenue-forecast', asyncHandler(async (req, res) => {
         where: {
           pipelineStage: 'CLOSED_WON',
           updatedAt: { gte: start, lte: end },
+          ...companyScope,
         },
       }),
       prisma.company.aggregate({
@@ -97,6 +111,7 @@ router.get('/revenue-forecast', asyncHandler(async (req, res) => {
         where: {
           pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
           updatedAt: { gte: start, lte: end },
+          ...companyScope,
         },
       }),
     ]);
@@ -116,7 +131,10 @@ router.get('/heatmap', asyncHandler(async (req, res) => {
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
   const activities = await prisma.activity.findMany({
-    where: { createdAt: { gte: ninetyDaysAgo } },
+    where: {
+      createdAt: { gte: ninetyDaysAgo },
+      ...(req.user.role !== 'ADMIN' ? { userId: req.user.id } : {}),
+    },
     select: { createdAt: true },
   });
 
@@ -132,10 +150,13 @@ router.get('/heatmap', asyncHandler(async (req, res) => {
 // GET /api/dashboard/funnel
 router.get('/funnel', asyncHandler(async (req, res) => {
   const stages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON'];
+  const companyScope = req.user.role === 'ADMIN' ? {} : {
+    OR: [{ assignedToId: req.user.id }, { createdById: req.user.id }],
+  };
   const counts = await prisma.company.groupBy({
     by: ['pipelineStage'],
     _count: { id: true },
-    where: { pipelineStage: { not: null } },
+    where: { pipelineStage: { not: null }, ...companyScope },
   });
 
   const countMap = {};

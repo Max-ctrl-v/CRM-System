@@ -22,7 +22,7 @@ router.post('/setup', asyncHandler(async (req, res) => {
     data: { totpSecret: secret },
   });
 
-  res.json({ qrDataUrl, secret });
+  res.json({ qrDataUrl });
 }));
 
 // POST /api/totp/verify — verify code and enable 2FA

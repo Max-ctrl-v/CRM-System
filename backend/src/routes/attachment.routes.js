@@ -23,9 +23,17 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (req, file, cb) => {
-    const blocked = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.msi'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (blocked.includes(ext)) {
+    const blocked = [
+      '.exe', '.bat', '.cmd', '.sh', '.ps1', '.msi', '.com', '.scr',
+      '.pif', '.vbs', '.vbe', '.js', '.jse', '.wsf', '.wsh', '.dll',
+      '.jar', '.cpl', '.reg', '.inf', '.hta', '.lnk',
+    ];
+    const name = file.originalname.toLowerCase();
+    const ext = path.extname(name);
+    // Block dangerous extensions and double extensions like .pdf.exe
+    const parts = name.split('.');
+    const hasBlockedExt = parts.slice(1).some(p => blocked.includes(`.${p}`));
+    if (blocked.includes(ext) || hasBlockedExt) {
       return cb(new Error('Dateityp nicht erlaubt.'));
     }
     cb(null, true);
