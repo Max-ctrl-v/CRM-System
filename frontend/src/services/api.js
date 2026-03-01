@@ -16,6 +16,41 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Proactive token refresh — refresh 10 min before expiry
+let refreshTimer = null;
+
+function scheduleTokenRefresh() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
+
+  try {
+    // Decode JWT payload (base64) to read exp
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expiresAt = payload.exp * 1000;
+    const refreshAt = expiresAt - 10 * 60 * 1000; // 10 min before expiry
+    const delay = Math.max(refreshAt - Date.now(), 30000); // at least 30s
+
+    refreshTimer = setTimeout(async () => {
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) return;
+        const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        scheduleTokenRefresh(); // schedule next refresh
+      } catch {
+        // Refresh failed — user will be prompted on next 401
+      }
+    }, delay);
+  } catch {
+    // Invalid token format — ignore
+  }
+}
+
+// Start proactive refresh on load if token exists
+scheduleTokenRefresh();
+
 // Token refresh queue — prevents race condition when multiple requests
 // fail with 401 simultaneously (only one refresh at a time)
 let refreshPromise = null;
@@ -26,6 +61,7 @@ async function refreshAccessToken() {
   const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
   localStorage.setItem('accessToken', data.accessToken);
   localStorage.setItem('refreshToken', data.refreshToken);
+  scheduleTokenRefresh();
   return data.accessToken;
 }
 
@@ -62,5 +98,10 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Re-schedule refresh when tokens are stored (called after login)
+export function onTokensStored() {
+  scheduleTokenRefresh();
+}
 
 export default api;

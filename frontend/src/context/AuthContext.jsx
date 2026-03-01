@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { onTokensStored } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -30,6 +30,7 @@ export function AuthProvider({ children }) {
     }
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
+    onTokensStored();
     setUser(data.user);
     return data.user;
   }
@@ -38,6 +39,7 @@ export function AuthProvider({ children }) {
     const { data } = await api.post('/auth/login/2fa', { tempToken, code });
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
+    onTokensStored();
     setUser(data.user);
     return data.user;
   }

@@ -217,18 +217,18 @@ async function findSimilarCompanies(companyName, website, industry, city) {
     throw new AppError('Perplexity API-Key nicht konfiguriert.', 500);
   }
 
-  const prompt = `Ich suche ähnliche Firmen wie "${companyName}"${website ? ` (Website: ${website})` : ''}${city ? ` mit Sitz in/nahe ${city}` : ''}.
+  const prompt = `Suche nach deutschen Unternehmen, die der Firma "${companyName}"${website ? ` (Website: ${website})` : ''} ähnlich sind${city ? `, Sitz: ${city}` : ''}.
 
-Die Firma ist im Bereich Forschungszulage (FZulG) relevant${industry ? ` und ist in der Branche: ${industry}` : ''}.
+${industry ? `Brancheninfo: ${industry}\n` : ''}Finde 5-8 REALE deutsche Unternehmen, die:
+1. Im gleichen oder einem eng verwandten Geschäftsfeld tätig sind
+2. Eigene Forschung & Entwicklung (F&E) betreiben oder betreiben könnten
+3. Potenziell Anspruch auf Forschungszulage nach dem Forschungszulagengesetz (FZulG) haben
+4. In Deutschland ansässig sind
 
-Bitte nenne mir 5-8 deutsche Firmen, die:
-- In einer ähnlichen Branche oder einem ähnlichen Tätigkeitsfeld arbeiten
-- Ähnliche Größe oder ähnliches Profil haben
-- Potenzial für Forschungszulage nach FZulG haben könnten
-- Möglichst in der gleichen Region oder ähnlichen Städten ansässig sind
+Wichtig: Nenne nur ECHTE, existierende Firmen mit korrektem Namen und Sitz. Keine erfundenen Firmen.
 
-Antworte NUR im folgenden JSON-Format (kein anderer Text):
-[{"name": "Firmenname", "city": "Stadt", "reason": "Kurze Begründung warum ähnlich", "website": "Website falls bekannt oder null"}]`;
+Antworte NUR im folgenden JSON-Array-Format, KEIN anderer Text davor oder danach:
+[{"name": "Firmenname", "city": "Stadt", "reason": "Warum ähnlich und F&E-relevant", "website": "www.example.de oder null"}]`;
 
   try {
     const response = await axios.post(
@@ -236,7 +236,7 @@ Antworte NUR im folgenden JSON-Format (kein anderer Text):
       {
         model: 'sonar',
         messages: [
-          { role: 'system', content: 'Du bist ein Experte für deutsche Unternehmen und das Forschungszulagengesetz. Antworte ausschließlich im angeforderten JSON-Format.' },
+          { role: 'system', content: 'Du bist ein Experte für deutsche Unternehmen mit Fokus auf Forschung & Entwicklung. Deine Aufgabe ist es, ähnliche deutsche Firmen zu finden, die im gleichen Bereich F&E betreiben. Antworte ausschließlich mit einem JSON-Array — kein Markdown, keine Erklärungen.' },
           { role: 'user', content: prompt },
         ],
         max_tokens: 1500,
@@ -251,10 +251,18 @@ Antworte NUR im folgenden JSON-Format (kein anderer Text):
     );
 
     const content = response.data.choices[0].message.content;
-    const jsonMatch = content.match(/\[[\s\S]*?\]/);
+    // Extract JSON array — use greedy match for last ] to handle nested objects
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        console.error('Similar companies JSON parse error:', jsonMatch[0].slice(0, 200));
+        return [];
+      }
     }
+    console.error('Similar companies no JSON found in response:', content.slice(0, 200));
     return [];
   } catch (err) {
     console.error('Similar companies AI error:', err.message);

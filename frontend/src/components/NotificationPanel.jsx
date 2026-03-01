@@ -23,7 +23,7 @@ function timeAgo(date) {
 }
 
 export default function NotificationPanel() {
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, fetchNotifications } = useNotifications();
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
   const navigate = useNavigate();
@@ -41,7 +41,11 @@ export default function NotificationPanel() {
   return (
     <div className="relative" ref={panelRef}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          const willOpen = !open;
+          setOpen(willOpen);
+          if (willOpen) fetchNotifications();
+        }}
         className="relative p-2 rounded-lg text-white/35 hover:text-white hover:bg-white/10
           focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300
           active:scale-95"

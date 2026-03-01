@@ -7,7 +7,7 @@ const { AppError } = require('../middleware/errorHandler');
 const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 12;
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '4h';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 function generateAccessToken(user) {
