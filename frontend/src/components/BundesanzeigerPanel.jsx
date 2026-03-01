@@ -20,7 +20,9 @@ export default function BundesanzeigerPanel({ companyName }) {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.get(`/bundesanzeiger/${encodeURIComponent(companyName)}`);
+      // Pass refresh=true on re-search to bypass backend cache
+      const refresh = result ? '?refresh=true' : '';
+      const { data } = await api.get(`/bundesanzeiger/${encodeURIComponent(companyName)}${refresh}`);
       setResult(data);
     } catch (err) {
       setError(err.response?.data?.error || 'Fehler beim Abrufen.');

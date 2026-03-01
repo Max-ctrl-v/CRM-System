@@ -6,10 +6,12 @@ const authenticate = require('../middleware/auth');
 
 router.use(authenticate);
 
-// GET /api/bundesanzeiger/:companyName
+// GET /api/bundesanzeiger/:companyName?refresh=true
 router.get('/:companyName', asyncHandler(async (req, res) => {
+  const forceRefresh = req.query.refresh === 'true';
   const result = await bundesanzeigerService.searchJahresabschluss(
-    decodeURIComponent(req.params.companyName)
+    decodeURIComponent(req.params.companyName),
+    forceRefresh
   );
   res.json(result);
 }));
