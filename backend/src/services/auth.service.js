@@ -1,10 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { JWT_SECRET, JWT_REFRESH_SECRET } = require('../config/env');
 const { AppError } = require('../middleware/errorHandler');
-
-const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = '4h';

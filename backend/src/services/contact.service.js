@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
-
-const prisma = new PrismaClient();
 
 async function getByCompany(companyId) {
   return prisma.contact.findMany({

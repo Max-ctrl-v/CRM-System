@@ -4,8 +4,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const authenticate = require('../middleware/auth');
 const { generateSecret, generateURI, verifySync } = require('../utils/totp');
 const qrcode = require('qrcode');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const ISSUER = process.env.TOTP_ISSUER || 'CRM Pipeline';
 

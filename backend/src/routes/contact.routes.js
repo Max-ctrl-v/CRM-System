@@ -37,12 +37,28 @@ router.post('/', asyncHandler(async (req, res) => {
 
 // PUT /api/contacts/:id
 router.put('/:id', asyncHandler(async (req, res) => {
+  const { firstName, lastName } = req.body;
+  if (firstName !== undefined && !firstName?.trim()) {
+    return res.status(400).json({ error: 'Vorname darf nicht leer sein.' });
+  }
+  if (lastName !== undefined && !lastName?.trim()) {
+    return res.status(400).json({ error: 'Nachname darf nicht leer sein.' });
+  }
   const contact = await contactService.update(req.params.id, req.body);
   res.json(contact);
 }));
 
 // DELETE /api/contacts/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
+  const contact = await contactService.getById(req.params.id);
+  // Only admin or the company owner can delete contacts
+  if (req.user.role !== 'ADMIN') {
+    const prisma = require('../lib/prisma');
+    const company = await prisma.company.findUnique({ where: { id: contact.companyId }, select: { assignedToId: true, createdById: true } });
+    if (company && company.assignedToId !== req.user.id && company.createdById !== req.user.id) {
+      return res.status(403).json({ error: 'Keine Berechtigung zum Löschen dieses Kontakts.' });
+    }
+  }
   await contactService.remove(req.params.id);
   res.json({ message: 'Kontakt gelöscht.' });
 }));

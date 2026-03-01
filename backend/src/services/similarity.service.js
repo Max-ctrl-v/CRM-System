@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function findSimilar(companyId, limit = 5) {
   const company = await prisma.company.findUnique({

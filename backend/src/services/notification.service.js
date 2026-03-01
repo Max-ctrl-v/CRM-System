@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // SSE connection manager
 const sseClients = new Map(); // userId -> Set<res>
@@ -24,8 +23,9 @@ function pushToUser(userId, data) {
   if (clients) {
     const payload = `data: ${JSON.stringify(data)}\n\n`;
     for (const res of clients) {
-      res.write(payload);
+      try { res.write(payload); } catch { clients.delete(res); }
     }
+    if (clients.size === 0) sseClients.delete(userId);
   }
 }
 

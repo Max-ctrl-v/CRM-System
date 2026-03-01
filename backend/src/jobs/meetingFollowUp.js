@@ -1,8 +1,6 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const notificationService = require('../services/notification.service');
-
-const prisma = new PrismaClient();
 
 function startMeetingFollowUpCron() {
   // Check every day at 9:00 CET

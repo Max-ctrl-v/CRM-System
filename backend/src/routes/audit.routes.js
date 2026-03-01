@@ -3,8 +3,7 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const authenticate = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 router.use(authenticate);
 router.use(authorize('ADMIN'));

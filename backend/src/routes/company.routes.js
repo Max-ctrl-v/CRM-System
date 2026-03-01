@@ -9,8 +9,7 @@ const scoringService = require('../services/scoring.service');
 const nextActionService = require('../services/nextAction.service');
 const similarityService = require('../services/similarity.service');
 const { parse } = require('csv-parse');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 router.use(authenticate);
 

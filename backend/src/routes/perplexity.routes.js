@@ -2,10 +2,8 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const perplexityService = require('../services/perplexity.service');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const authenticate = require('../middleware/auth');
-
-const prisma = new PrismaClient();
 router.use(authenticate);
 
 // POST /api/perplexity/research — research and save to company

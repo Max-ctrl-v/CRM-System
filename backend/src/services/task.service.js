@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
-
-const prisma = new PrismaClient();
 
 const TASK_INCLUDE = {
   company: { select: { id: true, name: true } },

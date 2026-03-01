@@ -1,9 +1,7 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { compileDigest, buildDigestHtml } = require('../services/digest.service');
 const { sendMail } = require('../services/email.service');
-
-const prisma = new PrismaClient();
 
 // Every Monday at 8:00 CET
 function startDigestCron() {

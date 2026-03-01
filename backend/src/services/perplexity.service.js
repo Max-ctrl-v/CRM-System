@@ -198,12 +198,14 @@ Antworte NUR im folgenden JSON-Format (kein anderer Text):
     // Extract JSON from response (may be wrapped in markdown code blocks)
     const jsonMatch = content.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        uisSchwierigkeiten: !!parsed.isUiS,
-        uisReason: parsed.reason || 'Keine Begründung.',
-        city: parsed.city || null,
-      };
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          uisSchwierigkeiten: !!parsed.isUiS,
+          uisReason: parsed.reason || 'Keine Begründung.',
+          city: parsed.city || null,
+        };
+      } catch { /* malformed JSON from API — fall through to default */ }
     }
     return { uisSchwierigkeiten: false, uisReason: 'Konnte nicht automatisch ermittelt werden.', city: null };
   } catch (err) {
