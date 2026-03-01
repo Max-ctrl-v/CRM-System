@@ -16,25 +16,24 @@ async function searchJahresabschluss(companyName) {
   // Use Perplexity to fetch Jahresabschluss data (Bundesanzeiger blocks direct scraping)
   if (PERPLEXITY_API_KEY) {
     try {
-      const prompt = `Suche den neuesten Jahresabschluss der Firma "${companyName}" im Bundesanzeiger (bundesanzeiger.de).
+      const prompt = `Suche den neuesten Jahresabschluss der Firma "${companyName}" ausschließlich im Bundesanzeiger (bundesanzeiger.de), Bereich Rechnungslegung/Finanzberichte.
 
-Liefere folgende Informationen falls verfügbar:
-1. **Datum des letzten Jahresabschlusses** (Geschäftsjahr)
-2. **Umsatzerlöse**
-3. **Bilanzsumme**
+Liefere NUR Informationen aus dem veröffentlichten Jahresabschluss im Bundesanzeiger:
+1. **Geschäftsjahr** (Zeitraum des Jahresabschlusses)
+2. **Bilanzsumme**
+3. **Eigenkapital**
 4. **Jahresüberschuss / Jahresfehlbetrag**
-5. **Eigenkapital**
-6. **Mitarbeiterzahl**
-7. **Art des Abschlusses** (z.B. Einzelabschluss, Konzernabschluss)
+5. **Umsatzerlöse** (falls im Jahresabschluss veröffentlicht)
+6. **Art des Abschlusses** (Einzelabschluss, Konzernabschluss, etc.)
 
-Falls keine Daten im Bundesanzeiger verfügbar sind, sage das klar. Antworte auf Deutsch.`;
+Wichtig: Verwende ausschließlich Daten aus dem Bundesanzeiger. Keine Schätzungen oder Daten aus anderen Quellen. Falls kein Jahresabschluss im Bundesanzeiger veröffentlicht ist, sage das klar. Antworte auf Deutsch.`;
 
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
         {
           model: 'sonar',
           messages: [
-            { role: 'system', content: 'Du bist ein Experte für deutsche Unternehmensfinanzberichte und den Bundesanzeiger.' },
+            { role: 'system', content: 'Du bist ein Experte für den Bundesanzeiger. Deine Aufgabe ist es, ausschließlich den veröffentlichten Jahresabschluss einer Firma im Bundesanzeiger zu finden und die dort enthaltenen Finanzdaten zusammenzufassen. Verwende keine anderen Quellen.' },
             { role: 'user', content: prompt },
           ],
           max_tokens: 1500,

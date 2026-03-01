@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, MapPin, TrendingUp, Sparkles, Globe, Loader2 } from 'lucide-react';
+import { Building2, MapPin, TrendingUp, Sparkles, Globe, Loader2, Plus } from 'lucide-react';
 import api from '../services/api';
 
 const STAGE_LABELS = {
@@ -10,7 +10,7 @@ const STAGE_LABELS = {
   CLOSED_WON: 'Gewonnen',
 };
 
-export default function SimilarCompanies({ companyId }) {
+export default function SimilarCompanies({ companyId, onCreateCompany }) {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [aiResults, setAiResults] = useState([]);
@@ -147,7 +147,10 @@ export default function SimilarCompanies({ companyId }) {
               {aiResults.map((c, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 px-4 py-3 bg-surface-elevated dark:bg-dark-elevated rounded-xl border border-amber-100 dark:border-amber-900/20"
+                  className="flex items-center gap-3 px-4 py-3 bg-surface-elevated dark:bg-dark-elevated rounded-xl border border-amber-100 dark:border-amber-900/20
+                    hover:border-amber-300 dark:hover:border-amber-700/40 cursor-pointer"
+                  style={{ transition: 'border-color 150ms ease, box-shadow 150ms ease' }}
+                  onClick={() => onCreateCompany?.({ name: c.name, website: c.website || '', city: c.city || '' })}
                 >
                   <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
                     <Sparkles className="w-4 h-4 text-amber-500" />
@@ -175,6 +178,12 @@ export default function SimilarCompanies({ companyId }) {
                         {c.reason}
                       </p>
                     )}
+                  </div>
+                  <div className="shrink-0">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold font-body text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg">
+                      <Plus className="w-3 h-3" />
+                      Anlegen
+                    </span>
                   </div>
                 </div>
               ))}

@@ -14,14 +14,14 @@ const PIPELINE_OPTIONS = [
   { value: 'CLOSED_LOST', label: 'Closed Lost' },
 ];
 
-export default function CreateCompanyModal({ onClose, onCreated, showPipelineOption = false }) {
+export default function CreateCompanyModal({ onClose, onCreated, showPipelineOption = false, initialData }) {
   const { user } = useAuth();
   const { dark } = useTheme();
   const { allUsers } = useCompanies();
   const users = allUsers;
-  const [name, setName] = useState('');
-  const [website, setWebsite] = useState('');
-  const [city, setCity] = useState('');
+  const [name, setName] = useState(initialData?.name || '');
+  const [website, setWebsite] = useState(initialData?.website || '');
+  const [city, setCity] = useState(initialData?.city || '');
   const [assignedToId, setAssignedToId] = useState('');
   const [pipelineStage, setPipelineStage] = useState(showPipelineOption ? '' : 'FIRMA_IDENTIFIZIERT');
   const [adminPipeline, setAdminPipeline] = useState(false);

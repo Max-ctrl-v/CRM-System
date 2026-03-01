@@ -13,6 +13,7 @@ import TaskList from '../components/TaskList';
 import ActivityTimeline from '../components/ActivityTimeline';
 import NextActionBanner from '../components/NextActionBanner';
 import AttachmentList from '../components/AttachmentList';
+import CreateCompanyModal from '../components/CreateCompanyModal';
 import SimilarCompanies from '../components/SimilarCompanies';
 import {
   ArrowLeft,
@@ -81,6 +82,7 @@ export default function CompanyDetailPage() {
   const users = allUsers;
   const [activeTab, setActiveTab] = useState('contacts');
   const [checkingUiS, setCheckingUiS] = useState(false);
+  const [createModalData, setCreateModalData] = useState(null);
 
   useEffect(() => {
     loadCompany();
@@ -587,8 +589,20 @@ export default function CompanyDetailPage() {
         {activeTab === 'tasks' && <TaskList companyId={company.id} />}
         {activeTab === 'activities' && <ActivityTimeline entityType="COMPANY" entityId={company.id} />}
         {activeTab === 'attachments' && <AttachmentList companyId={company.id} />}
-        {activeTab === 'similar' && <SimilarCompanies companyId={company.id} />}
+        {activeTab === 'similar' && <SimilarCompanies companyId={company.id} onCreateCompany={(data) => setCreateModalData(data)} />}
       </div>
+
+      {createModalData && (
+        <CreateCompanyModal
+          initialData={createModalData}
+          showPipelineOption
+          onClose={() => setCreateModalData(null)}
+          onCreated={(newCompany) => {
+            setCreateModalData(null);
+            navigate(`/company/${newCompany.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }
