@@ -85,16 +85,17 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
       <div
         className="bg-white rounded-2xl w-full max-w-lg mx-4 border border-border-light"
         style={{
-          display: 'flex',
-          flexDirection: 'column',
+          display: 'grid',
+          gridTemplateRows: 'auto 1fr auto',
           maxHeight: '85vh',
           overflow: 'hidden',
           padding: '20px 24px',
+          boxSizing: 'border-box',
           boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4" style={{ flexShrink: 0 }}>
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-brand-50 rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-brand-600" />
@@ -106,7 +107,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', flex: '1 1 0%', minHeight: 0, maxHeight: 'calc(85vh - 180px)' }}>
+        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', minHeight: 0 }}>
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
@@ -225,7 +226,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
             </div>
         </form>
 
-        <div className="flex gap-3 pt-3 border-t border-border-light mt-3" style={{ flexShrink: 0 }}>
+        <div className="flex gap-3 pt-3 border-t border-border-light mt-3">
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button type="submit" form="create-company-form" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
         </div>
