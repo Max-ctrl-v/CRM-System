@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -41,8 +41,12 @@ export function CompaniesProvider({ children }) {
     setCompanies((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
+  const value = useMemo(() => ({
+    companies, allUsers, loading, refresh, updateCompany, addCompany, removeCompany,
+  }), [companies, allUsers, loading, refresh, updateCompany, addCompany, removeCompany]);
+
   return (
-    <CompaniesContext.Provider value={{ companies, allUsers, loading, refresh, updateCompany, addCompany, removeCompany }}>
+    <CompaniesContext.Provider value={value}>
       {children}
     </CompaniesContext.Provider>
   );

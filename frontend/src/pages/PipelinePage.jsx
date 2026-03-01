@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
@@ -183,17 +183,22 @@ export default function PipelinePage() {
     if (user?.id && !selectedUserId) setSelectedUserId(user.id);
   }, [user?.id, selectedUserId]);
 
-  // Fetch latest comments and scores for pipeline companies
+  // Fetch latest comments and scores — only when pipeline company IDs change
+  const pipelineIdKey = useMemo(
+    () => companies.filter((c) => c.pipelineStage).map((c) => c.id).sort().join(','),
+    [companies]
+  );
+  const prevPipelineIdKey = useRef('');
   useEffect(() => {
-    const pipelineIds = companies.filter((c) => c.pipelineStage).map((c) => c.id);
-    if (pipelineIds.length === 0) return;
-    api.get(`/comments/latest-batch?entityType=COMPANY&entityIds=${pipelineIds.join(',')}`)
+    if (!pipelineIdKey || pipelineIdKey === prevPipelineIdKey.current) return;
+    prevPipelineIdKey.current = pipelineIdKey;
+    api.get(`/comments/latest-batch?entityType=COMPANY&entityIds=${pipelineIdKey}`)
       .then(({ data }) => setLatestComments(data))
       .catch(() => {});
-    api.get(`/companies/scores?ids=${pipelineIds.join(',')}`)
+    api.get(`/companies/scores?ids=${pipelineIdKey}`)
       .then(({ data }) => setScores(data))
       .catch(() => {});
-  }, [companies]);
+  }, [pipelineIdKey]);
 
   // Keyboard shortcut: N to create new company
   useEffect(() => {

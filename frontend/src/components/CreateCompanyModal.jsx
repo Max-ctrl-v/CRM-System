@@ -99,125 +99,127 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-1">
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
+            {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Firmenname *</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-field" placeholder="z.B. Mustermann GmbH" required autoFocus />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Website</label>
-            <input type="text" value={website} onChange={(e) => setWebsite(e.target.value)} className="input-field" placeholder="z.B. www.mustermann.de" />
-            {website.trim() && (
-              <p className="flex items-center gap-1 text-xs text-amber-600 mt-1.5 font-body">
-                <Sparkles className="w-3 h-3" /> KI-Recherche wird automatisch gestartet
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Stadt</label>
-            <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="input-field" placeholder="z.B. München, Berlin, Hamburg" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Zugewiesen an</label>
-            <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} className="input-field">
-              <option value="">— Nicht zugewiesen —</option>
-              {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
-          </div>
-
-          {user?.role === 'ADMIN' && (
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input type="checkbox" checked={adminPipeline} onChange={(e) => setAdminPipeline(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
-              <span className="text-sm font-semibold text-gray-700 font-body">Admin Pipeline</span>
-            </label>
-          )}
-
-          {showPipelineOption && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Pipeline-Stufe</label>
-              <select value={pipelineStage} onChange={(e) => setPipelineStage(e.target.value)} className="input-field">
-                {PIPELINE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-              </select>
-              {!pipelineStage && <p className="text-xs text-gray-400 mt-1 font-body">Firma wird ohne Pipeline-Zuordnung erstellt</p>}
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Firmenname *</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-field" placeholder="z.B. Mustermann GmbH" required autoFocus />
             </div>
-          )}
 
-          {/* Inline Contacts Section */}
-          <div className="border-t border-border pt-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-semibold text-gray-700 font-body">Kontakte</label>
-              <button
-                type="button"
-                onClick={addContact}
-                className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 font-body rounded px-2 py-1 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-300"
-                style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
-              >
-                <UserPlus className="w-3.5 h-3.5" /> Kontakt hinzufügen
-              </button>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Website</label>
+              <input type="text" value={website} onChange={(e) => setWebsite(e.target.value)} className="input-field" placeholder="z.B. www.mustermann.de" />
+              {website.trim() && (
+                <p className="flex items-center gap-1 text-xs text-amber-600 mt-1.5 font-body">
+                  <Sparkles className="w-3 h-3" /> KI-Recherche wird automatisch gestartet
+                </p>
+              )}
             </div>
-            {contacts.length === 0 && (
-              <p className="text-xs text-gray-400 font-body">Optional — Kontakte können auch später hinzugefügt werden.</p>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Stadt</label>
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="input-field" placeholder="z.B. München, Berlin, Hamburg" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Zugewiesen an</label>
+              <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} className="input-field">
+                <option value="">— Nicht zugewiesen —</option>
+                {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </div>
+
+            {user?.role === 'ADMIN' && (
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input type="checkbox" checked={adminPipeline} onChange={(e) => setAdminPipeline(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                <span className="text-sm font-semibold text-gray-700 font-body">Admin Pipeline</span>
+              </label>
             )}
-            {contacts.map((contact, idx) => (
-              <div key={idx} className="rounded-lg border border-border bg-surface-base p-3 mb-2.5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-semibold text-gray-500 font-body">Kontakt {idx + 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeContact(idx)}
-                    className="text-gray-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-red-300"
-                    style={{ transition: 'color 150ms ease' }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Vorname *"
-                    value={contact.firstName}
-                    onChange={(e) => updateContact(idx, 'firstName', e.target.value)}
-                    className="input-field text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Nachname *"
-                    value={contact.lastName}
-                    onChange={(e) => updateContact(idx, 'lastName', e.target.value)}
-                    className="input-field text-sm"
-                  />
-                  <input
-                    type="email"
-                    placeholder="E-Mail"
-                    value={contact.email}
-                    onChange={(e) => updateContact(idx, 'email', e.target.value)}
-                    className="input-field text-sm"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Telefon"
-                    value={contact.phone}
-                    onChange={(e) => updateContact(idx, 'phone', e.target.value)}
-                    className="input-field text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Position"
-                    value={contact.position}
-                    onChange={(e) => updateContact(idx, 'position', e.target.value)}
-                    className="input-field text-sm col-span-2"
-                  />
-                </div>
+
+            {showPipelineOption && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Pipeline-Stufe</label>
+                <select value={pipelineStage} onChange={(e) => setPipelineStage(e.target.value)} className="input-field">
+                  {PIPELINE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                {!pipelineStage && <p className="text-xs text-gray-400 mt-1 font-body">Firma wird ohne Pipeline-Zuordnung erstellt</p>}
               </div>
-            ))}
+            )}
+
+            {/* Inline Contacts Section */}
+            <div className="border-t border-border pt-4 mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-700 font-body">Kontakte</label>
+                <button
+                  type="button"
+                  onClick={addContact}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 font-body rounded px-2 py-1 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-300"
+                  style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
+                >
+                  <UserPlus className="w-3.5 h-3.5" /> Kontakt hinzufügen
+                </button>
+              </div>
+              {contacts.length === 0 && (
+                <p className="text-xs text-gray-400 font-body">Optional — Kontakte können auch später hinzugefügt werden.</p>
+              )}
+              {contacts.map((contact, idx) => (
+                <div key={idx} className="rounded-lg border border-border bg-surface-base p-3 mb-2.5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-gray-500 font-body">Kontakt {idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeContact(idx)}
+                      className="text-gray-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-red-300"
+                      style={{ transition: 'color 150ms ease' }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Vorname *"
+                      value={contact.firstName}
+                      onChange={(e) => updateContact(idx, 'firstName', e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Nachname *"
+                      value={contact.lastName}
+                      onChange={(e) => updateContact(idx, 'lastName', e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="email"
+                      placeholder="E-Mail"
+                      value={contact.email}
+                      onChange={(e) => updateContact(idx, 'email', e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Telefon"
+                      value={contact.phone}
+                      onChange={(e) => updateContact(idx, 'phone', e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Position"
+                      value={contact.position}
+                      onChange={(e) => updateContact(idx, 'position', e.target.value)}
+                      className="input-field text-sm col-span-2"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-4 shrink-0 border-t border-border-light mt-4">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
             <button type="submit" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
           </div>

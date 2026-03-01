@@ -21,7 +21,7 @@ if (SENTRY_DSN) {
   });
 }
 
-function GrainTexture() {
+const GrainTexture = React.memo(function GrainTexture() {
   return (
     <svg className="grain-overlay" width="100%" height="100%">
       <filter id="grain">
@@ -31,7 +31,7 @@ function GrainTexture() {
       <rect width="100%" height="100%" filter="url(#grain)" />
     </svg>
   );
-}
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

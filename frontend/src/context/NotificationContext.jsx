@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import api from '../services/api';
 
@@ -8,9 +8,8 @@ export function NotificationProvider({ children }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const eventSourceRef = useRef(null);
+  const pollRef = useRef(null);
 
-  // Fetch initial notifications
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
@@ -22,44 +21,37 @@ export function NotificationProvider({ children }) {
     }
   }, [user]);
 
-  // SSE connection
   useEffect(() => {
     if (!user) return;
 
     fetchNotifications();
 
-    const token = localStorage.getItem('accessToken');
-    const baseUrl = api.defaults.baseURL;
-    const url = `${baseUrl}/notifications/stream`;
-
-    const es = new EventSource(url, { withCredentials: false });
-
-    // We need to pass auth header — EventSource doesn't support headers.
-    // Instead, we'll poll periodically as a fallback.
-    const pollInterval = setInterval(fetchNotifications, 30000);
-
-    eventSourceRef.current = es;
-
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'NEW_NOTIFICATION') {
-          setNotifications((prev) => [data.notification, ...prev].slice(0, 30));
-          setUnreadCount((prev) => prev + 1);
-        }
-      } catch {
-        // ignore
+    // Poll only when tab is visible, 60s interval
+    const startPolling = () => {
+      if (pollRef.current) return;
+      pollRef.current = setInterval(fetchNotifications, 60000);
+    };
+    const stopPolling = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        fetchNotifications();
+        startPolling();
       }
     };
 
-    es.onerror = () => {
-      // SSE may fail due to auth; rely on polling
-      es.close();
-    };
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      es.close();
-      clearInterval(pollInterval);
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [user, fetchNotifications]);
 
@@ -85,10 +77,12 @@ export function NotificationProvider({ children }) {
     }
   }, []);
 
+  const value = useMemo(() => ({
+    notifications, unreadCount, markRead, markAllRead, fetchNotifications,
+  }), [notifications, unreadCount, markRead, markAllRead, fetchNotifications]);
+
   return (
-    <NotificationContext.Provider
-      value={{ notifications, unreadCount, markRead, markAllRead, fetchNotifications }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );
