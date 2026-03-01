@@ -106,7 +106,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', maxHeight: 'calc(85vh - 140px)', minHeight: 0 }}>
+        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', flex: '1 1 0%', minHeight: 0, maxHeight: 'calc(85vh - 180px)' }}>
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
