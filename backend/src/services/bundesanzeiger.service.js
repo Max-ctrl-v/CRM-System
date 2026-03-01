@@ -26,6 +26,9 @@ Liefere NUR Informationen aus dem veröffentlichten Jahresabschluss im Bundesanz
 5. **Umsatzerlöse** (falls im Jahresabschluss veröffentlicht)
 6. **Art des Abschlusses** (Einzelabschluss, Konzernabschluss, etc.)
 
+BESONDERS WICHTIG — Forschung und Entwicklung:
+Falls im Jahresabschluss Angaben zu **Forschung und Entwicklung (F&E)** enthalten sind (z.B. F&E-Aufwendungen, aktivierte Entwicklungskosten, F&E-Quote, Beschreibung von F&E-Aktivitäten), hebe diese Informationen **besonders hervor** in einem eigenen Abschnitt mit der Überschrift "## Forschung & Entwicklung". Dies ist für die Bewertung der Forschungszulage (FZulG) besonders relevant.
+
 Wichtig: Verwende ausschließlich Daten aus dem Bundesanzeiger. Keine Schätzungen oder Daten aus anderen Quellen. Falls kein Jahresabschluss im Bundesanzeiger veröffentlicht ist, sage das klar. Antworte auf Deutsch.`;
 
       const response = await axios.post(
