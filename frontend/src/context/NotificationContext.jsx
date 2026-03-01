@@ -28,9 +28,20 @@ export function NotificationProvider({ children }) {
 
     fetchNotifications();
 
-    // Try SSE connection for real-time notifications
     let sseConnected = false;
     const token = localStorage.getItem('accessToken');
+
+    const startPolling = () => {
+      if (pollRef.current) return;
+      pollRef.current = setInterval(fetchNotifications, 30000);
+    };
+    const stopPolling = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+
     if (token) {
       try {
         const es = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(token)}`);
@@ -44,6 +55,7 @@ export function NotificationProvider({ children }) {
               setUnreadCount((prev) => prev + 1);
             } else if (data.type === 'CONNECTED') {
               sseConnected = true;
+              stopPolling();
             }
           } catch {
             // ignore parse errors
@@ -51,40 +63,27 @@ export function NotificationProvider({ children }) {
         };
 
         es.onerror = () => {
-          // SSE failed — fall back to polling
           es.close();
           sseRef.current = null;
           sseConnected = false;
-          if (!pollRef.current) {
-            pollRef.current = setInterval(fetchNotifications, 15000);
-          }
+          startPolling();
         };
       } catch {
-        // EventSource not supported — use polling
+        startPolling();
       }
+    } else {
+      startPolling();
     }
 
-    // Start polling as fallback (slower if SSE is connected)
-    const startPolling = () => {
-      if (pollRef.current) return;
-      pollRef.current = setInterval(fetchNotifications, sseConnected ? 60000 : 15000);
-    };
-    const stopPolling = () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-    };
     const handleVisibility = () => {
       if (document.hidden) {
         stopPolling();
       } else {
         fetchNotifications();
-        startPolling();
+        if (!sseConnected) startPolling();
       }
     };
 
-    startPolling();
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {

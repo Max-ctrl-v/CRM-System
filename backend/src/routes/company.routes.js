@@ -3,7 +3,6 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const companyService = require('../services/company.service');
 const authenticate = require('../middleware/auth');
-const { auditLog } = require('../utils/auditLog');
 const activityService = require('../services/activity.service');
 const scoringService = require('../services/scoring.service');
 const nextActionService = require('../services/nextAction.service');
@@ -122,7 +121,6 @@ router.post('/', asyncHandler(async (req, res) => {
 // PUT /api/companies/:id
 router.put('/:id', asyncHandler(async (req, res) => {
   const company = await companyService.update(req.params.id, req.body);
-  auditLog('COMPANY_UPDATE', req.user.id, { companyId: req.params.id });
   activityService.log('COMPANY_UPDATED', 'COMPANY', req.params.id, req.user.id, { companyName: company.name }).catch(() => {});
   res.json(company);
 }));
@@ -133,7 +131,6 @@ router.patch('/:id/stage', asyncHandler(async (req, res) => {
   if (stage === undefined) return res.status(400).json({ error: 'Pipeline-Stufe erforderlich.' });
   const current = await companyService.getById(req.params.id);
   const company = await companyService.updateStage(req.params.id, stage);
-  auditLog('STAGE_CHANGE', req.user.id, { companyId: req.params.id, stage });
   activityService.log('STAGE_CHANGE', 'COMPANY', req.params.id, req.user.id, {
     oldStage: current.pipelineStage,
     newStage: stage,
@@ -212,7 +209,6 @@ router.delete('/:id', asyncHandler(async (req, res) => {
     return res.status(403).json({ error: 'Nur Admins dürfen Firmen löschen.' });
   }
   await companyService.remove(req.params.id);
-  auditLog('COMPANY_DELETE', req.user.id, { companyId: req.params.id });
   res.json({ message: 'Firma gelöscht.' });
 }));
 

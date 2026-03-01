@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LayoutDashboard, LogOut, List, KanbanSquare, CheckSquare, Search, Moon, Sun, ScrollText, Settings } from 'lucide-react';
+import { LayoutDashboard, LogOut, List, KanbanSquare, CheckSquare, Search, Moon, Sun, Settings } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CommandPalette from './CommandPalette';
@@ -79,29 +79,6 @@ export default function Layout() {
                 </Link>
               );
             })}
-            {user?.role === 'ADMIN' && (
-              <Link
-                to="/audit"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold font-body
-                  focus-visible:ring-2 focus-visible:ring-brand-300
-                  ${location.pathname === '/audit'
-                    ? 'text-white'
-                    : 'text-white/50 hover:text-white/85'
-                  }`}
-                style={{
-                  background: location.pathname === '/audit'
-                    ? 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))'
-                    : 'transparent',
-                  boxShadow: location.pathname === '/audit'
-                    ? 'inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 2px rgba(0,0,0,0.15)'
-                    : 'none',
-                  transition: 'background-color 150ms ease, color 150ms ease',
-                }}
-              >
-                <ScrollText className="w-4 h-4" />
-                Audit
-              </Link>
-            )}
           </nav>
 
           <div className="flex-1" />

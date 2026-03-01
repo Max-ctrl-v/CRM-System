@@ -25,7 +25,6 @@ const searchRoutes = require('./routes/search.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const attachmentRoutes = require('./routes/attachment.routes');
 const savedViewRoutes = require('./routes/savedView.routes');
-const auditRoutes = require('./routes/audit.routes');
 const totpRoutes = require('./routes/totp.routes');
 
 const app = express();
@@ -73,7 +72,6 @@ app.use('/api/search', apiLimiter, searchRoutes);
 app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/attachments', apiLimiter, attachmentRoutes);
 app.use('/api/saved-views', apiLimiter, savedViewRoutes);
-app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/totp', apiLimiter, totpRoutes);
 
 // Health check

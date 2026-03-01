@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Proactive token refresh — refresh 10 min before expiry
+// Proactive token refresh — refresh 5 min before expiry
 let refreshTimer = null;
 
 function scheduleTokenRefresh() {
@@ -25,11 +25,10 @@ function scheduleTokenRefresh() {
   if (!token) return;
 
   try {
-    // Decode JWT payload (base64) to read exp
     const payload = JSON.parse(atob(token.split('.')[1]));
     const expiresAt = payload.exp * 1000;
-    const refreshAt = expiresAt - 10 * 60 * 1000; // 10 min before expiry
-    const delay = Math.max(refreshAt - Date.now(), 30000); // at least 30s
+    const refreshAt = expiresAt - 5 * 60 * 1000; // 5 min before expiry
+    const delay = Math.max(refreshAt - Date.now(), 10000); // at least 10s
 
     refreshTimer = setTimeout(async () => {
       try {
@@ -38,7 +37,7 @@ function scheduleTokenRefresh() {
         const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
-        scheduleTokenRefresh(); // schedule next refresh
+        scheduleTokenRefresh();
       } catch {
         // Refresh failed — user will be prompted on next 401
       }

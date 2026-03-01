@@ -5,7 +5,7 @@ const { JWT_SECRET, JWT_REFRESH_SECRET } = require('../config/env');
 const { AppError } = require('../middleware/errorHandler');
 
 const SALT_ROUNDS = 12;
-const ACCESS_TOKEN_EXPIRY = '4h';
+const ACCESS_TOKEN_EXPIRY = '1h';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 function generateAccessToken(user) {

@@ -4,7 +4,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const authService = require('../services/auth.service');
 const authenticate = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
-const { auditLog } = require('../utils/auditLog');
 
 // POST /api/auth/login
 router.post('/login', asyncHandler(async (req, res) => {
@@ -13,9 +12,6 @@ router.post('/login', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'E-Mail und Passwort erforderlich.' });
   }
   const result = await authService.login(email, password);
-  if (!result.requires2FA) {
-    auditLog('LOGIN', result.user.id, { email });
-  }
   res.json(result);
 }));
 
@@ -26,7 +22,6 @@ router.post('/login/2fa', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Token und Code erforderlich.' });
   }
   const result = await authService.verify2FA(tempToken, code);
-  auditLog('LOGIN_2FA', result.user.id, { email: result.user.email });
   res.json(result);
 }));
 
@@ -51,7 +46,6 @@ router.get('/users', authenticate, asyncHandler(async (req, res) => {
 // POST /api/auth/logout
 router.post('/logout', authenticate, asyncHandler(async (req, res) => {
   await authService.logout(req.user.id);
-  auditLog('LOGOUT', req.user.id);
   res.json({ message: 'Erfolgreich abgemeldet.' });
 }));
 

@@ -31,10 +31,10 @@ router.get('/stream', (req, res) => {
   const userId = req.user.id;
   notificationService.addClient(userId, res);
 
-  // Heartbeat every 30s — catch write errors from closed connections
+  // Heartbeat every 55s — catch write errors from closed connections
   const heartbeat = setInterval(() => {
     try { res.write(': heartbeat\n\n'); } catch { clearInterval(heartbeat); notificationService.removeClient(userId, res); }
-  }, 30000);
+  }, 55000);
 
   req.on('close', () => {
     clearInterval(heartbeat);
