@@ -87,14 +87,14 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
         style={{
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '90vh',
+          maxHeight: '85vh',
           overflow: 'hidden',
-          padding: '28px',
+          padding: '20px 24px',
           boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5" style={{ flexShrink: 0 }}>
+        <div className="flex items-center justify-between mb-4" style={{ flexShrink: 0 }}>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-brand-50 rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-brand-600" />
@@ -106,7 +106,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-4 pr-1" style={{ overflowY: 'auto', flex: '1 1 0%', minHeight: 0 }}>
+        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', maxHeight: 'calc(85vh - 140px)', minHeight: 0 }}>
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
@@ -155,7 +155,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
             )}
 
             {/* Inline Contacts Section */}
-            <div className="border-t border-border pt-4 mt-4">
+            <div className="border-t border-border pt-3 mt-3">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-semibold text-gray-700 font-body">Kontakte</label>
                 <button
@@ -171,7 +171,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
                 <p className="text-xs text-gray-400 font-body">Optional — Kontakte können auch später hinzugefügt werden.</p>
               )}
               {contacts.map((contact, idx) => (
-                <div key={idx} className="rounded-lg border border-border bg-surface-base p-3 mb-2.5">
+                <div key={idx} className="rounded-lg border border-border bg-surface-base p-2.5 mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-semibold text-gray-500 font-body">Kontakt {idx + 1}</span>
                     <button
@@ -225,7 +225,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
             </div>
         </form>
 
-        <div className="flex gap-3 pt-4 border-t border-border-light mt-4" style={{ flexShrink: 0 }}>
+        <div className="flex gap-3 pt-3 border-t border-border-light mt-3" style={{ flexShrink: 0 }}>
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button type="submit" form="create-company-form" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
         </div>
