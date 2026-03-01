@@ -83,11 +83,18 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl w-full max-w-lg mx-4 p-7 border border-border-light max-h-[90vh] flex flex-col overflow-hidden"
-        style={{ boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)' }}
+        className="bg-white rounded-2xl w-full max-w-lg mx-4 border border-border-light"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          padding: '28px',
+          boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5 shrink-0">
+        <div className="flex items-center justify-between mb-5" style={{ flexShrink: 0 }}>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-brand-50 rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-brand-600" />
@@ -99,7 +106,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form id="create-company-form" onSubmit={handleSubmit} className="overflow-y-auto flex-1 min-h-0 space-y-4 pr-1">
+        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-4 pr-1" style={{ overflowY: 'auto', flex: '1 1 0%', minHeight: 0 }}>
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
@@ -218,7 +225,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
             </div>
         </form>
 
-        <div className="flex gap-3 pt-4 shrink-0 border-t border-border-light mt-4">
+        <div className="flex gap-3 pt-4 border-t border-border-light mt-4" style={{ flexShrink: 0 }}>
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button type="submit" form="create-company-form" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
         </div>
