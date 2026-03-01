@@ -12,19 +12,23 @@ const BROWSER_HEADERS = {
 };
 
 const NOT_FOUND_PATTERNS = [
-  /kein(e|en|er)?\s+(jahresabschluss|daten|ergebnis|veröffentlichung|eintrag|angaben)/i,
+  /kein(e|en|er)?\s+\S*\s*jahresabschluss/i,
+  /keine\s+\S*\s*(daten|ergebnis|veröffentlichung|eintrag|angaben)/i,
   /nicht\s+(verfügbar|veröffentlicht|gefunden|auffindbar|vorhanden)/i,
-  /keine\s+(informationen|ergebnisse|treffer|finanz)/i,
+  /keine\s+\S*\s*(informationen|ergebnisse|treffer|finanz)/i,
   /konnte\s+(nicht|kein)/i,
   /lieg(t|en)\s+nicht\s+vor/i,
   /nicht\s+im\s+bundesanzeiger/i,
-  /keinen\s+direkten\s+zugriff/i,
+  /keinen\s+(direkten\s+)?zugriff/i,
   /habe\s+keinen\s+zugriff/i,
+  /sind\s+keine\s+\S*\s*(daten|jahresabschluss|informationen|angaben)/i,
+  /nicht.*zu\s+finden/i,
+  /enthalten\s+keine/i,
 ];
 
 function isNotFoundResponse(content) {
   if (!content || content.trim().length < 80) return true;
-  return NOT_FOUND_PATTERNS.filter(p => p.test(content)).length >= 2;
+  return NOT_FOUND_PATTERNS.some(p => p.test(content));
 }
 
 // ---------------------------------------------------------------------------
@@ -178,6 +182,7 @@ async function searchJahresabschluss(companyName, forceRefresh = false) {
   try {
     const session = new BundesanzeigerSession();
     scraped = await session.search(companyName);
+    console.log(`[Bundesanzeiger] Crawler found ${scraped.documents.length} docs (${scraped.totalHits} hits) for "${companyName}"`);
   } catch (err) {
     console.error(`[Bundesanzeiger] Crawler error for "${companyName}":`, err.message);
   }
@@ -198,6 +203,8 @@ async function searchJahresabschluss(companyName, forceRefresh = false) {
     try {
       const prompt = `Finde die Finanzdaten aus dem neuesten veröffentlichten Jahresabschluss der Firma "${companyName}" (Bundesanzeiger, Rechnungslegung/Finanzberichte).
 
+Suche auf diesen Quellen: northdata.de, firmenwissen.de, companywall.de, implisense.com, unternehmensregister.de und allen anderen öffentlichen Seiten die Bundesanzeiger-Daten indexieren.
+
 Liefere:
 1. **Geschäftsjahr** (Zeitraum des Jahresabschlusses)
 2. **Bilanzsumme**
@@ -209,7 +216,7 @@ Liefere:
 BESONDERS WICHTIG — Forschung und Entwicklung:
 Falls im Jahresabschluss Angaben zu **Forschung und Entwicklung (F&E)** enthalten sind (z.B. F&E-Aufwendungen, aktivierte Entwicklungskosten, F&E-Quote, Beschreibung von F&E-Aktivitäten), hebe diese Informationen **besonders hervor** in einem eigenen Abschnitt mit der Überschrift "## Forschung & Entwicklung". Dies ist für die Bewertung der Forschungszulage (FZulG) besonders relevant.
 
-WICHTIG: Liefere NUR verifizierte Daten mit Quellenangabe. Erfinde KEINE Zahlen. Falls du keine konkreten Finanzdaten findest, liste nur die verfügbaren Jahresabschlüsse auf. Antworte auf Deutsch.${scrapeContext}`;
+WICHTIG: Liefere NUR verifizierte Daten mit Quellenangabe. Erfinde KEINE Zahlen. Falls du keine konkreten Finanzdaten findest, sage ehrlich dass keine Daten gefunden wurden. Antworte auf Deutsch.${scrapeContext}`;
 
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
