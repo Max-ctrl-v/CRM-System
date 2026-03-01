@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, us
 import { useAuth } from './AuthContext';
 import api from '../services/api';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const NotificationContext = createContext();
 
 export function NotificationProvider({ children }) {
@@ -9,6 +10,7 @@ export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const pollRef = useRef(null);
+  const sseRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
@@ -26,10 +28,46 @@ export function NotificationProvider({ children }) {
 
     fetchNotifications();
 
-    // Poll only when tab is visible, 60s interval
+    // Try SSE connection for real-time notifications
+    let sseConnected = false;
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      try {
+        const es = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(token)}`);
+        sseRef.current = es;
+
+        es.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'NEW_NOTIFICATION') {
+              setNotifications((prev) => [data.notification, ...prev].slice(0, 30));
+              setUnreadCount((prev) => prev + 1);
+            } else if (data.type === 'CONNECTED') {
+              sseConnected = true;
+            }
+          } catch {
+            // ignore parse errors
+          }
+        };
+
+        es.onerror = () => {
+          // SSE failed — fall back to polling
+          es.close();
+          sseRef.current = null;
+          sseConnected = false;
+          if (!pollRef.current) {
+            pollRef.current = setInterval(fetchNotifications, 15000);
+          }
+        };
+      } catch {
+        // EventSource not supported — use polling
+      }
+    }
+
+    // Start polling as fallback (slower if SSE is connected)
     const startPolling = () => {
       if (pollRef.current) return;
-      pollRef.current = setInterval(fetchNotifications, 60000);
+      pollRef.current = setInterval(fetchNotifications, sseConnected ? 60000 : 15000);
     };
     const stopPolling = () => {
       if (pollRef.current) {
@@ -52,6 +90,10 @@ export function NotificationProvider({ children }) {
     return () => {
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibility);
+      if (sseRef.current) {
+        sseRef.current.close();
+        sseRef.current = null;
+      }
     };
   }, [user, fetchNotifications]);
 
