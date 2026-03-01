@@ -99,8 +99,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-1">
+        <form id="create-company-form" onSubmit={handleSubmit} className="overflow-y-auto flex-1 min-h-0 space-y-4 pr-1">
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
@@ -217,13 +216,12 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="flex gap-3 pt-4 shrink-0 border-t border-border-light mt-4">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
-            <button type="submit" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
-          </div>
         </form>
+
+        <div className="flex gap-3 pt-4 shrink-0 border-t border-border-light mt-4">
+          <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
+          <button type="submit" form="create-company-form" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
+        </div>
       </div>
     </div>
   );
