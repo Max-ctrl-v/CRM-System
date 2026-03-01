@@ -24,4 +24,11 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY || '',
+  SENTRY_DSN: process.env.SENTRY_DSN || '',
+  TOTP_ISSUER: process.env.TOTP_ISSUER || 'CRM Pipeline',
+  SMTP_HOST: process.env.SMTP_HOST || '',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
+  SMTP_USER: process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || '',
+  SMTP_FROM: process.env.SMTP_FROM || 'CRM Pipeline <noreply@novaris-consulting.de>',
 };

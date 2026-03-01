@@ -4,12 +4,16 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import { useCompanies } from '../context/CompaniesContext';
 import CommentSection from '../components/CommentSection';
 import ContactList from '../components/ContactList';
 import PerplexityPanel from '../components/PerplexityPanel';
 import BundesanzeigerPanel from '../components/BundesanzeigerPanel';
 import TaskList from '../components/TaskList';
 import ActivityTimeline from '../components/ActivityTimeline';
+import NextActionBanner from '../components/NextActionBanner';
+import AttachmentList from '../components/AttachmentList';
+import SimilarCompanies from '../components/SimilarCompanies';
 import {
   ArrowLeft,
   Building2,
@@ -31,6 +35,10 @@ import {
   PhoneOff,
   Shield,
   Clock,
+  Star,
+  Calendar,
+  CalendarCheck,
+  CalendarClock,
 } from 'lucide-react';
 
 const STAGES = [
@@ -49,6 +57,8 @@ const TABS = [
   { key: 'bundesanzeiger', label: 'Jahresabschluss', icon: FileText },
   { key: 'tasks', label: 'Aufgaben', icon: CheckSquare },
   { key: 'activities', label: 'Aktivitäten', icon: Clock },
+  { key: 'attachments', label: 'Dateien', icon: FileText },
+  { key: 'similar', label: 'Ähnliche Firmen', icon: Building2 },
 ];
 
 function formatEuro(value) {
@@ -62,6 +72,7 @@ export default function CompanyDetailPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
   const { dark } = useTheme();
+  const { removeCompany } = useCompanies();
 
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +134,9 @@ export default function CompanyDetailPage() {
     if (!window.confirm(`"${company.name}" wirklich löschen?`)) return;
     try {
       await api.delete(`/companies/${id}`);
-      navigate('/');
+      removeCompany(id);
+      addToast(`"${company.name}" gelöscht.`, 'success');
+      navigate(-1);
     } catch (err) {
       addToast(err.response?.data?.error || 'Fehler beim Löschen.', 'error');
     }
@@ -135,6 +148,57 @@ export default function CompanyDetailPage() {
       setCompany(data);
     } catch (err) {
       addToast(err.response?.data?.error || 'Fehler beim Ändern.', 'error');
+    }
+  }
+
+  const [showMeetingPicker, setShowMeetingPicker] = useState(false);
+  const [meetingDateInput, setMeetingDateInput] = useState('');
+  const [starAnimating, setStarAnimating] = useState(false);
+
+  async function toggleFavorite() {
+    try {
+      setStarAnimating(true);
+      const { data } = await api.patch(`/companies/${id}/favorite`, { isFavorite: !company.isFavorite });
+      setCompany(data);
+      setTimeout(() => setStarAnimating(false), 600);
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Fehler beim Ändern.', 'error');
+      setStarAnimating(false);
+    }
+  }
+
+  async function handleMeetingSet() {
+    if (!meetingDateInput) return;
+    try {
+      const { data } = await api.patch(`/companies/${id}/meeting`, {
+        meetingStatus: 'MEETING_SET',
+        meetingDate: meetingDateInput,
+      });
+      setCompany(data);
+      setShowMeetingPicker(false);
+      setMeetingDateInput('');
+      addToast('Termin erstellt!', 'success');
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Fehler.', 'error');
+    }
+  }
+
+  async function handleMeetingDone() {
+    try {
+      const { data } = await api.patch(`/companies/${id}/meeting`, { meetingStatus: 'MEETING_DONE' });
+      setCompany(data);
+      addToast('Termin als erfolgreich markiert! Follow-Up in 2 Wochen.', 'success');
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Fehler.', 'error');
+    }
+  }
+
+  async function handleMeetingClear() {
+    try {
+      const { data } = await api.patch(`/companies/${id}/meeting`, { meetingStatus: null });
+      setCompany(data);
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Fehler.', 'error');
     }
   }
 
@@ -272,7 +336,7 @@ export default function CompanyDetailPage() {
                     <h1 className="text-xl font-display font-bold text-gray-900 tracking-display">{company.name}</h1>
                     {company.website && (
                       <a
-                        href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                        href={(() => { try { const u = new URL(company.website.startsWith('http') ? company.website : `https://${company.website}`); return ['http:', 'https:'].includes(u.protocol) ? u.href : '#'; } catch { return '#'; } })()}
                         target="_blank" rel="noopener noreferrer"
                         className="text-brand-500 hover:text-brand-600 text-[13px] font-body flex items-center gap-1 mt-0.5 rounded focus-visible:ring-2 focus-visible:ring-brand-300"
                         style={{ transition: 'color 150ms ease' }}
@@ -345,6 +409,19 @@ export default function CompanyDetailPage() {
                 </button>
               )}
               <button
+                onClick={toggleFavorite}
+                className={`flex items-center gap-1.5 text-[13px] px-3 py-2 rounded-lg font-semibold font-body focus-visible:ring-2 focus-visible:ring-accent-300 active:scale-95 ${
+                  company.isFavorite
+                    ? 'bg-amber-50 text-amber-700 border border-amber-300 hover:bg-amber-100'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200'
+                }`}
+                style={{ transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, color 150ms ease' }}
+                title={company.isFavorite ? 'Aus Favoriten entfernen' : 'Als Favorit markieren (passt in unseren Scope)'}
+              >
+                <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-500 text-amber-500' : ''} ${starAnimating ? 'star-animate' : ''}`} />
+                Favorit
+              </button>
+              <button
                 onClick={toggleDoNotCall}
                 className={`flex items-center gap-1.5 text-[13px] px-3 py-2 rounded-lg font-semibold font-body focus-visible:ring-2 focus-visible:ring-red-300 active:scale-95 ${
                   company.doNotCall
@@ -391,7 +468,87 @@ export default function CompanyDetailPage() {
             })}
           </div>
         </div>
+
+        {/* Meeting Section */}
+        <div className="mt-5 pt-5 border-t border-border-light">
+          <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2.5 block font-body">Termin</label>
+          <div className="flex items-center gap-3 flex-wrap">
+            {!company.meetingStatus && !showMeetingPicker && (
+              <button
+                onClick={() => setShowMeetingPicker(true)}
+                className="flex items-center gap-1.5 text-[12px] px-3 py-2 rounded-lg font-semibold font-body
+                  bg-gray-100 text-gray-600 border border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200
+                  focus-visible:ring-2 focus-visible:ring-blue-300 active:scale-95"
+                style={{ transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, color 150ms ease' }}
+              >
+                <Calendar className="w-3.5 h-3.5" /> Termin erstellen
+              </button>
+            )}
+            {showMeetingPicker && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={meetingDateInput}
+                  onChange={(e) => setMeetingDateInput(e.target.value)}
+                  className="input-field text-sm w-44"
+                />
+                <button onClick={handleMeetingSet} className="btn-primary text-[12px] px-3 py-1.5">Setzen</button>
+                <button onClick={() => { setShowMeetingPicker(false); setMeetingDateInput(''); }} className="btn-secondary text-[12px] px-3 py-1.5">Abbrechen</button>
+              </div>
+            )}
+            {company.meetingStatus === 'MEETING_SET' && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-[12px] font-semibold font-body">
+                  <CalendarClock className="w-3.5 h-3.5" />
+                  Termin: {new Date(company.meetingDate).toLocaleDateString('de-DE')}
+                </div>
+                <button
+                  onClick={handleMeetingDone}
+                  className="flex items-center gap-1.5 text-[12px] px-3 py-2 rounded-lg font-semibold font-body
+                    bg-green-50 text-green-700 border border-green-200 hover:bg-green-100
+                    focus-visible:ring-2 focus-visible:ring-green-300 active:scale-95"
+                  style={{ transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease' }}
+                >
+                  <CalendarCheck className="w-3.5 h-3.5" /> Termin erfolgreich
+                </button>
+                <button
+                  onClick={handleMeetingClear}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50
+                    focus-visible:ring-2 focus-visible:ring-red-300"
+                  title="Termin entfernen"
+                  style={{ transition: 'color 150ms ease, background-color 150ms ease' }}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+            {company.meetingStatus === 'MEETING_DONE' && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-[12px] font-semibold font-body">
+                  <CalendarCheck className="w-3.5 h-3.5" />
+                  Termin erledigt ({new Date(company.meetingDate).toLocaleDateString('de-DE')})
+                </div>
+                {company.meetingFollowUpAt && (
+                  <span className="text-[11px] text-gray-400 font-body">
+                    Follow-Up: {new Date(company.meetingFollowUpAt).toLocaleDateString('de-DE')}
+                  </span>
+                )}
+                <button
+                  onClick={() => { setShowMeetingPicker(true); handleMeetingClear(); }}
+                  className="text-[11px] text-brand-500 hover:text-brand-700 font-semibold font-body rounded
+                    focus-visible:ring-2 focus-visible:ring-brand-300 px-1 py-0.5"
+                  style={{ transition: 'color 150ms ease' }}
+                >
+                  Neuen Termin erstellen
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* AI Next Action */}
+      <NextActionBanner companyId={company.id} />
 
       {/* Tabs */}
       <div
@@ -430,6 +587,8 @@ export default function CompanyDetailPage() {
         {activeTab === 'bundesanzeiger' && <BundesanzeigerPanel companyName={company.name} />}
         {activeTab === 'tasks' && <TaskList companyId={company.id} />}
         {activeTab === 'activities' && <ActivityTimeline entityType="COMPANY" entityId={company.id} />}
+        {activeTab === 'attachments' && <AttachmentList companyId={company.id} />}
+        {activeTab === 'similar' && <SimilarCompanies companyId={company.id} />}
       </div>
     </div>
   );

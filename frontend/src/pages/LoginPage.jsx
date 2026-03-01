@@ -2,14 +2,19 @@ import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, AlertCircle, LayoutDashboard, ArrowRight } from 'lucide-react';
+import TwoFactorInput from '../components/TwoFactorInput';
 
 export default function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, verify2FA } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [needs2FA, setNeeds2FA] = useState(false);
+  const [tempToken, setTempToken] = useState('');
+  const [twoFAError, setTwoFAError] = useState('');
+  const [twoFALoading, setTwoFALoading] = useState(false);
 
   if (user) return <Navigate to="/" />;
 
@@ -18,12 +23,30 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/');
+      const result = await login(email, password);
+      if (result?.requires2FA) {
+        setTempToken(result.tempToken);
+        setNeeds2FA(true);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Anmeldung fehlgeschlagen.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handle2FASubmit(code) {
+    setTwoFAError('');
+    setTwoFALoading(true);
+    try {
+      await verify2FA(tempToken, code);
+      navigate('/');
+    } catch (err) {
+      setTwoFAError(err.response?.data?.error || 'Ungültiger Code.');
+    } finally {
+      setTwoFALoading(false);
     }
   }
 
@@ -132,66 +155,76 @@ export default function LoginPage() {
               boxShadow: '0 1px 2px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.05), 0 8px 20px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)',
             }}
           >
-            <h1 className="text-2xl font-display font-bold text-gray-900 tracking-display mb-1.5">
-              Willkommen zurück
-            </h1>
-            <p className="text-gray-500 text-sm font-body mb-7">
-              Melden Sie sich an, um fortzufahren
-            </p>
+            {needs2FA ? (
+              <TwoFactorInput
+                onSubmit={handle2FASubmit}
+                loading={twoFALoading}
+                error={twoFAError}
+              />
+            ) : (
+              <>
+                <h1 className="text-2xl font-display font-bold text-gray-900 tracking-display mb-1.5">
+                  Willkommen zurück
+                </h1>
+                <p className="text-gray-500 text-sm font-body mb-7">
+                  Melden Sie sich an, um fortzufahren
+                </p>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-body">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  {error}
-                </div>
-              )}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {error && (
+                    <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-body">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {error}
+                    </div>
+                  )}
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-body">E-Mail-Adresse</label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="input-field pl-10"
-                    placeholder="name@firma.de"
-                    required
-                    autoFocus
-                  />
-                </div>
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-body">E-Mail-Adresse</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="input-field pl-10"
+                        placeholder="name@firma.de"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2 font-body">Passwort</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="input-field pl-10"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 font-body">Passwort</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="input-field pl-10"
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-                    Anmeldung...
-                  </>
-                ) : (
-                  <>
-                    Anmelden
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
+                  <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2">
+                    {loading ? (
+                      <>
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                        Anmeldung...
+                      </>
+                    ) : (
+                      <>
+                        Anmelden
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Send, Trash2, MessageSquare } from 'lucide-react';
+import { Send, Trash2, MessageSquare, AtSign } from 'lucide-react';
 
 export default function CommentSection({ entityType, entityId }) {
   const { user } = useAuth();
@@ -11,10 +11,68 @@ export default function CommentSection({ entityType, entityId }) {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const inputRef = useRef(null);
+  const mentionRef = useRef(null);
 
   useEffect(() => {
     loadComments();
   }, [entityType, entityId]);
+
+  useEffect(() => {
+    api.get('/auth/users').then(({ data }) => setAllUsers(data)).catch(() => {});
+  }, []);
+
+  const filteredMentionUsers = allUsers.filter((u) =>
+    u.name.toLowerCase().includes(mentionSearch.toLowerCase()) && u.id !== user?.id
+  );
+
+  function handleContentChange(e) {
+    const val = e.target.value;
+    setContent(val);
+    // Detect @ trigger
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursorPos);
+    const atMatch = textBeforeCursor.match(/@([\wäöüÄÖÜß]*)$/);
+    if (atMatch) {
+      setShowMentions(true);
+      setMentionSearch(atMatch[1]);
+      setMentionIndex(0);
+    } else {
+      setShowMentions(false);
+    }
+  }
+
+  function insertMention(userName) {
+    const cursorPos = inputRef.current?.selectionStart || content.length;
+    const textBeforeCursor = content.slice(0, cursorPos);
+    const atPos = textBeforeCursor.lastIndexOf('@');
+    if (atPos === -1) return;
+    const before = content.slice(0, atPos);
+    const after = content.slice(cursorPos);
+    setContent(`${before}@${userName} ${after}`);
+    setShowMentions(false);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function handleMentionKeyDown(e) {
+    if (!showMentions || filteredMentionUsers.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setMentionIndex((i) => (i + 1) % filteredMentionUsers.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setMentionIndex((i) => (i - 1 + filteredMentionUsers.length) % filteredMentionUsers.length);
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      insertMention(filteredMentionUsers[mentionIndex].name);
+    } else if (e.key === 'Escape') {
+      setShowMentions(false);
+    }
+  }
 
   async function loadComments() {
     try {
@@ -79,14 +137,46 @@ export default function CommentSection({ entityType, entityId }) {
           >
             {user?.name?.charAt(0)?.toUpperCase() || '?'}
           </div>
-          <div className="flex-1 flex gap-2">
-            <input
-              type="text"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Kommentar schreiben..."
-              className="input-field text-sm flex-1"
-            />
+          <div className="flex-1 flex gap-2 relative">
+            <div className="relative flex-1">
+              <input
+                ref={inputRef}
+                type="text"
+                value={content}
+                onChange={handleContentChange}
+                onKeyDown={handleMentionKeyDown}
+                placeholder="Kommentar schreiben... (@Name für Erwähnung)"
+                className="input-field text-sm w-full"
+              />
+              {showMentions && filteredMentionUsers.length > 0 && (
+                <div
+                  ref={mentionRef}
+                  className="absolute bottom-full left-0 mb-1 w-64 bg-white rounded-lg border border-border-light overflow-hidden z-50"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)' }}
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider font-body border-b border-border">
+                    <AtSign className="w-3 h-3 inline mr-1" />Erwähnen
+                  </div>
+                  {filteredMentionUsers.slice(0, 5).map((u, idx) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      className={`w-full text-left px-3 py-2 text-sm font-body flex items-center gap-2 ${
+                        idx === mentionIndex ? 'bg-brand-50 text-brand-700' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                      style={{ transition: 'background-color 100ms ease' }}
+                      onClick={() => insertMention(u.name)}
+                      onMouseEnter={() => setMentionIndex(idx)}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 shrink-0">
+                        {u.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="truncate">{u.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               type="submit"
               disabled={submitting || !content.trim()}
@@ -132,7 +222,15 @@ export default function CommentSection({ entityType, entityId }) {
                     </button>
                   )}
                 </div>
-                <p className="text-sm text-gray-700 font-body whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+                <p className="text-sm text-gray-700 font-body whitespace-pre-wrap leading-relaxed">
+                  {comment.content.split(/(@[\wäöüÄÖÜß\s.]+?)(?=\s@|\s*$|[,!?;]|\s[a-zäöü])/).map((part, i) =>
+                    part.startsWith('@') ? (
+                      <span key={i} className="font-semibold text-brand-600 bg-brand-50 rounded px-0.5">{part.trim()}</span>
+                    ) : (
+                      <span key={i}>{part}</span>
+                    )
+                  )}
+                </p>
               </div>
             </div>
           ))}

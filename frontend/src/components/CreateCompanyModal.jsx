@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { X, Building2, Sparkles } from 'lucide-react';
+import { X, Building2, Sparkles, UserPlus, Trash2 } from 'lucide-react';
 
 const PIPELINE_OPTIONS = [
   { value: '', label: '— Keine Pipeline —' },
@@ -23,8 +23,21 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   const [pipelineStage, setPipelineStage] = useState(showPipelineOption ? '' : 'FIRMA_IDENTIFIZIERT');
   const [users, setUsers] = useState([]);
   const [adminPipeline, setAdminPipeline] = useState(false);
+  const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  function addContact() {
+    setContacts((prev) => [...prev, { firstName: '', lastName: '', email: '', phone: '', position: '' }]);
+  }
+
+  function updateContact(index, field, value) {
+    setContacts((prev) => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+  }
+
+  function removeContact(index) {
+    setContacts((prev) => prev.filter((_, i) => i !== index));
+  }
 
   useEffect(() => {
     api.get('/auth/users').then(({ data }) => {
@@ -39,6 +52,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
     setLoading(true);
     setError('');
     try {
+      const validContacts = contacts.filter((c) => c.firstName.trim() && c.lastName.trim());
       const { data } = await api.post('/companies', {
         name: name.trim(),
         website: website.trim() || null,
@@ -46,6 +60,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
         assignedToId: assignedToId || null,
         pipelineStage: pipelineStage || null,
         adminPipeline,
+        contacts: validContacts.length > 0 ? validContacts : undefined,
       });
       // Close modal immediately — run background tasks after
       onCreated(data);
@@ -68,7 +83,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl w-full max-w-md mx-4 p-7 border border-border-light"
+        className="bg-white rounded-2xl w-full max-w-lg mx-4 p-7 border border-border-light max-h-[90vh] flex flex-col"
         style={{ boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -84,7 +99,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-1">
           {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
           <div>
@@ -131,6 +146,76 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
               {!pipelineStage && <p className="text-xs text-gray-400 mt-1 font-body">Firma wird ohne Pipeline-Zuordnung erstellt</p>}
             </div>
           )}
+
+          {/* Inline Contacts Section */}
+          <div className="border-t border-border pt-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-semibold text-gray-700 font-body">Kontakte</label>
+              <button
+                type="button"
+                onClick={addContact}
+                className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 font-body rounded px-2 py-1 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-300"
+                style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Kontakt hinzufügen
+              </button>
+            </div>
+            {contacts.length === 0 && (
+              <p className="text-xs text-gray-400 font-body">Optional — Kontakte können auch später hinzugefügt werden.</p>
+            )}
+            {contacts.map((contact, idx) => (
+              <div key={idx} className="rounded-lg border border-border bg-surface-base p-3 mb-2.5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-semibold text-gray-500 font-body">Kontakt {idx + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeContact(idx)}
+                    className="text-gray-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-red-300"
+                    style={{ transition: 'color 150ms ease' }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Vorname *"
+                    value={contact.firstName}
+                    onChange={(e) => updateContact(idx, 'firstName', e.target.value)}
+                    className="input-field text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Nachname *"
+                    value={contact.lastName}
+                    onChange={(e) => updateContact(idx, 'lastName', e.target.value)}
+                    className="input-field text-sm"
+                  />
+                  <input
+                    type="email"
+                    placeholder="E-Mail"
+                    value={contact.email}
+                    onChange={(e) => updateContact(idx, 'email', e.target.value)}
+                    className="input-field text-sm"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Telefon"
+                    value={contact.phone}
+                    onChange={(e) => updateContact(idx, 'phone', e.target.value)}
+                    className="input-field text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Position"
+                    value={contact.position}
+                    onChange={(e) => updateContact(idx, 'position', e.target.value)}
+                    className="input-field text-sm col-span-2"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>

@@ -13,7 +13,20 @@ router.post('/login', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'E-Mail und Passwort erforderlich.' });
   }
   const result = await authService.login(email, password);
-  auditLog('LOGIN', result.user.id, { email });
+  if (!result.requires2FA) {
+    auditLog('LOGIN', result.user.id, { email });
+  }
+  res.json(result);
+}));
+
+// POST /api/auth/login/2fa
+router.post('/login/2fa', asyncHandler(async (req, res) => {
+  const { tempToken, code } = req.body;
+  if (!tempToken || !code) {
+    return res.status(400).json({ error: 'Token und Code erforderlich.' });
+  }
+  const result = await authService.verify2FA(tempToken, code);
+  auditLog('LOGIN_2FA', result.user.id, { email: result.user.email });
   res.json(result);
 }));
 

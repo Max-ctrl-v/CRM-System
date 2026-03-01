@@ -1,13 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { CompaniesProvider } from './context/CompaniesContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+
+// Sentry init (optional — only if DSN configured)
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0.1,
+  });
+}
 
 function GrainTexture() {
   return (
@@ -28,10 +40,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ThemeProvider>
           <AuthProvider>
             <CompaniesProvider>
-              <ToastProvider>
-                <App />
-                <GrainTexture />
-              </ToastProvider>
+              <NotificationProvider>
+                <ToastProvider>
+                  <App />
+                  <GrainTexture />
+                </ToastProvider>
+              </NotificationProvider>
             </CompaniesProvider>
           </AuthProvider>
         </ThemeProvider>

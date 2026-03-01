@@ -5,6 +5,12 @@ const companyService = require('../services/company.service');
 const authenticate = require('../middleware/auth');
 const { auditLog } = require('../utils/auditLog');
 const activityService = require('../services/activity.service');
+const scoringService = require('../services/scoring.service');
+const nextActionService = require('../services/nextAction.service');
+const similarityService = require('../services/similarity.service');
+const { parse } = require('csv-parse');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 router.use(authenticate);
 
@@ -15,6 +21,24 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json(companies);
 }));
 
+// GET /api/companies/scores — batch scores (MUST be before /:id)
+router.get('/scores', asyncHandler(async (req, res) => {
+  const { ids } = req.query;
+  if (!ids) return res.json({});
+  const companyIds = ids.split(',').filter(Boolean);
+  const scores = await scoringService.batchScores(companyIds);
+  res.json(scores);
+}));
+
+// GET /api/companies/next-actions — batch next actions (MUST be before /:id)
+router.get('/next-actions', asyncHandler(async (req, res) => {
+  const { ids } = req.query;
+  if (!ids) return res.json({});
+  const companyIds = ids.split(',').filter(Boolean);
+  const actions = await nextActionService.batchSuggest(companyIds);
+  res.json(actions);
+}));
+
 // GET /api/companies/:id
 router.get('/:id', asyncHandler(async (req, res) => {
   const company = await companyService.getById(req.params.id);
@@ -23,6 +47,42 @@ router.get('/:id', asyncHandler(async (req, res) => {
     return res.status(403).json({ error: 'Kein Zugriff auf diese Firma.' });
   }
   res.json(company);
+}));
+
+// POST /api/companies/import — CSV bulk import
+router.post('/import', asyncHandler(async (req, res) => {
+  const { rows, mapping } = req.body;
+  if (!rows || !Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: 'Keine Daten zum Import.' });
+  }
+  if (rows.length > 500) {
+    return res.status(400).json({ error: 'Maximal 500 Firmen pro Import.' });
+  }
+
+  const results = { created: 0, errors: [] };
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      const name = row[mapping.name];
+      if (!name?.trim()) {
+        results.errors.push({ row: i + 1, error: 'Name fehlt' });
+        continue;
+      }
+      await companyService.create({
+        name: name.trim(),
+        website: row[mapping.website] || undefined,
+        city: row[mapping.city] || undefined,
+        expectedRevenue: mapping.revenue ? parseFloat(row[mapping.revenue]) || undefined : undefined,
+      }, req.user.id);
+      results.created++;
+    } catch (err) {
+      results.errors.push({ row: i + 1, error: err.message });
+    }
+  }
+
+  activityService.log('BULK_IMPORT', 'COMPANY', 'bulk', req.user.id, { count: results.created }).catch(() => {});
+  res.json(results);
 }));
 
 // POST /api/companies/bulk — bulk stage, assign, or delete
@@ -40,6 +100,9 @@ router.post('/bulk', asyncHandler(async (req, res) => {
     return res.json({ message: `${ids.length} Firmen zugewiesen.` });
   }
   if (action === 'delete') {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Nur Admins dürfen Firmen löschen.' });
+    }
     await companyService.bulkDelete(ids);
     return res.json({ message: `${ids.length} Firmen gelöscht.` });
   }
@@ -48,6 +111,10 @@ router.post('/bulk', asyncHandler(async (req, res) => {
 
 // POST /api/companies
 router.post('/', asyncHandler(async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim() || name.trim().length > 255) {
+    return res.status(400).json({ error: 'Firmenname ist erforderlich (max. 255 Zeichen).' });
+  }
   const company = await companyService.create(req.body, req.user.id);
   activityService.log('COMPANY_CREATED', 'COMPANY', company.id, req.user.id, { companyName: company.name }).catch(() => {});
   res.status(201).json(company);
@@ -83,8 +150,68 @@ router.patch('/:id/do-not-call', asyncHandler(async (req, res) => {
   res.json(company);
 }));
 
+// PATCH /api/companies/:id/favorite
+router.patch('/:id/favorite', asyncHandler(async (req, res) => {
+  const { isFavorite } = req.body;
+  const company = await companyService.update(req.params.id, { isFavorite: !!isFavorite });
+  res.json(company);
+}));
+
+// PATCH /api/companies/:id/meeting
+router.patch('/:id/meeting', asyncHandler(async (req, res) => {
+  const { meetingStatus, meetingDate } = req.body;
+  const updateData = {};
+
+  if (meetingStatus === 'MEETING_SET') {
+    if (!meetingDate) return res.status(400).json({ error: 'Termindatum erforderlich.' });
+    updateData.meetingStatus = 'MEETING_SET';
+    updateData.meetingDate = meetingDate;
+    updateData.meetingFollowUpAt = null;
+  } else if (meetingStatus === 'MEETING_DONE') {
+    const current = await companyService.getById(req.params.id);
+    const baseDate = current.meetingDate || new Date();
+    const followUp = new Date(baseDate);
+    followUp.setDate(followUp.getDate() + 14);
+    updateData.meetingStatus = 'MEETING_DONE';
+    updateData.meetingFollowUpAt = followUp.toISOString();
+  } else if (meetingStatus === null) {
+    updateData.meetingStatus = null;
+    updateData.meetingDate = null;
+    updateData.meetingFollowUpAt = null;
+  } else {
+    return res.status(400).json({ error: 'Ungültiger Meeting-Status.' });
+  }
+
+  const company = await companyService.update(req.params.id, updateData);
+  activityService.log('MEETING_STATUS_CHANGED', 'COMPANY', req.params.id, req.user.id, {
+    meetingStatus, companyName: company.name,
+  }).catch(() => {});
+  res.json(company);
+}));
+
+// GET /api/companies/:id/score
+router.get('/:id/score', asyncHandler(async (req, res) => {
+  const score = await scoringService.calculateScore(req.params.id);
+  res.json({ score });
+}));
+
+// GET /api/companies/:id/next-action
+router.get('/:id/next-action', asyncHandler(async (req, res) => {
+  const suggestion = await nextActionService.suggest(req.params.id);
+  res.json(suggestion);
+}));
+
+// GET /api/companies/:id/similar
+router.get('/:id/similar', asyncHandler(async (req, res) => {
+  const similar = await similarityService.findSimilar(req.params.id);
+  res.json(similar);
+}));
+
 // DELETE /api/companies/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Nur Admins dürfen Firmen löschen.' });
+  }
   await companyService.remove(req.params.id);
   auditLog('COMPANY_DELETE', req.user.id, { companyId: req.params.id });
   res.json({ message: 'Firma gelöscht.' });

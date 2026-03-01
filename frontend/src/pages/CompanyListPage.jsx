@@ -22,9 +22,15 @@ import {
   CheckSquare,
   Square,
   MinusSquare,
+  Star,
+  CalendarClock,
+  CalendarCheck,
 } from 'lucide-react';
 import SkeletonRow from '../components/skeletons/SkeletonRow';
 import EmptyState from '../components/EmptyState';
+import FilterPanel from '../components/FilterPanel';
+import SavedViewSelector from '../components/SavedViewSelector';
+import ImportModal from '../components/ImportModal';
 
 const STAGE_LABELS = {
   FIRMA_IDENTIFIZIERT: { label: 'Identifiziert', color: '#6366f1', bg: '#eef2ff', bgDark: 'rgba(99,102,241,0.12)' },
@@ -82,7 +88,7 @@ function exportCSV(companies) {
 
 export default function CompanyListPage() {
   const navigate = useNavigate();
-  const { companies, allUsers, loading, addCompany, refresh } = useCompanies();
+  const { companies, allUsers, loading, addCompany, updateCompany, refresh } = useCompanies();
   const { addToast } = useToast();
   const { dark } = useTheme();
   const [search, setSearch] = useState('');
@@ -92,6 +98,24 @@ export default function CompanyListPage() {
   const [selected, setSelected] = useState(new Set());
   const [bulkAction, setBulkAction] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({ stages: [], assignedToId: '', city: '', dateFrom: '', dateTo: '', uisOnly: false });
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [starAnimatingId, setStarAnimatingId] = useState(null);
+
+  async function toggleFavorite(e, companyId) {
+    e.stopPropagation();
+    const comp = companies.find((c) => c.id === companyId);
+    if (!comp) return;
+    const newVal = !comp.isFavorite;
+    updateCompany({ ...comp, isFavorite: newVal });
+    if (newVal) {
+      setStarAnimatingId(companyId);
+      setTimeout(() => setStarAnimatingId(null), 650);
+    }
+    try { await api.patch(`/companies/${companyId}/favorite`); }
+    catch { refresh(); }
+  }
 
   function handleCompanyCreated(company) {
     addCompany(company);
@@ -105,20 +129,44 @@ export default function CompanyListPage() {
 
   const filtered = useMemo(() => {
     const searched = companies.filter((c) => {
-      if (!search) return true;
-      const q = search.toLowerCase();
-      const contactMatch = c.contacts?.some((ct) =>
-        (ct.firstName && ct.firstName.toLowerCase().includes(q)) ||
-        (ct.lastName && ct.lastName.toLowerCase().includes(q))
-      );
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.website?.toLowerCase().includes(q) ||
-        c.assignedTo?.name?.toLowerCase().includes(q) ||
-        (c.pipelineStage && STAGE_LABELS[c.pipelineStage]?.label.toLowerCase().includes(q)) ||
-        (!c.pipelineStage && 'keine pipeline'.includes(q)) ||
-        contactMatch
-      );
+      // Text search
+      if (search) {
+        const q = search.toLowerCase();
+        const contactMatch = c.contacts?.some((ct) =>
+          (ct.firstName && ct.firstName.toLowerCase().includes(q)) ||
+          (ct.lastName && ct.lastName.toLowerCase().includes(q))
+        );
+        const textMatch =
+          c.name.toLowerCase().includes(q) ||
+          c.website?.toLowerCase().includes(q) ||
+          c.assignedTo?.name?.toLowerCase().includes(q) ||
+          (c.pipelineStage && STAGE_LABELS[c.pipelineStage]?.label.toLowerCase().includes(q)) ||
+          (!c.pipelineStage && 'keine pipeline'.includes(q)) ||
+          contactMatch;
+        if (!textMatch) return false;
+      }
+
+      // Advanced filters
+      if (advancedFilters.stages?.length > 0) {
+        if (!c.pipelineStage || !advancedFilters.stages.includes(c.pipelineStage)) return false;
+      }
+      if (advancedFilters.assignedToId) {
+        if (c.assignedTo?.id !== advancedFilters.assignedToId) return false;
+      }
+      if (advancedFilters.city) {
+        if (!c.city || !c.city.toLowerCase().includes(advancedFilters.city.toLowerCase())) return false;
+      }
+      if (advancedFilters.dateFrom) {
+        if (c.createdAt < advancedFilters.dateFrom) return false;
+      }
+      if (advancedFilters.dateTo) {
+        if (c.createdAt > advancedFilters.dateTo + 'T23:59:59') return false;
+      }
+      if (advancedFilters.uisOnly) {
+        if (!c.uis) return false;
+      }
+
+      return true;
     });
     return searched.sort((a, b) => {
       let valA, valB;
@@ -131,7 +179,7 @@ export default function CompanyListPage() {
       if (valA > valB) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [companies, search, sortBy, sortDir]);
+  }, [companies, search, sortBy, sortDir, advancedFilters]);
 
   const toggleSelect = useCallback((id, e) => {
     e.stopPropagation();
@@ -224,6 +272,25 @@ export default function CompanyListPage() {
           >
             <Download className="w-4 h-4" /> CSV
           </button>
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-body font-medium
+              bg-surface-elevated dark:bg-dark-elevated text-text-secondary dark:text-dark-text-secondary
+              hover:text-text-primary dark:hover:text-dark-text-primary border border-border dark:border-dark-border
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+          >
+            <Plus className="w-4 h-4" /> Import
+          </button>
+          <FilterPanel
+            filters={advancedFilters}
+            onFiltersChange={setAdvancedFilters}
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+          />
+          <SavedViewSelector
+            currentFilters={advancedFilters}
+            onLoadView={setAdvancedFilters}
+          />
           <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> Neue Firma
           </button>
@@ -383,6 +450,14 @@ export default function CompanyListPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => toggleFavorite(e, company.id)}
+                        className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${starAnimatingId === company.id ? 'star-animate' : ''}`}
+                        title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
+                        style={{ transition: 'transform 150ms ease' }}
+                      >
+                        <Star className={`w-4 h-4 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
+                      </button>
                       <div
                         className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                         style={{ background: company.doNotCall
@@ -392,7 +467,15 @@ export default function CompanyListPage() {
                         {company.doNotCall ? <PhoneOff className="w-4 h-4 text-red-600" /> : <Building2 className="w-4 h-4 text-brand-600" />}
                       </div>
                       <div className="min-w-0">
-                        <span className={`font-display font-semibold text-[13px] block ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>{company.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-display font-semibold text-[13px] ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>{company.name}</span>
+                          {company.meetingStatus === 'MEETING_SET' && (
+                            <CalendarClock className="w-3.5 h-3.5 text-blue-500 shrink-0" title="Meeting geplant" />
+                          )}
+                          {company.meetingStatus === 'MEETING_DONE' && (
+                            <CalendarCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" title="Meeting erledigt" />
+                          )}
+                        </div>
                         {company.doNotCall && (
                           <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 font-body mt-0.5">
                             <PhoneOff className="w-2.5 h-2.5" /> Nicht mehr anrufen!
@@ -469,6 +552,9 @@ export default function CompanyListPage() {
 
       {showCreate && (
         <CreateCompanyModal onClose={() => setShowCreate(false)} onCreated={handleCompanyCreated} showPipelineOption />
+      )}
+      {showImport && (
+        <ImportModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); refresh(); }} />
       )}
     </div>
   );

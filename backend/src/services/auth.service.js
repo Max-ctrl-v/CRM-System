@@ -33,6 +33,47 @@ async function login(email, password) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw new AppError('Ungültige Anmeldedaten.', 401);
 
+  // If 2FA is enabled, return a temp token instead
+  if (user.totpEnabled) {
+    const tempToken = jwt.sign(
+      { id: user.id, purpose: '2fa' },
+      JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+    return { requires2FA: true, tempToken };
+  }
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken, lastLogin: new Date() },
+  });
+
+  return {
+    accessToken,
+    refreshToken,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+  };
+}
+
+async function verify2FA(tempToken, code) {
+  let decoded;
+  try {
+    decoded = jwt.verify(tempToken, JWT_SECRET);
+  } catch {
+    throw new AppError('Token abgelaufen. Bitte erneut anmelden.', 401);
+  }
+  if (decoded.purpose !== '2fa') throw new AppError('Ungültiges Token.', 401);
+
+  const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+  if (!user || !user.totpSecret) throw new AppError('2FA nicht konfiguriert.', 400);
+
+  const otplib = require('otplib');
+  const valid = otplib.verifySync(code, user.totpSecret);
+  if (!valid) throw new AppError('Ungültiger 2FA-Code.', 401);
+
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
@@ -96,4 +137,4 @@ async function getAllUsers() {
   });
 }
 
-module.exports = { login, refresh, logout, createUser, getAllUsers };
+module.exports = { login, verify2FA, refresh, logout, createUser, getAllUsers };

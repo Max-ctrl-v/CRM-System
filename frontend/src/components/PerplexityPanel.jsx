@@ -130,7 +130,7 @@ export default function PerplexityPanel({ companyId, companyName, website }) {
               <div className="prose prose-sm max-w-none text-gray-700
                 prose-headings:text-gray-900 prose-headings:font-display prose-headings:font-bold
                 prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-                <ReactMarkdown>{result.content}</ReactMarkdown>
+                <ReactMarkdown skipHtml>{result.content}</ReactMarkdown>
               </div>
 
               {result.citations && result.citations.length > 0 && (
@@ -234,7 +234,7 @@ export default function PerplexityPanel({ companyId, companyName, website }) {
             <div className="prose prose-sm max-w-none text-gray-700
               prose-headings:text-gray-900 prose-headings:font-display prose-headings:font-bold
               prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-              <ReactMarkdown>{searchResult.content}</ReactMarkdown>
+              <ReactMarkdown skipHtml>{searchResult.content}</ReactMarkdown>
             </div>
 
             {searchResult.citations && searchResult.citations.length > 0 && (

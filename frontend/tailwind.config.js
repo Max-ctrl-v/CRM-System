@@ -41,11 +41,27 @@ export default {
           won: '#10b981',
           lost: '#ef4444',
         },
+        text: {
+          primary: '#111827',
+          secondary: '#6b7280',
+          tertiary: '#9ca3af',
+        },
         surface: {
           base: '#f3f4f8',
           raised: '#ffffff',
           elevated: '#ffffff',
           floating: '#ffffff',
+        },
+        dark: {
+          base: '#13161f',
+          elevated: '#1e2130',
+          floating: '#252838',
+          border: '#2a2d3d',
+          text: {
+            primary: '#f0f1f4',
+            secondary: '#9ca3af',
+            tertiary: '#6b7280',
+          },
         },
         border: {
           DEFAULT: '#e2e5eb',

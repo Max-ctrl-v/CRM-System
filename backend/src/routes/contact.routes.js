@@ -24,8 +24,11 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // POST /api/contacts
 router.post('/', asyncHandler(async (req, res) => {
   const { firstName, lastName, companyId } = req.body;
-  if (!firstName || !lastName || !companyId) {
+  if (!firstName?.trim() || !lastName?.trim() || !companyId) {
     return res.status(400).json({ error: 'Vorname, Nachname und Firma erforderlich.' });
+  }
+  if (firstName.trim().length > 100 || lastName.trim().length > 100) {
+    return res.status(400).json({ error: 'Name zu lang (max. 100 Zeichen).' });
   }
   const contact = await contactService.create(req.body);
   activityService.log('CONTACT_ADDED', 'COMPANY', contact.companyId, req.user.id, { contactName: `${contact.firstName} ${contact.lastName}` }).catch(() => {});

@@ -16,6 +16,9 @@ import {
   ArrowRight,
   Calendar,
 } from 'lucide-react';
+import RevenueChart from '../components/RevenueChart';
+import ActivityHeatmap from '../components/ActivityHeatmap';
+import ConversionFunnel from '../components/ConversionFunnel';
 
 const STAGE_META = {
   FIRMA_IDENTIFIZIERT: { label: 'Identifiziert', color: '#6366f1', colorEnd: '#818cf8' },
@@ -240,11 +243,20 @@ export default function DashboardPage() {
           <h2 className="text-sm font-display font-bold text-gray-900 tracking-display mb-4">Letzte Aktivitäten</h2>
           {stats.recentActivities?.length > 0 ? (
             <div className="space-y-3">
-              {stats.recentActivities.slice(0, 10).map((activity) => {
+              {(stats.recentActivities || []).slice(0, 10).map((activity) => {
                 const config = ACTION_CONFIG[activity.action] || ACTION_CONFIG.COMPANY_UPDATED;
                 const Icon = config.icon;
                 return (
-                  <div key={activity.id} className="flex items-start gap-2.5">
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 -mx-2 cursor-pointer hover:bg-surface-base"
+                    style={{ transition: 'background-color 150ms ease' }}
+                    onClick={() => {
+                      if (activity.entityType === 'COMPANY' && activity.entityId) {
+                        navigate(`/company/${activity.entityId}`);
+                      }
+                    }}
+                  >
                     <div
                       className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
                       style={{ background: dark ? config.bgDark : config.bg, boxShadow: `0 1px 3px ${config.color}${dark ? '25' : '15'}` }}
@@ -266,6 +278,17 @@ export default function DashboardPage() {
             <p className="text-[12px] text-gray-400 font-body text-center py-6">Noch keine Aktivitäten</p>
           )}
         </div>
+      </div>
+
+      {/* Analytics Row */}
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        <RevenueChart />
+        <ConversionFunnel />
+      </div>
+
+      {/* Activity Heatmap */}
+      <div className="mt-4">
+        <ActivityHeatmap />
       </div>
     </div>
   );

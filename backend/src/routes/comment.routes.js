@@ -4,6 +4,9 @@ const asyncHandler = require('../utils/asyncHandler');
 const commentService = require('../services/comment.service');
 const authenticate = require('../middleware/auth');
 const activityService = require('../services/activity.service');
+const notificationService = require('../services/notification.service');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 router.use(authenticate);
 
@@ -31,11 +34,58 @@ router.get('/latest-batch', asyncHandler(async (req, res) => {
 // POST /api/comments
 router.post('/', asyncHandler(async (req, res) => {
   const { content, entityType, entityId } = req.body;
-  if (!content || !entityType || !entityId) {
+  if (!content?.trim() || !entityType || !entityId) {
     return res.status(400).json({ error: 'Inhalt, entityType und entityId erforderlich.' });
+  }
+  if (content.trim().length > 5000) {
+    return res.status(400).json({ error: 'Kommentar zu lang (max. 5000 Zeichen).' });
+  }
+  if (!['COMPANY', 'CONTACT'].includes(entityType)) {
+    return res.status(400).json({ error: 'Ungültiger entityType.' });
   }
   const comment = await commentService.create(req.body, req.user.id);
   activityService.log('COMMENT_ADDED', entityType, entityId, req.user.id, { commentId: comment.id }).catch(() => {});
+
+  // Parse @mentions and notify mentioned users
+  const mentionedUserIds = new Set();
+
+  // Fetch all users and check if any name appears after an @ in the comment
+  const allUsers = await prisma.user.findMany({ select: { id: true, name: true } });
+  const contentLower = content.trim().toLowerCase();
+  for (const u of allUsers) {
+    if (u.id === req.user.id) continue;
+    const atName = `@${u.name.toLowerCase()}`;
+    if (contentLower.includes(atName)) {
+      mentionedUserIds.add(u.id);
+    }
+  }
+
+  const link = entityType === 'COMPANY' ? `/company/${entityId}` : null;
+
+  for (const userId of mentionedUserIds) {
+    notificationService.create({
+      type: 'COMMENT_ADDED',
+      title: 'Du wurdest erwähnt',
+      message: `${req.user.name} hat dich in einem Kommentar erwähnt: "${content.trim().slice(0, 80)}${content.trim().length > 80 ? '...' : ''}"`,
+      link,
+      userId,
+    }).catch(() => {});
+  }
+
+  // Notify company owner about new comment (skip if already mentioned)
+  if (entityType === 'COMPANY') {
+    const company = await prisma.company.findUnique({ where: { id: entityId }, select: { assignedToId: true, name: true } });
+    if (company?.assignedToId && company.assignedToId !== req.user.id && !mentionedUserIds.has(company.assignedToId)) {
+      notificationService.create({
+        type: 'COMMENT_ADDED',
+        title: 'Neuer Kommentar',
+        message: `${req.user.name} hat einen Kommentar bei "${company.name}" hinterlassen.`,
+        link: `/company/${entityId}`,
+        userId: company.assignedToId,
+      }).catch(() => {});
+    }
+  }
+
   res.status(201).json(comment);
 }));
 

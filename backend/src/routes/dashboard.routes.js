@@ -75,4 +75,86 @@ router.get('/stats', asyncHandler(async (req, res) => {
   });
 }));
 
+// GET /api/dashboard/revenue-forecast
+router.get('/revenue-forecast', asyncHandler(async (req, res) => {
+  const now = new Date();
+  const months = [];
+
+  for (let i = 5; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
+    const label = start.toLocaleString('de-DE', { month: 'short', year: '2-digit' });
+
+    const [won, pipeline] = await Promise.all([
+      prisma.company.aggregate({
+        _sum: { expectedRevenue: true },
+        where: {
+          pipelineStage: 'CLOSED_WON',
+          updatedAt: { gte: start, lte: end },
+        },
+      }),
+      prisma.company.aggregate({
+        _sum: { expectedRevenue: true },
+        where: {
+          pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
+          updatedAt: { gte: start, lte: end },
+        },
+      }),
+    ]);
+
+    months.push({
+      label,
+      won: won._sum.expectedRevenue || 0,
+      pipeline: pipeline._sum.expectedRevenue || 0,
+    });
+  }
+
+  res.json(months);
+}));
+
+// GET /api/dashboard/heatmap
+router.get('/heatmap', asyncHandler(async (req, res) => {
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+  const activities = await prisma.activity.findMany({
+    where: { createdAt: { gte: ninetyDaysAgo } },
+    select: { createdAt: true },
+  });
+
+  const heatmap = {};
+  for (const a of activities) {
+    const dateKey = a.createdAt.toISOString().split('T')[0];
+    heatmap[dateKey] = (heatmap[dateKey] || 0) + 1;
+  }
+
+  res.json(heatmap);
+}));
+
+// GET /api/dashboard/funnel
+router.get('/funnel', asyncHandler(async (req, res) => {
+  const stages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON'];
+  const counts = await prisma.company.groupBy({
+    by: ['pipelineStage'],
+    _count: { id: true },
+    where: { pipelineStage: { not: null } },
+  });
+
+  const countMap = {};
+  for (const c of counts) {
+    countMap[c.pipelineStage] = c._count.id;
+  }
+
+  const funnel = stages.map((stage, i) => {
+    const count = countMap[stage] || 0;
+    const prevCount = i > 0 ? (countMap[stages[i - 1]] || 0) : count;
+    return {
+      stage,
+      count,
+      conversionRate: prevCount > 0 ? Math.round((count / prevCount) * 100) : 0,
+    };
+  });
+
+  res.json(funnel);
+}));
+
 module.exports = router;

@@ -25,6 +25,17 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const { data } = await api.post('/auth/login', { email, password });
+    if (data.requires2FA) {
+      return { requires2FA: true, tempToken: data.tempToken };
+    }
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setUser(data.user);
+    return data.user;
+  }
+
+  async function verify2FA(tempToken, code) {
+    const { data } = await api.post('/auth/login/2fa', { tempToken, code });
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
@@ -43,7 +54,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, verify2FA, logout }}>
       {children}
     </AuthContext.Provider>
   );

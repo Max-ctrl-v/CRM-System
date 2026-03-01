@@ -10,7 +10,7 @@ router.use(authenticate);
 // GET /api/search?q=...
 router.get('/', asyncHandler(async (req, res) => {
   const { q } = req.query;
-  if (!q || q.length < 2) return res.json({ companies: [], contacts: [], tasks: [] });
+  if (!q || q.length < 2 || q.length > 200) return res.json({ companies: [], contacts: [], tasks: [] });
 
   const [companies, contacts, tasks] = await Promise.all([
     prisma.company.findMany({

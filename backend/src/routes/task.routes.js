@@ -4,6 +4,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const taskService = require('../services/task.service');
 const authenticate = require('../middleware/auth');
 const activityService = require('../services/activity.service');
+const notificationService = require('../services/notification.service');
 
 router.use(authenticate);
 
@@ -29,6 +30,18 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // POST /api/tasks
 router.post('/', asyncHandler(async (req, res) => {
   const task = await taskService.create(req.body, req.user.id);
+
+  // Notify assigned user
+  if (task.assignedToId && task.assignedToId !== req.user.id) {
+    notificationService.create({
+      type: 'TASK_ASSIGNED',
+      title: 'Neue Aufgabe zugewiesen',
+      message: `${req.user.name} hat dir die Aufgabe "${task.title}" zugewiesen.`,
+      link: task.companyId ? `/company/${task.companyId}` : '/aufgaben',
+      userId: task.assignedToId,
+    }).catch(() => {});
+  }
+
   res.status(201).json(task);
 }));
 
@@ -51,6 +64,10 @@ router.patch('/:id/done', asyncHandler(async (req, res) => {
 
 // DELETE /api/tasks/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
+  const task = await taskService.getById(req.params.id);
+  if (req.user.role !== 'ADMIN' && task.createdBy?.id !== req.user.id && task.assignedTo?.id !== req.user.id) {
+    return res.status(403).json({ error: 'Keine Berechtigung zum Löschen dieser Aufgabe.' });
+  }
   await taskService.remove(req.params.id);
   res.json({ message: 'Aufgabe gelöscht.' });
 }));

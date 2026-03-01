@@ -21,7 +21,11 @@ import {
   TrendingUp,
   ArrowRight,
   MessageSquare,
+  Star,
+  CalendarClock,
+  CalendarCheck,
 } from 'lucide-react';
+import ProbabilityBadge from '../components/ProbabilityBadge';
 import SkeletonCard from '../components/skeletons/SkeletonCard';
 import EmptyState from '../components/EmptyState';
 import PipelineAnalyticsBar from '../components/PipelineAnalyticsBar';
@@ -158,17 +162,36 @@ export default function PipelinePage() {
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [latestComments, setLatestComments] = useState({});
+  const [scores, setScores] = useState({});
+  const [starAnimatingId, setStarAnimatingId] = useState(null);
+
+  async function toggleFavorite(e, companyId) {
+    e.stopPropagation();
+    const comp = companies.find((c) => c.id === companyId);
+    if (!comp) return;
+    const newVal = !comp.isFavorite;
+    updateCompany({ ...comp, isFavorite: newVal });
+    if (newVal) {
+      setStarAnimatingId(companyId);
+      setTimeout(() => setStarAnimatingId(null), 650);
+    }
+    try { await api.patch(`/companies/${companyId}/favorite`); }
+    catch { refresh(); }
+  }
 
   useEffect(() => {
     if (user?.id && !selectedUserId) setSelectedUserId(user.id);
   }, [user?.id, selectedUserId]);
 
-  // Fetch latest comments for pipeline companies
+  // Fetch latest comments and scores for pipeline companies
   useEffect(() => {
     const pipelineIds = companies.filter((c) => c.pipelineStage).map((c) => c.id);
     if (pipelineIds.length === 0) return;
     api.get(`/comments/latest-batch?entityType=COMPANY&entityIds=${pipelineIds.join(',')}`)
       .then(({ data }) => setLatestComments(data))
+      .catch(() => {});
+    api.get(`/companies/scores?ids=${pipelineIds.join(',')}`)
+      .then(({ data }) => setScores(data))
       .catch(() => {});
   }, [companies]);
 
@@ -439,9 +462,22 @@ export default function PipelinePage() {
                                     <GripVertical className="w-3.5 h-3.5" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <span className={`font-display font-semibold text-[13px] truncate block leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
-                                      {company.name}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={(e) => toggleFavorite(e, company.id)}
+                                        className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${starAnimatingId === company.id ? 'star-animate' : ''}`}
+                                        title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
+                                        style={{ transition: 'transform 150ms ease' }}
+                                      >
+                                        <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
+                                      </button>
+                                      <span className={`font-display font-semibold text-[13px] truncate leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
+                                        {company.name}
+                                      </span>
+                                      {scores[company.id] != null && (
+                                        <ProbabilityBadge score={scores[company.id]} size={28} />
+                                      )}
+                                    </div>
                                     {company.website && (
                                       <p className="text-[11px] text-gray-400 truncate font-body mt-0.5">{company.website}</p>
                                     )}
@@ -508,6 +544,16 @@ export default function PipelinePage() {
                                           <AlertTriangle className="w-3 h-3" />UiS
                                         </span>
                                       )}
+                                      {company.meetingStatus === 'MEETING_SET' && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 font-body" title={company.meetingDate ? `Meeting: ${new Date(company.meetingDate).toLocaleDateString('de-DE')}` : 'Meeting geplant'}>
+                                          <CalendarClock className="w-3 h-3" />Meeting
+                                        </span>
+                                      )}
+                                      {company.meetingStatus === 'MEETING_DONE' && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 font-body" title={company.meetingFollowUpAt ? `Follow-up: ${new Date(company.meetingFollowUpAt).toLocaleDateString('de-DE')}` : 'Meeting erledigt'}>
+                                          <CalendarCheck className="w-3 h-3" />Erledigt
+                                        </span>
+                                      )}
                                     </div>
                                     {(company.eigenkapital || company.verlustvortrag || company.gewinnvortrag) && (
                                       <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400 font-body">
@@ -526,8 +572,9 @@ export default function PipelinePage() {
                                       <div className="flex items-start gap-1.5 mt-2 text-[10px] text-gray-400 font-body">
                                         <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
                                         <span className="truncate" title={latestComments[company.id].content}>
-                                          {latestComments[company.id].content.length > 50
-                                            ? latestComments[company.id].content.slice(0, 50) + '...'
+                                          <span className="font-semibold text-gray-500">{latestComments[company.id].user?.name || 'Unbekannt'}:</span>{' '}
+                                          {latestComments[company.id].content.length > 40
+                                            ? latestComments[company.id].content.slice(0, 40) + '...'
                                             : latestComments[company.id].content}
                                         </span>
                                       </div>
@@ -653,9 +700,19 @@ export default function PipelinePage() {
                                     <GripVertical className="w-3.5 h-3.5" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <span className={`font-display font-semibold text-[13px] truncate block leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
-                                      {company.name}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={(e) => toggleFavorite(e, company.id)}
+                                        className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${starAnimatingId === company.id ? 'star-animate' : ''}`}
+                                        title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
+                                        style={{ transition: 'transform 150ms ease' }}
+                                      >
+                                        <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
+                                      </button>
+                                      <span className={`font-display font-semibold text-[13px] truncate leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
+                                        {company.name}
+                                      </span>
+                                    </div>
                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                       {company.assignedTo && (
                                         <span className="text-[11px] px-2 py-0.5 rounded-md font-medium" style={{ background: dark ? stage.bgLightDark : stage.bgLight, color: stage.color }}>
@@ -670,6 +727,16 @@ export default function PipelinePage() {
                                       {company.uisSchwierigkeiten && (
                                         <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 font-body" title={company.uisReason || 'Unternehmen in Schwierigkeiten'}>
                                           <AlertTriangle className="w-3 h-3" />UiS
+                                        </span>
+                                      )}
+                                      {company.meetingStatus === 'MEETING_SET' && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 font-body">
+                                          <CalendarClock className="w-3 h-3" />Meeting
+                                        </span>
+                                      )}
+                                      {company.meetingStatus === 'MEETING_DONE' && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 font-body">
+                                          <CalendarCheck className="w-3 h-3" />Erledigt
                                         </span>
                                       )}
                                     </div>

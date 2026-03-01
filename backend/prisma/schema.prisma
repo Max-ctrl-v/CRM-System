@@ -25,6 +25,19 @@ enum EntityType {
   CONTACT
 }
 
+enum MeetingStatus {
+  MEETING_SET
+  MEETING_DONE
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  STAGE_CHANGED
+  COMMENT_ADDED
+  OVERDUE_REMINDER
+  SYSTEM
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -35,12 +48,18 @@ model User {
   createdAt     DateTime  @default(now())
   lastLogin     DateTime?
 
+  totpSecret    String?
+  totpEnabled   Boolean   @default(false)
+
   assignedCompanies Company[] @relation("AssignedTo")
   createdCompanies  Company[] @relation("CreatedBy")
   comments          Comment[]
   createdTasks      Task[]    @relation("TaskCreatedBy")
   assignedTasks     Task[]    @relation("TaskAssignedTo")
   activities        Activity[]
+  notifications     Notification[]
+  attachments       Attachment[]
+  savedViews        SavedView[]
 
   @@map("users")
 }
@@ -63,7 +82,12 @@ model Company {
   uisSchwierigkeiten Boolean @default(false)
   uisReason        String?
   doNotCall        Boolean @default(false)
+  isFavorite       Boolean @default(false)
   adminPipeline    Boolean @default(false)
+
+  meetingStatus     MeetingStatus?
+  meetingDate       DateTime?
+  meetingFollowUpAt DateTime?
 
   assignedToId  String?
   assignedTo    User?         @relation("AssignedTo", fields: [assignedToId], references: [id])
@@ -73,6 +97,7 @@ model Company {
 
   contacts      Contact[]
   tasks         Task[]
+  attachments   Attachment[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -157,4 +182,56 @@ model Activity {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("activities")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileSize  Int
+  mimeType  String
+  path      String
+
+  companyId    String
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@map("attachments")
+}
+
+model SavedView {
+  id       String  @id @default(uuid())
+  name     String
+  filters  Json
+  isGlobal Boolean @default(false)
+
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("saved_views")
 }

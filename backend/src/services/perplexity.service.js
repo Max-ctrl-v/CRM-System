@@ -50,7 +50,8 @@ Antworte auf Deutsch und sei so spezifisch wie möglich.`;
     if (err.response?.status === 401) {
       throw new AppError('Perplexity API-Key ungültig.', 401);
     }
-    throw new AppError(`Perplexity-Anfrage fehlgeschlagen: ${err.message}`, 502);
+    console.error('Perplexity API error:', err.message);
+    throw new AppError('Recherche-Dienst vorübergehend nicht verfügbar.', 502);
   }
 }
 
@@ -103,7 +104,8 @@ Antworte auf Deutsch und sei so spezifisch wie möglich. Falls keine Information
     if (err.response?.status === 401) {
       throw new AppError('Perplexity API-Key ungültig.', 401);
     }
-    throw new AppError(`Perplexity-Anfrage fehlgeschlagen: ${err.message}`, 502);
+    console.error('Perplexity API error:', err.message);
+    throw new AppError('Recherche-Dienst vorübergehend nicht verfügbar.', 502);
   }
 }
 
@@ -143,7 +145,8 @@ async function freeSearch(query) {
     if (err.response?.status === 401) {
       throw new AppError('Perplexity API-Key ungültig.', 401);
     }
-    throw new AppError(`Perplexity-Anfrage fehlgeschlagen: ${err.message}`, 502);
+    console.error('Perplexity API error:', err.message);
+    throw new AppError('Recherche-Dienst vorübergehend nicht verfügbar.', 502);
   }
 }
 
@@ -191,7 +194,7 @@ Antworte NUR im folgenden JSON-Format (kein anderer Text):
     );
 
     const content = response.data.choices[0].message.content;
-    console.log('UiS check raw response:', content);
+    if (process.env.NODE_ENV !== 'production') console.log('UiS check raw response:', content);
     // Extract JSON from response (may be wrapped in markdown code blocks)
     const jsonMatch = content.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
@@ -204,9 +207,59 @@ Antworte NUR im folgenden JSON-Format (kein anderer Text):
     }
     return { uisSchwierigkeiten: false, uisReason: 'Konnte nicht automatisch ermittelt werden.', city: null };
   } catch (err) {
-    console.error('UiS check error:', err.response?.data || err.message);
-    return { uisSchwierigkeiten: false, uisReason: `Prüfung fehlgeschlagen: ${err.message}`, city: null };
+    console.error('UiS check error:', err.message);
+    return { uisSchwierigkeiten: false, uisReason: 'Prüfung fehlgeschlagen.', city: null };
   }
 }
 
-module.exports = { researchCompany, researchContact, freeSearch, checkUiS };
+async function findSimilarCompanies(companyName, website, industry, city) {
+  if (!PERPLEXITY_API_KEY) {
+    throw new AppError('Perplexity API-Key nicht konfiguriert.', 500);
+  }
+
+  const prompt = `Ich suche ähnliche Firmen wie "${companyName}"${website ? ` (Website: ${website})` : ''}${city ? ` mit Sitz in/nahe ${city}` : ''}.
+
+Die Firma ist im Bereich Forschungszulage (FZulG) relevant${industry ? ` und ist in der Branche: ${industry}` : ''}.
+
+Bitte nenne mir 5-8 deutsche Firmen, die:
+- In einer ähnlichen Branche oder einem ähnlichen Tätigkeitsfeld arbeiten
+- Ähnliche Größe oder ähnliches Profil haben
+- Potenzial für Forschungszulage nach FZulG haben könnten
+- Möglichst in der gleichen Region oder ähnlichen Städten ansässig sind
+
+Antworte NUR im folgenden JSON-Format (kein anderer Text):
+[{"name": "Firmenname", "city": "Stadt", "reason": "Kurze Begründung warum ähnlich", "website": "Website falls bekannt oder null"}]`;
+
+  try {
+    const response = await axios.post(
+      'https://api.perplexity.ai/chat/completions',
+      {
+        model: 'sonar',
+        messages: [
+          { role: 'system', content: 'Du bist ein Experte für deutsche Unternehmen und das Forschungszulagengesetz. Antworte ausschließlich im angeforderten JSON-Format.' },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 1500,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    );
+
+    const content = response.data.choices[0].message.content;
+    const jsonMatch = content.match(/\[[\s\S]*?\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return [];
+  } catch (err) {
+    console.error('Similar companies AI error:', err.message);
+    throw new AppError('KI-Recherche vorübergehend nicht verfügbar.', 502);
+  }
+}
+
+module.exports = { researchCompany, researchContact, freeSearch, checkUiS, findSimilarCompanies };

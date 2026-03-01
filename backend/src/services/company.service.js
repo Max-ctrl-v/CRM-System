@@ -44,20 +44,52 @@ async function getById(id) {
 }
 
 async function create(data, userId) {
-  return prisma.company.create({
-    data: {
-      name: data.name,
-      website: data.website || null,
-      city: data.city || null,
-      pipelineStage: data.pipelineStage || null,
-      assignedToId: data.assignedToId || null,
-      adminPipeline: !!data.adminPipeline,
-      createdById: userId,
-    },
-    include: {
-      assignedTo: { select: { id: true, name: true, email: true } },
-      createdBy: { select: { id: true, name: true } },
-    },
+  return prisma.$transaction(async (tx) => {
+    const company = await tx.company.create({
+      data: {
+        name: data.name,
+        website: data.website || null,
+        city: data.city || null,
+        pipelineStage: data.pipelineStage || null,
+        assignedToId: data.assignedToId || null,
+        adminPipeline: !!data.adminPipeline,
+        createdById: userId,
+      },
+      include: {
+        assignedTo: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true } },
+        _count: { select: { contacts: true } },
+      },
+    });
+
+    if (data.contacts && Array.isArray(data.contacts) && data.contacts.length > 0) {
+      for (const contact of data.contacts) {
+        if (contact.firstName?.trim() && contact.lastName?.trim()) {
+          await tx.contact.create({
+            data: {
+              firstName: contact.firstName.trim(),
+              lastName: contact.lastName.trim(),
+              email: contact.email?.trim() || null,
+              phone: contact.phone?.trim() || null,
+              position: contact.position?.trim() || null,
+              companyId: company.id,
+            },
+          });
+        }
+      }
+      // Re-fetch with correct _count after contacts were created
+      return tx.company.findUnique({
+        where: { id: company.id },
+        include: {
+          assignedTo: { select: { id: true, name: true, email: true } },
+          createdBy: { select: { id: true, name: true } },
+          contacts: { select: { firstName: true, lastName: true } },
+          _count: { select: { contacts: true } },
+        },
+      });
+    }
+
+    return company;
   });
 }
 
@@ -77,7 +109,11 @@ async function update(id, data) {
       ...(data.uisSchwierigkeiten !== undefined && { uisSchwierigkeiten: !!data.uisSchwierigkeiten }),
       ...(data.uisReason !== undefined && { uisReason: data.uisReason }),
       ...(data.doNotCall !== undefined && { doNotCall: !!data.doNotCall }),
+      ...(data.isFavorite !== undefined && { isFavorite: !!data.isFavorite }),
       ...(data.adminPipeline !== undefined && { adminPipeline: !!data.adminPipeline }),
+      ...(data.meetingStatus !== undefined && { meetingStatus: data.meetingStatus }),
+      ...(data.meetingDate !== undefined && { meetingDate: data.meetingDate ? new Date(data.meetingDate) : null }),
+      ...(data.meetingFollowUpAt !== undefined && { meetingFollowUpAt: data.meetingFollowUpAt ? new Date(data.meetingFollowUpAt) : null }),
     },
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },

@@ -132,4 +132,37 @@ router.post('/check-uis', asyncHandler(async (req, res) => {
   res.json(result);
 }));
 
+// POST /api/perplexity/similar-companies — AI-powered similar company search
+router.post('/similar-companies', asyncHandler(async (req, res) => {
+  const { companyId } = req.body;
+  if (!companyId) {
+    return res.status(400).json({ error: 'companyId erforderlich.' });
+  }
+
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { name: true, website: true, city: true, perplexityResult: true },
+  });
+  if (!company) {
+    return res.status(404).json({ error: 'Firma nicht gefunden.' });
+  }
+
+  // Extract industry hint from perplexity result if available
+  let industry = null;
+  if (company.perplexityResult) {
+    try {
+      const parsed = JSON.parse(company.perplexityResult);
+      industry = parsed.content?.slice(0, 200);
+    } catch { /* ignore */ }
+  }
+
+  const results = await perplexityService.findSimilarCompanies(
+    company.name,
+    company.website,
+    industry,
+    company.city
+  );
+  res.json(results);
+}));
+
 module.exports = router;
