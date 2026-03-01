@@ -70,8 +70,8 @@ async function verify2FA(tempToken, code) {
   const user = await prisma.user.findUnique({ where: { id: decoded.id } });
   if (!user || !user.totpSecret) throw new AppError('2FA nicht konfiguriert.', 400);
 
-  const otplib = require('otplib');
-  const valid = otplib.verifySync(code, user.totpSecret);
+  const { verifySync } = require('../utils/totp');
+  const valid = verifySync(code, user.totpSecret);
   if (!valid) throw new AppError('Ungültiger 2FA-Code.', 401);
 
   const accessToken = generateAccessToken(user);

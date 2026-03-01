@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const authenticate = require('../middleware/auth');
-const otplib = require('otplib');
+const { generateSecret, generateURI, verifySync } = require('../utils/totp');
 const qrcode = require('qrcode');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -13,8 +13,8 @@ router.use(authenticate);
 
 // POST /api/totp/setup — generate TOTP secret + QR
 router.post('/setup', asyncHandler(async (req, res) => {
-  const secret = otplib.generateSecret();
-  const otpauth = otplib.generateURI({ issuer: ISSUER, label: req.user.email, secret });
+  const secret = generateSecret();
+  const otpauth = generateURI({ issuer: ISSUER, label: req.user.email, secret });
   const qrDataUrl = await qrcode.toDataURL(otpauth);
 
   // Save secret temporarily (not enabled yet)
@@ -36,7 +36,7 @@ router.post('/verify', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Bitte zuerst 2FA einrichten.' });
   }
 
-  const valid = otplib.verifySync(code, user.totpSecret);
+  const valid = verifySync(code, user.totpSecret);
   if (!valid) {
     return res.status(400).json({ error: 'Ungültiger Code.' });
   }
