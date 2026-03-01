@@ -2,16 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useCompanies } from '../context/CompaniesContext';
 import { Send, Trash2, MessageSquare, AtSign } from 'lucide-react';
 
 export default function CommentSection({ entityType, entityId }) {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { allUsers } = useCompanies();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [allUsers, setAllUsers] = useState([]);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -21,10 +22,6 @@ export default function CommentSection({ entityType, entityId }) {
   useEffect(() => {
     loadComments();
   }, [entityType, entityId]);
-
-  useEffect(() => {
-    api.get('/auth/users').then(({ data }) => setAllUsers(data)).catch(() => {});
-  }, []);
 
   const filteredMentionUsers = allUsers.filter((u) =>
     u.name.toLowerCase().includes(mentionSearch.toLowerCase()) && u.id !== user?.id

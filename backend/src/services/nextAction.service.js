@@ -135,12 +135,99 @@ async function suggest(companyId) {
 }
 
 async function batchSuggest(companyIds) {
+  if (companyIds.length === 0) return {};
+
+  // Single query for all companies
+  const companies = await prisma.company.findMany({
+    where: { id: { in: companyIds } },
+    include: {
+      contacts: { select: { id: true } },
+      tasks: {
+        where: { done: false },
+        orderBy: { dueDate: 'asc' },
+        take: 1,
+      },
+    },
+  });
+
+  // Batch fetch latest activities and comments
+  const [activities, comments] = await Promise.all([
+    prisma.activity.findMany({
+      where: { entityType: 'COMPANY', entityId: { in: companyIds } },
+      orderBy: { createdAt: 'desc' },
+      distinct: ['entityId'],
+    }),
+    prisma.comment.findMany({
+      where: { entityType: 'COMPANY', entityId: { in: companyIds } },
+      orderBy: { createdAt: 'desc' },
+      distinct: ['entityId'],
+    }),
+  ]);
+
+  const activityMap = {};
+  for (const a of activities) activityMap[a.entityId] = a;
+
   const results = {};
-  await Promise.all(
-    companyIds.map(async (id) => {
-      results[id] = await suggest(id);
-    })
-  );
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+
+  for (const company of companies) {
+    const lastActivity = activityMap[company.id];
+    const daysSinceActivity = lastActivity
+      ? (Date.now() - lastActivity.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+      : Infinity;
+
+    const suggestions = [];
+
+    if (company.contacts.length === 0) {
+      suggestions.push({ priority: 'high', action: 'Ansprechpartner hinzufügen', reason: 'Kein Kontakt hinterlegt' });
+    }
+
+    switch (company.pipelineStage) {
+      case 'FIRMA_IDENTIFIZIERT':
+        suggestions.push({ priority: 'high', action: 'Erstkontakt aufnehmen', reason: 'Firma noch nicht kontaktiert' });
+        if (!company.perplexityResult) {
+          suggestions.push({ priority: 'medium', action: 'Perplexity-Recherche durchführen', reason: 'Noch keine Firmenrecherche vorhanden' });
+        }
+        break;
+      case 'FIRMA_KONTAKTIERT':
+        if (daysSinceActivity > 7) {
+          suggestions.push({ priority: 'high', action: 'Follow-up Anruf planen', reason: `Letzte Aktivität vor ${Math.round(daysSinceActivity)} Tagen` });
+        }
+        suggestions.push({ priority: 'medium', action: 'Termin für Erstgespräch vereinbaren', reason: 'Nächster Schritt in der Pipeline' });
+        break;
+      case 'VERHANDLUNG':
+        if (!company.expectedRevenue) {
+          suggestions.push({ priority: 'high', action: 'Erwarteten Umsatz eintragen', reason: 'Kein erwarteter Umsatz hinterlegt' });
+        }
+        if (daysSinceActivity > 5) {
+          suggestions.push({ priority: 'high', action: 'Status-Update einholen', reason: `Letzte Aktivität vor ${Math.round(daysSinceActivity)} Tagen` });
+        }
+        break;
+      case 'CLOSED_WON':
+        if (daysSinceActivity > 30) {
+          suggestions.push({ priority: 'low', action: 'Kundenzufriedenheit prüfen', reason: 'Längere Zeit kein Kontakt' });
+        }
+        break;
+      case 'CLOSED_LOST':
+        if (daysSinceActivity > 90) {
+          suggestions.push({ priority: 'low', action: 'Erneute Kontaktaufnahme prüfen', reason: 'Mehr als 90 Tage seit letztem Kontakt' });
+        }
+        break;
+    }
+
+    const overdueTask = company.tasks.find((t) => t.dueDate && new Date(t.dueDate) < new Date());
+    if (overdueTask) {
+      suggestions.push({ priority: 'high', action: 'Überfällige Aufgabe erledigen', reason: `"${overdueTask.title}" ist überfällig` });
+    }
+
+    if (daysSinceActivity > 14 && !['CLOSED_WON', 'CLOSED_LOST'].includes(company.pipelineStage)) {
+      suggestions.push({ priority: 'high', action: 'Kontakt wiederaufnehmen', reason: `Keine Aktivität seit ${Math.round(daysSinceActivity)} Tagen` });
+    }
+
+    suggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    results[company.id] = suggestions.length > 0 ? suggestions[0] : { priority: 'low', action: 'Keine Aktion nötig', reason: 'Alles auf dem aktuellen Stand' };
+  }
+
   return results;
 }
 

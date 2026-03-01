@@ -18,19 +18,24 @@ function startMeetingFollowUpCron() {
         },
       });
 
-      for (const company of companies) {
-        if (company.assignedToId) {
-          await notificationService.create({
+      // Create notifications in parallel
+      const notificationPromises = companies
+        .filter((c) => c.assignedToId)
+        .map((company) =>
+          notificationService.create({
             type: 'OVERDUE_REMINDER',
             title: 'Follow-Up fällig',
             message: `Follow-Up für "${company.name}" ist fällig (Termin war am ${company.meetingDate?.toLocaleDateString('de-DE')}).`,
             link: `/company/${company.id}`,
             userId: company.assignedToId,
-          });
-        }
-        // Clear follow-up date so we don't re-notify
-        await prisma.company.update({
-          where: { id: company.id },
+          }).catch((err) => console.error(`[MeetingFollowUp] Notification failed for ${company.name}:`, err.message))
+        );
+      await Promise.allSettled(notificationPromises);
+
+      // Single bulk update to clear all follow-up dates
+      if (companies.length > 0) {
+        await prisma.company.updateMany({
+          where: { id: { in: companies.map((c) => c.id) } },
           data: { meetingFollowUpAt: null },
         });
       }

@@ -12,18 +12,25 @@ function startDigestCron() {
         select: { id: true, email: true, name: true },
       });
 
-      for (const user of users) {
-        try {
-          const digest = await compileDigest(user.id);
-          const html = buildDigestHtml(digest, user.name);
-          await sendMail({
-            to: user.email,
-            subject: 'CRM Pipeline — Wochenübersicht',
-            html,
-          });
-          console.log(`[Digest] Sent to ${user.email}`);
-        } catch (err) {
-          console.error(`[Digest] Failed for ${user.email}:`, err.message);
+      // Process in batches of 5 for parallel sending
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < users.length; i += BATCH_SIZE) {
+        const batch = users.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map(async (u) => {
+            const digest = await compileDigest(u.id);
+            const html = buildDigestHtml(digest, u.name);
+            await sendMail({
+              to: u.email,
+              subject: 'CRM Pipeline — Wochenübersicht',
+              html,
+            });
+            return u.email;
+          })
+        );
+        for (const r of results) {
+          if (r.status === 'fulfilled') console.log(`[Digest] Sent to ${r.value}`);
+          else console.error(`[Digest] Failed:`, r.reason?.message);
         }
       }
       console.log('[Digest] Weekly digest complete.');

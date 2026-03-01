@@ -87,40 +87,45 @@ router.get('/stats', asyncHandler(async (req, res) => {
 // GET /api/dashboard/revenue-forecast
 router.get('/revenue-forecast', asyncHandler(async (req, res) => {
   const now = new Date();
-  const months = [];
   const companyScope = req.user.role === 'ADMIN' ? {} : {
     OR: [{ assignedToId: req.user.id }, { createdById: req.user.id }],
   };
 
+  // Calculate date range for all 6 months
+  const rangeStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const rangeEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+  // Single query to get all relevant companies in the 6-month range
+  const companies = await prisma.company.findMany({
+    where: {
+      updatedAt: { gte: rangeStart, lte: rangeEnd },
+      expectedRevenue: { not: null },
+      ...companyScope,
+    },
+    select: {
+      pipelineStage: true,
+      expectedRevenue: true,
+      updatedAt: true,
+    },
+  });
+
+  // Build month buckets in JS
+  const months = [];
   for (let i = 5; i >= 0; i--) {
     const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
     const label = start.toLocaleString('de-DE', { month: 'short', year: '2-digit' });
 
-    const [won, pipeline] = await Promise.all([
-      prisma.company.aggregate({
-        _sum: { expectedRevenue: true },
-        where: {
-          pipelineStage: 'CLOSED_WON',
-          updatedAt: { gte: start, lte: end },
-          ...companyScope,
-        },
-      }),
-      prisma.company.aggregate({
-        _sum: { expectedRevenue: true },
-        where: {
-          pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
-          updatedAt: { gte: start, lte: end },
-          ...companyScope,
-        },
-      }),
-    ]);
+    let won = 0;
+    let pipeline = 0;
+    for (const c of companies) {
+      if (c.updatedAt >= start && c.updatedAt <= end && c.expectedRevenue) {
+        if (c.pipelineStage === 'CLOSED_WON') won += c.expectedRevenue;
+        else if (['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'].includes(c.pipelineStage)) pipeline += c.expectedRevenue;
+      }
+    }
 
-    months.push({
-      label,
-      won: won._sum.expectedRevenue || 0,
-      pipeline: pipeline._sum.expectedRevenue || 0,
-    });
+    months.push({ label, won, pipeline });
   }
 
   res.json(months);

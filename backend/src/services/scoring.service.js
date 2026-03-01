@@ -58,12 +58,51 @@ async function calculateScore(companyId) {
 }
 
 async function batchScores(companyIds) {
+  if (companyIds.length === 0) return {};
+
+  // Single query for all companies instead of N+1
+  const companies = await prisma.company.findMany({
+    where: { id: { in: companyIds } },
+    include: {
+      contacts: { select: { id: true } },
+      tasks: { select: { id: true, done: true } },
+    },
+  });
+
+  // Single query for latest activities per company
+  const activities = await prisma.activity.findMany({
+    where: { entityType: 'COMPANY', entityId: { in: companyIds } },
+    orderBy: { createdAt: 'desc' },
+    distinct: ['entityId'],
+  });
+  const activityMap = {};
+  for (const a of activities) activityMap[a.entityId] = a;
+
   const results = {};
-  await Promise.all(
-    companyIds.map(async (id) => {
-      results[id] = await calculateScore(id);
-    })
-  );
+  for (const company of companies) {
+    let score = 0;
+    const stageWeight = STAGE_WEIGHTS[company.pipelineStage] || 0;
+    score += stageWeight * 0.4;
+    score += Math.min(company.contacts.length, 3) * 5;
+
+    const recentActivity = activityMap[company.id];
+    if (recentActivity) {
+      const daysSince = (Date.now() - recentActivity.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSince < 3) score += 20;
+      else if (daysSince < 7) score += 15;
+      else if (daysSince < 14) score += 10;
+      else if (daysSince < 30) score += 5;
+    }
+
+    const totalTasks = company.tasks.length;
+    if (totalTasks > 0) {
+      const doneTasks = company.tasks.filter((t) => t.done).length;
+      score += (doneTasks / totalTasks) * 15;
+    }
+    if (company.expectedRevenue && company.expectedRevenue > 0) score += 10;
+
+    results[company.id] = Math.min(Math.round(score), 100);
+  }
   return results;
 }
 

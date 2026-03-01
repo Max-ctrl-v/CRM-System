@@ -7,7 +7,6 @@ const activityService = require('../services/activity.service');
 const scoringService = require('../services/scoring.service');
 const nextActionService = require('../services/nextAction.service');
 const similarityService = require('../services/similarity.service');
-const { parse } = require('csv-parse');
 const prisma = require('../lib/prisma');
 
 router.use(authenticate);

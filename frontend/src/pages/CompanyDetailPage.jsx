@@ -72,19 +72,18 @@ export default function CompanyDetailPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
   const { dark } = useTheme();
-  const { removeCompany } = useCompanies();
+  const { removeCompany, allUsers } = useCompanies();
 
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({});
-  const [users, setUsers] = useState([]);
+  const users = allUsers;
   const [activeTab, setActiveTab] = useState('contacts');
   const [checkingUiS, setCheckingUiS] = useState(false);
 
   useEffect(() => {
     loadCompany();
-    api.get('/auth/users').then(({ data }) => setUsers(data)).catch(() => {});
   }, [id]);
 
   async function loadCompany() {

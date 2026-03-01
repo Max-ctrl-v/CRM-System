@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const { PORT, CORS_ORIGIN, NODE_ENV, SENTRY_DSN } = require('./config/env');
@@ -37,6 +38,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
+app.use(compression());
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -74,9 +76,15 @@ app.use('/api/attachments', apiLimiter, attachmentRoutes);
 app.use('/api/saved-views', apiLimiter, savedViewRoutes);
 app.use('/api/totp', apiLimiter, totpRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check with DB verification
+app.get('/api/health', async (req, res) => {
+  try {
+    const prisma = require('./lib/prisma');
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', db: 'disconnected', timestamp: new Date().toISOString() });
+  }
 });
 
 // Error handler

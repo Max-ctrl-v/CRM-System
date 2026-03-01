@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useCompanies } from '../context/CompaniesContext';
 import { X, Building2, Sparkles, UserPlus, Trash2 } from 'lucide-react';
 
 const PIPELINE_OPTIONS = [
@@ -16,37 +17,21 @@ const PIPELINE_OPTIONS = [
 export default function CreateCompanyModal({ onClose, onCreated, showPipelineOption = false }) {
   const { user } = useAuth();
   const { dark } = useTheme();
+  const { allUsers } = useCompanies();
+  const users = allUsers;
   const [name, setName] = useState('');
   const [website, setWebsite] = useState('');
   const [city, setCity] = useState('');
   const [assignedToId, setAssignedToId] = useState('');
   const [pipelineStage, setPipelineStage] = useState(showPipelineOption ? '' : 'FIRMA_IDENTIFIZIERT');
-  const [users, setUsers] = useState([]);
   const [adminPipeline, setAdminPipeline] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const headerRef = useRef(null);
-  const footerRef = useRef(null);
-  const [formMaxH, setFormMaxH] = useState(400);
-
-  const recalc = useCallback(() => {
-    const wh = window.innerHeight;
-    const modalH = wh * 0.85;
-    const hh = headerRef.current?.offsetHeight || 60;
-    const fh = footerRef.current?.offsetHeight || 60;
-    const padding = 40; // 20px top + 20px bottom
-    setFormMaxH(Math.max(150, modalH - hh - fh - padding));
-  }, []);
 
   useEffect(() => {
-    recalc();
-    window.addEventListener('resize', recalc);
-    return () => window.removeEventListener('resize', recalc);
-  }, [recalc]);
-
-  // Recalculate when refs are measured
-  useEffect(() => { recalc(); }, [contacts.length, recalc]);
+    if (user?.id) setAssignedToId(user.id);
+  }, [user?.id]);
 
   function addContact() {
     setContacts((prev) => [...prev, { firstName: '', lastName: '', email: '', phone: '', position: '' }]);
@@ -59,13 +44,6 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   function removeContact(index) {
     setContacts((prev) => prev.filter((_, i) => i !== index));
   }
-
-  useEffect(() => {
-    api.get('/auth/users').then(({ data }) => {
-      setUsers(data);
-      if (user?.id) setAssignedToId(user.id);
-    }).catch(() => {});
-  }, [user?.id]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -104,16 +82,14 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl w-full max-w-lg mx-4 border border-border-light"
+        className="bg-white rounded-2xl w-full max-w-lg mx-4 border border-border-light flex flex-col"
         style={{
           maxHeight: '85vh',
-          padding: '20px 24px',
-          boxSizing: 'border-box',
           boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div ref={headerRef} className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-brand-50 rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-brand-600" />
@@ -125,7 +101,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', maxHeight: `${formMaxH}px` }}>
+        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 px-6 pr-5 overflow-y-auto min-h-0 flex-1">
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
@@ -244,7 +220,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
             </div>
         </form>
 
-        <div ref={footerRef} className="flex gap-3 pt-3 border-t border-border-light mt-3">
+        <div className="flex gap-3 px-6 py-4 border-t border-border-light shrink-0">
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button type="submit" form="create-company-form" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
         </div>

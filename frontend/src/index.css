@@ -3,10 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    zoom: 1.5;
-  }
-
   body {
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.7;

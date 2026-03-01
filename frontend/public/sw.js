@@ -34,10 +34,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Cache successful responses for offline fallback
+        // Cache successful responses for offline fallback (static assets only)
         if (response.ok) {
           const url = new URL(request.url);
-          if (url.pathname.match(/\.(js|css|png|svg|woff2?)$/) || url.pathname === '/') {
+          // Never cache API responses
+          if (!url.pathname.startsWith('/api/') && (url.pathname.match(/\.(js|css|png|svg|woff2?)$/) || url.pathname === '/')) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
