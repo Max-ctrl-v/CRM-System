@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -26,6 +26,27 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const headerRef = useRef(null);
+  const footerRef = useRef(null);
+  const [formMaxH, setFormMaxH] = useState(400);
+
+  const recalc = useCallback(() => {
+    const wh = window.innerHeight;
+    const modalH = wh * 0.85;
+    const hh = headerRef.current?.offsetHeight || 60;
+    const fh = footerRef.current?.offsetHeight || 60;
+    const padding = 40; // 20px top + 20px bottom
+    setFormMaxH(Math.max(150, modalH - hh - fh - padding));
+  }, []);
+
+  useEffect(() => {
+    recalc();
+    window.addEventListener('resize', recalc);
+    return () => window.removeEventListener('resize', recalc);
+  }, [recalc]);
+
+  // Recalculate when refs are measured
+  useEffect(() => { recalc(); }, [contacts.length, recalc]);
 
   function addContact() {
     setContacts((prev) => [...prev, { firstName: '', lastName: '', email: '', phone: '', position: '' }]);
@@ -85,17 +106,14 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
       <div
         className="bg-white rounded-2xl w-full max-w-lg mx-4 border border-border-light"
         style={{
-          display: 'grid',
-          gridTemplateRows: 'auto minmax(0, 1fr) auto',
           maxHeight: '85vh',
-          overflow: 'hidden',
           padding: '20px 24px',
           boxSizing: 'border-box',
           boxShadow: dark ? '0 8px 16px rgba(0,0,0,0.4), 0 20px 48px rgba(0,0,0,0.35)' : '0 8px 16px rgba(0,0,0,0.1), 0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.03)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div ref={headerRef} className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-brand-50 rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-brand-600" />
@@ -107,7 +125,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
           </button>
         </div>
 
-        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', minHeight: 0 }}>
+        <form id="create-company-form" onSubmit={handleSubmit} className="space-y-3 pr-1" style={{ overflowY: 'auto', maxHeight: `${formMaxH}px` }}>
             {error && <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm font-body">{error}</div>}
 
             <div>
@@ -226,7 +244,7 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
             </div>
         </form>
 
-        <div className="flex gap-3 pt-3 border-t border-border-light mt-3">
+        <div ref={footerRef} className="flex gap-3 pt-3 border-t border-border-light mt-3">
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Abbrechen</button>
           <button type="submit" form="create-company-form" disabled={loading} className="btn-primary flex-1">{loading ? 'Erstellen...' : 'Erstellen'}</button>
         </div>
