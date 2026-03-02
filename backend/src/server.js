@@ -47,8 +47,8 @@ app.use(cookieParser());
 app.use(compression());
 
 // Serve uploaded files (require authentication)
-const { authenticate } = require('./middleware/auth');
-app.use('/uploads', authenticate, express.static(path.join(__dirname, '../uploads')));
+const authMiddleware = require('./middleware/auth');
+app.use('/uploads', authMiddleware, express.static(path.join(__dirname, '../uploads')));
 
 // Rate limiting for login, 2FA, and refresh endpoints
 const authLimiter = rateLimit({
