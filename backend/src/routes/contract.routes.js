@@ -58,7 +58,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const fileSize = fs.existsSync(absPath) ? fs.statSync(absPath).size : 0;
   prisma.attachment.create({
     data: {
-      fileName: `Vertrag-${contract.contractNumber}.pdf`,
+      fileName: `Vertrag ${contract.contractNumber.split('-').pop()}.pdf`,
       fileSize,
       mimeType: 'application/pdf',
       path: pdfPath,
@@ -93,7 +93,8 @@ router.get('/:id/download', asyncHandler(async (req, res) => {
   if (!filePath.startsWith(uploadsDir)) {
     return res.status(400).json({ error: 'Ungültiger Dateipfad.' });
   }
-  res.download(filePath, `Vertrag-${contract.contractNumber}.pdf`);
+  const seqNum = contract.contractNumber.split('-').pop();
+  res.download(filePath, `Vertrag ${seqNum}.pdf`);
 }));
 
 module.exports = router;

@@ -25,7 +25,9 @@ function formatDate(date) {
 async function generateContractPdf(contract) {
   ensureDir();
 
-  const fileName = `Vertrag-${contract.contractNumber}.pdf`;
+  // Extract sequential number from contractNumber (e.g. NV-2026-0001 → 0001)
+  const seqNum = contract.contractNumber.split('-').pop();
+  const fileName = `Vertrag ${seqNum}.pdf`;
   const filePath = path.join(UPLOADS_DIR, fileName);
   const relativePath = `contracts/${fileName}`;
 

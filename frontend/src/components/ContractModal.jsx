@@ -59,9 +59,20 @@ export default function ContractModal({ company, onClose, onComplete }) {
     }
   }
 
-  function handleDownload() {
+  async function handleDownload() {
     if (!success) return;
-    window.open(`${API_URL}/contracts/${success.id}/download`, '_blank');
+    try {
+      const { data } = await api.get(`/contracts/${success.id}/download`, { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vertrag ${success.contractNumber.split('-').pop()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: direct open (will fail if auth required)
+      window.open(`${API_URL}/contracts/${success.id}/download`, '_blank');
+    }
   }
 
   function handleDone() {
