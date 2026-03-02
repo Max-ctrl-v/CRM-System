@@ -7,9 +7,6 @@ const authenticate = (req, res, next) => {
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
-  } else if (req.query.token) {
-    // Allow token via query param (for SSE EventSource which can't set headers)
-    token = req.query.token;
   }
 
   if (!token) {

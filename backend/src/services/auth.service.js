@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { JWT_SECRET, JWT_REFRESH_SECRET } = require('../config/env');
@@ -7,6 +8,11 @@ const { AppError } = require('../middleware/errorHandler');
 const SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = '1h';
 const REFRESH_TOKEN_EXPIRY = '7d';
+
+/** SHA-256 hash a token for safe DB storage */
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 function generateAccessToken(user) {
   return jwt.sign(
@@ -46,7 +52,7 @@ async function login(email, password) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshToken, lastLogin: new Date() },
+    data: { refreshToken: hashToken(refreshToken), lastLogin: new Date() },
   });
 
   return {
@@ -77,7 +83,7 @@ async function verify2FA(tempToken, code) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshToken, lastLogin: new Date() },
+    data: { refreshToken: hashToken(refreshToken), lastLogin: new Date() },
   });
 
   return {
@@ -98,7 +104,13 @@ async function refresh(refreshToken) {
   }
 
   const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-  if (!user || user.refreshToken !== refreshToken) {
+  if (!user || !user.refreshToken) {
+    throw new AppError('Ungültiges Refresh-Token.', 401);
+  }
+
+  // Compare hashed token (with backward compat for plaintext migration)
+  const hashed = hashToken(refreshToken);
+  if (user.refreshToken !== hashed && user.refreshToken !== refreshToken) {
     throw new AppError('Ungültiges Refresh-Token.', 401);
   }
 
@@ -107,7 +119,7 @@ async function refresh(refreshToken) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { refreshToken: newRefreshToken },
+    data: { refreshToken: hashToken(newRefreshToken) },
   });
 
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };

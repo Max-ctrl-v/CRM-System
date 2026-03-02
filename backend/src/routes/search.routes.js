@@ -11,9 +11,17 @@ router.get('/', asyncHandler(async (req, res) => {
   const { q } = req.query;
   if (!q || q.length < 2 || q.length > 200) return res.json({ companies: [], contacts: [], tasks: [] });
 
+  // Non-admin users cannot see entities linked to admin-assigned companies
+  const accessFilter = req.user.role !== 'ADMIN'
+    ? { NOT: { assignedTo: { role: 'ADMIN' } } }
+    : {};
+  const relAccessFilter = req.user.role !== 'ADMIN'
+    ? { company: { NOT: { assignedTo: { role: 'ADMIN' } } } }
+    : {};
+
   const [companies, contacts, tasks] = await Promise.all([
     prisma.company.findMany({
-      where: { name: { contains: q, mode: 'insensitive' } },
+      where: { name: { contains: q, mode: 'insensitive' }, ...accessFilter },
       select: { id: true, name: true, pipelineStage: true, website: true },
       take: 5,
     }),
@@ -24,12 +32,13 @@ router.get('/', asyncHandler(async (req, res) => {
           { lastName: { contains: q, mode: 'insensitive' } },
           { email: { contains: q, mode: 'insensitive' } },
         ],
+        ...relAccessFilter,
       },
       select: { id: true, firstName: true, lastName: true, email: true, companyId: true, company: { select: { name: true } } },
       take: 5,
     }),
     prisma.task.findMany({
-      where: { title: { contains: q, mode: 'insensitive' } },
+      where: { title: { contains: q, mode: 'insensitive' }, ...relAccessFilter },
       select: { id: true, title: true, done: true, companyId: true, company: { select: { name: true } } },
       take: 5,
     }),

@@ -29,7 +29,6 @@ export function NotificationProvider({ children }) {
     fetchNotifications();
 
     let sseConnected = false;
-    const token = localStorage.getItem('accessToken');
 
     const startPolling = () => {
       if (pollRef.current) return;
@@ -42,18 +41,21 @@ export function NotificationProvider({ children }) {
       }
     };
 
-    if (token) {
-      try {
-        const es = new EventSource(`${API_BASE}/notifications/stream?token=${encodeURIComponent(token)}`);
+    // Fetch a one-time SSE ticket, then open EventSource
+    let cancelled = false;
+    api.post('/auth/sse-ticket')
+      .then(({ data }) => {
+        if (cancelled) return;
+        const es = new EventSource(`${API_BASE}/notifications/stream?ticket=${encodeURIComponent(data.ticket)}`);
         sseRef.current = es;
 
         es.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'NEW_NOTIFICATION') {
-              setNotifications((prev) => [data.notification, ...prev].slice(0, 30));
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'NEW_NOTIFICATION') {
+              setNotifications((prev) => [msg.notification, ...prev].slice(0, 30));
               setUnreadCount((prev) => prev + 1);
-            } else if (data.type === 'CONNECTED') {
+            } else if (msg.type === 'CONNECTED') {
               sseConnected = true;
               stopPolling();
             }
@@ -68,12 +70,10 @@ export function NotificationProvider({ children }) {
           sseConnected = false;
           startPolling();
         };
-      } catch {
-        startPolling();
-      }
-    } else {
-      startPolling();
-    }
+      })
+      .catch(() => {
+        if (!cancelled) startPolling();
+      });
 
     const handleVisibility = () => {
       if (document.hidden) {
@@ -87,6 +87,7 @@ export function NotificationProvider({ children }) {
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
+      cancelled = true;
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibility);
       if (sseRef.current) {

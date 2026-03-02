@@ -4,6 +4,10 @@ const asyncHandler = require('../utils/asyncHandler');
 const contactService = require('../services/contact.service');
 const authenticate = require('../middleware/auth');
 const activityService = require('../services/activity.service');
+const pick = require('../utils/pick');
+
+const CONTACT_CREATE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'position', 'companyId'];
+const CONTACT_UPDATE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'position'];
 
 router.use(authenticate);
 
@@ -30,7 +34,8 @@ router.post('/', asyncHandler(async (req, res) => {
   if (firstName.trim().length > 100 || lastName.trim().length > 100) {
     return res.status(400).json({ error: 'Name zu lang (max. 100 Zeichen).' });
   }
-  const contact = await contactService.create(req.body);
+  const safeData = pick(req.body, CONTACT_CREATE_FIELDS);
+  const contact = await contactService.create(safeData);
   activityService.log('CONTACT_ADDED', 'COMPANY', contact.companyId, req.user.id, { contactName: `${contact.firstName} ${contact.lastName}` }).catch(() => {});
   res.status(201).json(contact);
 }));
@@ -44,7 +49,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   if (lastName !== undefined && !lastName?.trim()) {
     return res.status(400).json({ error: 'Nachname darf nicht leer sein.' });
   }
-  const contact = await contactService.update(req.params.id, req.body);
+  const safeData = pick(req.body, CONTACT_UPDATE_FIELDS);
+  const contact = await contactService.update(req.params.id, safeData);
   res.json(contact);
 }));
 

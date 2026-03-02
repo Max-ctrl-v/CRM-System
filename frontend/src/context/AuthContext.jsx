@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api, { onTokensStored } from '../services/api';
+import api, { setAccessToken, clearAccessToken } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -7,20 +7,20 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // On mount: try to restore session via httpOnly refresh cookie
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      api
-        .get('/auth/me')
-        .then(({ data }) => setUser(data))
-        .catch(() => {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    api
+      .post('/auth/refresh')
+      .then(({ data }) => {
+        setAccessToken(data.accessToken);
+        return api.get('/auth/me');
+      })
+      .then(({ data }) => setUser(data))
+      .catch(() => {
+        // No valid session — user must log in
+        clearAccessToken();
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   async function login(email, password) {
@@ -28,18 +28,15 @@ export function AuthProvider({ children }) {
     if (data.requires2FA) {
       return { requires2FA: true, tempToken: data.tempToken };
     }
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    onTokensStored();
+    // Access token in memory; refresh token set as httpOnly cookie by backend
+    setAccessToken(data.accessToken);
     setUser(data.user);
     return data.user;
   }
 
   async function verify2FA(tempToken, code) {
     const { data } = await api.post('/auth/login/2fa', { tempToken, code });
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    onTokensStored();
+    setAccessToken(data.accessToken);
     setUser(data.user);
     return data.user;
   }
@@ -50,8 +47,7 @@ export function AuthProvider({ children }) {
     } catch {
       // Ignore errors — clear local state regardless
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    clearAccessToken();
     setUser(null);
   }
 

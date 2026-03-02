@@ -7,7 +7,30 @@ const activityService = require('../services/activity.service');
 const scoringService = require('../services/scoring.service');
 const nextActionService = require('../services/nextAction.service');
 const similarityService = require('../services/similarity.service');
+const pick = require('../utils/pick');
 const prisma = require('../lib/prisma');
+
+// Allowed fields for mass assignment protection
+const COMPANY_CREATE_FIELDS = ['name', 'website', 'city', 'pipelineStage', 'assignedToId', 'adminPipeline', 'contacts', 'expectedRevenue'];
+const COMPANY_UPDATE_FIELDS = [
+  'name', 'website', 'city', 'pipelineStage', 'assignedToId', 'adminPipeline',
+  'eigenkapital', 'verlustvortrag', 'gewinnvortrag', 'expectedRevenue',
+  'uisSchwierigkeiten', 'uisReason', 'doNotCall', 'isFavorite',
+  'meetingStatus', 'meetingDate', 'meetingFollowUpAt',
+];
+
+/** IDOR: assert non-admin user can modify this company */
+async function assertWriteAccess(user, companyId) {
+  if (user.role === 'ADMIN') return;
+  const company = await companyService.getById(companyId);
+  if (company.assignedTo?.role === 'ADMIN') {
+    return { error: 'Kein Zugriff auf diese Firma.', status: 403 };
+  }
+  if (company.assignedToId && company.assignedToId !== user.id && company.createdById !== user.id) {
+    return { error: 'Keine Berechtigung zum Bearbeiten.', status: 403 };
+  }
+  return null;
+}
 
 router.use(authenticate);
 
@@ -112,14 +135,19 @@ router.post('/', asyncHandler(async (req, res) => {
   if (!name || !name.trim() || name.trim().length > 255) {
     return res.status(400).json({ error: 'Firmenname ist erforderlich (max. 255 Zeichen).' });
   }
-  const company = await companyService.create(req.body, req.user.id);
+  const safeData = pick(req.body, COMPANY_CREATE_FIELDS);
+  const company = await companyService.create(safeData, req.user.id);
   activityService.log('COMPANY_CREATED', 'COMPANY', company.id, req.user.id, { companyName: company.name }).catch(() => {});
   res.status(201).json(company);
 }));
 
 // PUT /api/companies/:id
 router.put('/:id', asyncHandler(async (req, res) => {
-  const company = await companyService.update(req.params.id, req.body);
+  const denied = await assertWriteAccess(req.user, req.params.id);
+  if (denied) return res.status(denied.status).json({ error: denied.error });
+
+  const safeData = pick(req.body, COMPANY_UPDATE_FIELDS);
+  const company = await companyService.update(req.params.id, safeData);
   activityService.log('COMPANY_UPDATED', 'COMPANY', req.params.id, req.user.id, { companyName: company.name }).catch(() => {});
   res.json(company);
 }));
@@ -128,6 +156,10 @@ router.put('/:id', asyncHandler(async (req, res) => {
 router.patch('/:id/stage', asyncHandler(async (req, res) => {
   const { stage } = req.body;
   if (stage === undefined) return res.status(400).json({ error: 'Pipeline-Stufe erforderlich.' });
+
+  const denied = await assertWriteAccess(req.user, req.params.id);
+  if (denied) return res.status(denied.status).json({ error: denied.error });
+
   const current = await companyService.getById(req.params.id);
   const company = await companyService.updateStage(req.params.id, stage);
   activityService.log('STAGE_CHANGE', 'COMPANY', req.params.id, req.user.id, {
@@ -140,6 +172,9 @@ router.patch('/:id/stage', asyncHandler(async (req, res) => {
 
 // PATCH /api/companies/:id/do-not-call
 router.patch('/:id/do-not-call', asyncHandler(async (req, res) => {
+  const denied = await assertWriteAccess(req.user, req.params.id);
+  if (denied) return res.status(denied.status).json({ error: denied.error });
+
   const { doNotCall } = req.body;
   const company = await companyService.update(req.params.id, { doNotCall: !!doNotCall });
   res.json(company);
@@ -147,6 +182,9 @@ router.patch('/:id/do-not-call', asyncHandler(async (req, res) => {
 
 // PATCH /api/companies/:id/favorite
 router.patch('/:id/favorite', asyncHandler(async (req, res) => {
+  const denied = await assertWriteAccess(req.user, req.params.id);
+  if (denied) return res.status(denied.status).json({ error: denied.error });
+
   const { isFavorite } = req.body;
   const company = await companyService.update(req.params.id, { isFavorite: !!isFavorite });
   res.json(company);
@@ -154,6 +192,9 @@ router.patch('/:id/favorite', asyncHandler(async (req, res) => {
 
 // PATCH /api/companies/:id/meeting
 router.patch('/:id/meeting', asyncHandler(async (req, res) => {
+  const denied = await assertWriteAccess(req.user, req.params.id);
+  if (denied) return res.status(denied.status).json({ error: denied.error });
+
   const { meetingStatus, meetingDate } = req.body;
   const updateData = {};
 

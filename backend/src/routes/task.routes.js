@@ -5,6 +5,10 @@ const taskService = require('../services/task.service');
 const authenticate = require('../middleware/auth');
 const activityService = require('../services/activity.service');
 const notificationService = require('../services/notification.service');
+const pick = require('../utils/pick');
+
+const TASK_CREATE_FIELDS = ['title', 'description', 'dueDate', 'companyId', 'contactId', 'assignedToId'];
+const TASK_UPDATE_FIELDS = ['title', 'description', 'dueDate', 'done', 'assignedToId', 'companyId', 'contactId'];
 
 router.use(authenticate);
 
@@ -29,7 +33,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 // POST /api/tasks
 router.post('/', asyncHandler(async (req, res) => {
-  const task = await taskService.create(req.body, req.user.id);
+  const safeData = pick(req.body, TASK_CREATE_FIELDS);
+  const task = await taskService.create(safeData, req.user.id);
 
   // Notify assigned user
   if (task.assignedToId && task.assignedToId !== req.user.id) {
@@ -47,7 +52,15 @@ router.post('/', asyncHandler(async (req, res) => {
 
 // PUT /api/tasks/:id
 router.put('/:id', asyncHandler(async (req, res) => {
-  const task = await taskService.update(req.params.id, req.body);
+  // IDOR: only admin, creator, or assignee can edit
+  if (req.user.role !== 'ADMIN') {
+    const existing = await taskService.getById(req.params.id);
+    if (existing.createdBy?.id !== req.user.id && existing.assignedTo?.id !== req.user.id) {
+      return res.status(403).json({ error: 'Keine Berechtigung zum Bearbeiten dieser Aufgabe.' });
+    }
+  }
+  const safeData = pick(req.body, TASK_UPDATE_FIELDS);
+  const task = await taskService.update(req.params.id, safeData);
   res.json(task);
 }));
 

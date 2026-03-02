@@ -48,8 +48,20 @@ router.post('/verify', asyncHandler(async (req, res) => {
   res.json({ message: '2FA erfolgreich aktiviert.' });
 }));
 
-// POST /api/totp/disable — disable 2FA
+// POST /api/totp/disable — disable 2FA (requires password re-authentication)
 router.post('/disable', asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ error: 'Passwort erforderlich um 2FA zu deaktivieren.' });
+  }
+
+  const bcrypt = require('bcrypt');
+  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    return res.status(401).json({ error: 'Falsches Passwort.' });
+  }
+
   await prisma.user.update({
     where: { id: req.user.id },
     data: { totpEnabled: false, totpSecret: null },

@@ -3,6 +3,9 @@ const router = express.Router();
 const asyncHandler = require('../utils/asyncHandler');
 const savedViewService = require('../services/savedView.service');
 const authenticate = require('../middleware/auth');
+const pick = require('../utils/pick');
+
+const VIEW_FIELDS = ['name', 'filters', 'isGlobal'];
 
 router.use(authenticate);
 
@@ -24,7 +27,8 @@ router.post('/', asyncHandler(async (req, res) => {
 
 // PUT /api/saved-views/:id
 router.put('/:id', asyncHandler(async (req, res) => {
-  const view = await savedViewService.update(req.params.id, req.body, req.user.id);
+  const safeData = pick(req.body, VIEW_FIELDS);
+  const view = await savedViewService.update(req.params.id, safeData, req.user.id);
   res.json(view);
 }));
 

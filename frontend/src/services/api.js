@@ -2,16 +2,33 @@ import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+// In-memory token storage (not persisted to localStorage — secure against XSS)
+let accessToken = null;
+
+export function setAccessToken(token) {
+  accessToken = token;
+  scheduleTokenRefresh();
+}
+
+export function getAccessToken() {
+  return accessToken;
+}
+
+export function clearAccessToken() {
+  accessToken = null;
+  if (refreshTimer) clearTimeout(refreshTimer);
+}
+
 const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // Send httpOnly cookies cross-origin
 });
 
-// Request interceptor — attach access token
+// Request interceptor — attach in-memory access token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
@@ -21,22 +38,19 @@ let refreshTimer = null;
 
 function scheduleTokenRefresh() {
   if (refreshTimer) clearTimeout(refreshTimer);
-  const token = localStorage.getItem('accessToken');
-  if (!token) return;
+  if (!accessToken) return;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(atob(accessToken.split('.')[1]));
     const expiresAt = payload.exp * 1000;
     const refreshAt = expiresAt - 5 * 60 * 1000; // 5 min before expiry
     const delay = Math.max(refreshAt - Date.now(), 10000); // at least 10s
 
     refreshTimer = setTimeout(async () => {
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) return;
-        const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
+        // Cookie is sent automatically (withCredentials)
+        const { data } = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
+        accessToken = data.accessToken;
         scheduleTokenRefresh();
       } catch {
         // Refresh failed — user will be prompted on next 401
@@ -47,19 +61,14 @@ function scheduleTokenRefresh() {
   }
 }
 
-// Start proactive refresh on load if token exists
-scheduleTokenRefresh();
-
 // Token refresh queue — prevents race condition when multiple requests
 // fail with 401 simultaneously (only one refresh at a time)
 let refreshPromise = null;
 
 async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem('refreshToken');
-  if (!refreshToken) throw new Error('No refresh token');
-  const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
+  // Refresh token is in httpOnly cookie — sent automatically
+  const { data } = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
+  accessToken = data.accessToken;
   scheduleTokenRefresh();
   return data.accessToken;
 }
@@ -86,8 +95,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        accessToken = null;
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
@@ -97,10 +105,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Re-schedule refresh when tokens are stored (called after login)
-export function onTokensStored() {
-  scheduleTokenRefresh();
-}
 
 export default api;
