@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM, { createPortal } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import App from './App';
@@ -21,15 +21,19 @@ if (SENTRY_DSN) {
   });
 }
 
+// Portal grain overlay to document.body so its mix-blend-mode
+// doesn't create a containing block for position:fixed inside #root
+// (Chromium compositing bug can offset DnD drag previews)
 const GrainTexture = React.memo(function GrainTexture() {
-  return (
+  return createPortal(
     <svg className="grain-overlay" width="100%" height="100%">
       <filter id="grain">
         <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
         <feColorMatrix type="saturate" values="0" />
       </filter>
       <rect width="100%" height="100%" filter="url(#grain)" />
-    </svg>
+    </svg>,
+    document.body
   );
 });
 

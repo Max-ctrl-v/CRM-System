@@ -131,23 +131,6 @@ function timeAgo(dateStr) {
   return `vor ${weeks} Wo.`;
 }
 
-// Compensate for CSS zoom on <html> — DnD measures zoomed px but renders inside zoom context
-const ZOOM = 1;
-function getDragStyle(draggableStyle, isDragging) {
-  if (!isDragging || !draggableStyle) return draggableStyle;
-  const s = { ...draggableStyle };
-  if (s.width) s.width /= ZOOM;
-  if (s.height) s.height /= ZOOM;
-  if (typeof s.top === 'number') s.top /= ZOOM;
-  if (typeof s.left === 'number') s.left /= ZOOM;
-  if (s.transform) {
-    s.transform = s.transform.replace(
-      /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/,
-      (_, x, y) => `translate(${parseFloat(x) / ZOOM}px, ${parseFloat(y) / ZOOM}px)`
-    );
-  }
-  return s;
-}
 
 // ── Memoized card for main pipeline stages (prevents re-render during drag) ──
 const MainPipelineCard = memo(function MainPipelineCard({
@@ -163,7 +146,7 @@ const MainPipelineCard = memo(function MainPipelineCard({
           {...prov.draggableProps}
           className={`group rounded-lg p-3.5 cursor-pointer ${company.doNotCall ? 'bg-red-50' : 'bg-white'} ${snap.isDragging ? '' : 'pipeline-card'}`}
           style={{
-            ...getDragStyle(prov.draggableProps.style, snap.isDragging),
+            ...prov.draggableProps.style,
             border: company.doNotCall
               ? `1px solid ${dark ? 'rgba(239,68,68,0.25)' : '#fecaca'}`
               : `1px solid ${dark ? stage.borderColorDark : `${stage.borderColor}30`}`,
@@ -316,7 +299,7 @@ const ClosedStageCard = memo(function ClosedStageCard({
           {...prov.draggableProps}
           className={`group rounded-lg p-3 cursor-pointer ${company.doNotCall ? 'bg-red-50' : 'bg-white'} ${snap.isDragging ? '' : 'pipeline-card'}`}
           style={{
-            ...getDragStyle(prov.draggableProps.style, snap.isDragging),
+            ...prov.draggableProps.style,
             border: company.doNotCall
               ? `1px solid ${dark ? 'rgba(239,68,68,0.25)' : '#fecaca'}`
               : `1px solid ${dark ? stage.borderColorDark : `${stage.borderColor}30`}`,
@@ -446,6 +429,18 @@ export default function PipelinePage() {
       .then(({ data }) => setScores(data))
       .catch(() => {});
   }, [pipelineIdKey]);
+
+  // @hello-pangea/dnd only supports one scrollable parent per Droppable.
+  // <main> has overflow:auto (needed by other pages), but PipelinePage manages
+  // its own scroll via overflow-x-auto. Disable main's overflow to prevent
+  // DnD from detecting multiple scroll containers (causes drag misalignment).
+  useEffect(() => {
+    const main = document.querySelector('main');
+    if (!main) return;
+    const prev = main.style.overflow;
+    main.style.overflow = 'hidden';
+    return () => { main.style.overflow = prev; };
+  }, []);
 
   // Keyboard shortcut: N to create new company
   useEffect(() => {
@@ -644,8 +639,6 @@ export default function PipelinePage() {
                 <Droppable key={stage.key} droppableId={stage.key}>
                   {(provided, snapshot) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
                       className="flex-1 min-w-0 flex flex-col rounded-xl"
                       style={{
                         background: snapshot.isDraggingOver
@@ -697,8 +690,12 @@ export default function PipelinePage() {
                         />
                       </div>
 
-                      {/* Cards */}
-                      <div className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2">
+                      {/* Cards — Droppable innerRef on scroll container so DnD sees only one scroll parent */}
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2"
+                      >
                         {stageCompanies.map((company, index) => (
                           <MainPipelineCard
                             key={company.id}
@@ -747,8 +744,6 @@ export default function PipelinePage() {
                 <Droppable key={stage.key} droppableId={stage.key}>
                   {(provided, snapshot) => (
                     <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
                       className="flex-1 min-w-0 flex flex-col rounded-xl"
                       style={{
                         background: snapshot.isDraggingOver
@@ -799,8 +794,12 @@ export default function PipelinePage() {
                         />
                       </div>
 
-                      {/* Cards */}
-                      <div className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2">
+                      {/* Cards — Droppable innerRef on scroll container */}
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2"
+                      >
                         {stageCompanies.map((company, index) => (
                           <ClosedStageCard
                             key={company.id}
