@@ -24,6 +24,7 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY || '',
+  FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY || '',
   SENTRY_DSN: process.env.SENTRY_DSN || '',
   TOTP_ISSUER: process.env.TOTP_ISSUER || 'CRM Pipeline',
   SMTP_HOST: process.env.SMTP_HOST || '',
