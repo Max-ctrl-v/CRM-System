@@ -61,7 +61,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
 
   function handleDownload() {
     if (!success) return;
-    window.open(`${API_URL}/api/contracts/${success.id}/download`, '_blank');
+    window.open(`${API_URL}/contracts/${success.id}/download`, '_blank');
   }
 
   function handleDone() {
