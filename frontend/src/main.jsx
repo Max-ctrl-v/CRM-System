@@ -1,5 +1,6 @@
 import React from 'react';
-import ReactDOM, { createPortal } from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import App from './App';
