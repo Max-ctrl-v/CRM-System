@@ -2,6 +2,8 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { PERPLEXITY_API_KEY } = require('../config/env');
 
+const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
+
 const cache = new Map();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -162,6 +164,61 @@ class BundesanzeigerSession {
 }
 
 // ---------------------------------------------------------------------------
+// Firecrawl: Scrape northdata.de for financial overview
+// ---------------------------------------------------------------------------
+
+async function scrapeNorthdata(companyName) {
+  if (!FIRECRAWL_API_KEY) return null;
+  try {
+    const slug = companyName.replace(/\s+/g, '+');
+    const resp = await axios.post(
+      'https://api.firecrawl.dev/v1/scrape',
+      { url: `https://www.northdata.de/${slug}`, formats: ['markdown'], waitFor: 5000, timeout: 30000 },
+      { headers: { 'Authorization': `Bearer ${FIRECRAWL_API_KEY}`, 'Content-Type': 'application/json' }, timeout: 40000 }
+    );
+    if (!resp.data?.success) return null;
+    const md = resp.data.data?.markdown || '';
+    if (md.length < 100) return null;
+
+    // Extract structured data from northdata markdown
+    const result = { source: 'northdata.de', raw: md };
+
+    // Bilanzsumme (Aktiva = Passiva)
+    const aktivaMatch = md.match(/([\d.,]+)\s*Mio\.\s*€\s*Aktiva\s*Stand:\s*([\d.]+)/i);
+    if (aktivaMatch) {
+      result.bilanzsumme = aktivaMatch[1] + ' Mio. €';
+      result.stichtag = aktivaMatch[2];
+    }
+    // Umsatzerlöse
+    const umsatzMatch = md.match(/([\d.,]+)\s*Mio\.\s*€\s*Umsatzerlöse\s*Stand:\s*([\d.]+)/i);
+    if (umsatzMatch) result.umsatz = umsatzMatch[1] + ' Mio. €';
+
+    // Gegenstand (company purpose — important for F&E assessment)
+    const gegenstandMatch = md.match(/###\s*Gegenstand\s*\n+([^#]+)/i);
+    if (gegenstandMatch) result.gegenstand = gegenstandMatch[1].trim().replace(/\s+/g, ' ');
+
+    // F&E Förderungen (research grants)
+    const foerderungen = [];
+    const foerderRegex = /Förderung\s*\(([\d.,]+)\s*€\):\s*([^\]]+)/gi;
+    let fm;
+    while ((fm = foerderRegex.exec(md)) !== null) {
+      foerderungen.push({ betrag: fm[1] + ' €', projekt: fm[2].trim() });
+    }
+    if (foerderungen.length > 0) result.foerderungen = foerderungen;
+
+    // Latest Jahresabschluss publications
+    const jaMatches = md.match(/Jah­res­ab­schluss[^)]+/gi) || [];
+    result.publikationen = jaMatches.slice(0, 5).map(m => m.replace(/­/g, '').replace(/\s+/g, ' ').trim());
+
+    console.log(`[Bundesanzeiger] Northdata scraped for "${companyName}": Bilanz=${result.bilanzsumme || 'n/a'}, Umsatz=${result.umsatz || 'n/a'}`);
+    return result;
+  } catch (err) {
+    console.error(`[Bundesanzeiger] Northdata scrape error for "${companyName}":`, err.message);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
@@ -189,16 +246,36 @@ async function searchJahresabschluss(companyName, forceRefresh = false) {
 
   const latestDoc = scraped.documents[0];
 
-  // Step 2: Build context from scraped results for Perplexity
+  // Step 2: Scrape northdata.de for financial overview (parallel-safe)
+  const northdata = await scrapeNorthdata(companyName);
+
+  // Step 3: Build context from all sources for Perplexity
   let scrapeContext = '';
   if (scraped.documents.length > 0) {
     const docList = scraped.documents.slice(0, 5).map((d, i) =>
       `${i + 1}. ${d.info}${d.pubDate ? ` (veröffentlicht am ${d.pubDate})` : ''}`
     ).join('\n');
-    scrapeContext = `\n\nWICHTIG: Die direkte Suche im Bundesanzeiger hat ${scraped.totalHits} Treffer für "${companyName}" ergeben. Die neuesten Jahresabschlüsse:\n${docList}\n\nDer neueste Jahresabschluss ist: ${latestDoc.info}. Finde die Finanzdaten (Bilanzsumme, Eigenkapital, Umsatzerlöse, Jahresüberschuss) für diesen Abschluss aus allen verfügbaren öffentlichen Quellen.`;
+    scrapeContext += `\n\nWICHTIG: Die direkte Suche im Bundesanzeiger hat ${scraped.totalHits} Treffer für "${companyName}" ergeben. Die neuesten Jahresabschlüsse:\n${docList}\n\nDer neueste Jahresabschluss ist: ${latestDoc.info}. Finde die Finanzdaten (Bilanzsumme, Eigenkapital, Umsatzerlöse, Jahresüberschuss) für diesen Abschluss aus allen verfügbaren öffentlichen Quellen.`;
+  }
+  if (northdata) {
+    scrapeContext += '\n\nDATEN VON NORTHDATA.DE:';
+    if (northdata.bilanzsumme) scrapeContext += `\n- Bilanzsumme (Aktiva): ${northdata.bilanzsumme} (Stichtag: ${northdata.stichtag})`;
+    if (northdata.umsatz) scrapeContext += `\n- Umsatzerlöse: ${northdata.umsatz}`;
+    if (northdata.gegenstand) scrapeContext += `\n- Gegenstand des Unternehmens: ${northdata.gegenstand}`;
+    if (northdata.foerderungen?.length > 0) {
+      scrapeContext += '\n- F&E-Förderungen:';
+      northdata.foerderungen.forEach(f => { scrapeContext += `\n  - ${f.projekt} (${f.betrag})`; });
+    }
+    if (northdata.publikationen?.length > 0) {
+      scrapeContext += '\n- Neueste Publikationen: ' + northdata.publikationen.join('; ');
+    }
+    scrapeContext += '\nVerwende diese Daten als verifizierte Grundlage und ergänze sie mit weiteren Details aus deiner Suche.';
   }
 
-  // Step 3: Use Perplexity (sonar-pro, NO domain filter) to find financial details
+  const hasScrapedDocs = scraped.documents.length > 0;
+  const hasNorthdata = northdata && (northdata.bilanzsumme || northdata.umsatz);
+
+  // Step 4: Use Perplexity (sonar-pro, NO domain filter) to find financial details
   if (PERPLEXITY_API_KEY) {
     try {
       const prompt = `Finde die Finanzdaten aus dem neuesten veröffentlichten Jahresabschluss der Firma "${companyName}" (Bundesanzeiger, Rechnungslegung/Finanzberichte).
@@ -243,37 +320,57 @@ WICHTIG: Liefere NUR verifizierte Daten mit Quellenangabe. Erfinde KEINE Zahlen.
       const content = response.data.choices[0].message.content;
       const citations = response.data.citations || [];
       const notFound = isNotFoundResponse(content);
-      const hasScrapedDocs = scraped.documents.length > 0;
 
       // Build final content
       let finalContent = content;
+      const sections = [];
+
+      // Northdata financial overview section
+      if (hasNorthdata) {
+        let ndSection = `## Finanzkennzahlen (northdata.de)\n\n`;
+        if (northdata.bilanzsumme) ndSection += `- **Bilanzsumme:** ${northdata.bilanzsumme} (Stand: ${northdata.stichtag})\n`;
+        if (northdata.umsatz) ndSection += `- **Umsatzerlöse:** ${northdata.umsatz}\n`;
+        if (northdata.gegenstand) ndSection += `\n**Unternehmensgegenstand:** ${northdata.gegenstand}\n`;
+        if (northdata.foerderungen?.length > 0) {
+          ndSection += `\n### F&E-Förderungen\n`;
+          northdata.foerderungen.forEach(f => { ndSection += `- **${f.projekt}** (${f.betrag})\n`; });
+        }
+        sections.push(ndSection);
+      }
+
+      // Scraped document list
       if (hasScrapedDocs) {
         const docSummary = scraped.documents.slice(0, 10).map(d =>
           `- ${d.info}${d.pubDate ? ` (veröffentlicht: ${d.pubDate})` : ''}`
         ).join('\n');
-
-        if (notFound) {
-          // Perplexity couldn't find details, but we confirmed documents exist
-          finalContent = `## Im Bundesanzeiger veröffentlichte Jahresabschlüsse\n\nFür **${companyName}** wurden **${scraped.totalHits} Veröffentlichungen** im Bundesanzeiger gefunden:\n\n${docSummary}\n\n---\n\n*Die detaillierten Finanzkennzahlen (Bilanzsumme, Eigenkapital, etc.) konnten nicht automatisch extrahiert werden. Bitte nutzen Sie den Link unten, um den vollständigen Jahresabschluss direkt im Bundesanzeiger einzusehen.*`;
-        } else {
-          // Perplexity found details — prepend the confirmed document list
-          finalContent = `## Im Bundesanzeiger veröffentlichte Jahresabschlüsse\n\n${docSummary}\n\n---\n\n${content}`;
-        }
+        sections.push(`## Im Bundesanzeiger veröffentlichte Jahresabschlüsse\n\nFür **${companyName}** wurden **${scraped.totalHits} Veröffentlichungen** gefunden:\n\n${docSummary}`);
       }
+
+      // Perplexity content (only if it found something useful)
+      if (!notFound) {
+        sections.push(content);
+      } else if (!hasScrapedDocs && !hasNorthdata) {
+        // Nothing found from any source
+        sections.push(`*Keine Finanzdaten gefunden. Bitte nutzen Sie den Link unten für eine manuelle Suche im Bundesanzeiger.*`);
+      }
+
+      finalContent = sections.join('\n\n---\n\n');
+      const foundOverall = hasScrapedDocs || hasNorthdata || !notFound;
 
       const data = {
         companyName,
-        found: hasScrapedDocs || !notFound,
-        content: (hasScrapedDocs || !notFound) ? finalContent : null,
-        message: (!hasScrapedDocs && notFound)
+        found: foundOverall,
+        content: foundOverall ? finalContent : null,
+        message: !foundOverall
           ? `Kein Jahresabschluss für "${companyName}" im Bundesanzeiger gefunden. Bitte prüfen Sie die Schreibweise oder suchen Sie direkt im Bundesanzeiger.`
           : undefined,
         citations,
-        results: (hasScrapedDocs || !notFound)
-          ? [{ title: `Jahresabschluss — ${companyName}`, date: latestDoc?.pubDate || 'Via KI-Recherche', link: searchUrl }]
+        results: foundOverall
+          ? [{ title: `Jahresabschluss — ${companyName}`, date: latestDoc?.pubDate || northdata?.stichtag || 'Via KI-Recherche', link: searchUrl }]
           : [],
         searchUrl,
         scrapedDocuments: scraped.documents.slice(0, 5),
+        northdataFinancials: hasNorthdata ? { bilanzsumme: northdata.bilanzsumme, umsatz: northdata.umsatz, stichtag: northdata.stichtag } : undefined,
         fetchedAt: new Date().toISOString(),
       };
 
@@ -286,19 +383,30 @@ WICHTIG: Liefere NUR verifizierte Daten mit Quellenangabe. Erfinde KEINE Zahlen.
     }
   }
 
-  // Fallback without Perplexity: return scraped document list if available
-  if (scraped.documents.length > 0) {
-    const docSummary = scraped.documents.slice(0, 10).map(d =>
-      `- ${d.info}${d.pubDate ? ` (veröffentlicht: ${d.pubDate})` : ''}`
-    ).join('\n');
+  // Fallback without Perplexity: return scraped + northdata data if available
+  if (hasScrapedDocs || hasNorthdata) {
+    const sections = [];
+    if (hasNorthdata) {
+      let ndSection = `## Finanzkennzahlen (northdata.de)\n\n`;
+      if (northdata.bilanzsumme) ndSection += `- **Bilanzsumme:** ${northdata.bilanzsumme}\n`;
+      if (northdata.umsatz) ndSection += `- **Umsatzerlöse:** ${northdata.umsatz}\n`;
+      sections.push(ndSection);
+    }
+    if (hasScrapedDocs) {
+      const docSummary = scraped.documents.slice(0, 10).map(d =>
+        `- ${d.info}${d.pubDate ? ` (veröffentlicht: ${d.pubDate})` : ''}`
+      ).join('\n');
+      sections.push(`## Im Bundesanzeiger veröffentlichte Jahresabschlüsse\n\nFür **${companyName}** wurden **${scraped.totalHits} Veröffentlichungen** gefunden:\n\n${docSummary}`);
+    }
     const data = {
       companyName,
       found: true,
-      content: `## Im Bundesanzeiger veröffentlichte Jahresabschlüsse\n\nFür **${companyName}** wurden **${scraped.totalHits} Veröffentlichungen** im Bundesanzeiger gefunden:\n\n${docSummary}\n\n---\n\n*Bitte nutzen Sie den Link unten, um den vollständigen Jahresabschluss direkt im Bundesanzeiger einzusehen.*`,
+      content: sections.join('\n\n---\n\n'),
       citations: [],
-      results: [{ title: `Jahresabschluss — ${companyName}`, date: scraped.documents[0]?.pubDate || '', link: searchUrl }],
+      results: [{ title: `Jahresabschluss — ${companyName}`, date: latestDoc?.pubDate || northdata?.stichtag || '', link: searchUrl }],
       searchUrl,
       scrapedDocuments: scraped.documents.slice(0, 5),
+      northdataFinancials: hasNorthdata ? { bilanzsumme: northdata.bilanzsumme, umsatz: northdata.umsatz, stichtag: northdata.stichtag } : undefined,
       fetchedAt: new Date().toISOString(),
     };
     cache.set(cacheKey, { data, timestamp: Date.now() });
