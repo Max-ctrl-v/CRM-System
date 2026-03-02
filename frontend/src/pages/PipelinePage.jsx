@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../services/api';
@@ -149,6 +149,252 @@ function getDragStyle(draggableStyle, isDragging) {
   return s;
 }
 
+// ── Memoized card for main pipeline stages (prevents re-render during drag) ──
+const MainPipelineCard = memo(function MainPipelineCard({
+  company, index, stage, dark, score, latestComment,
+  isEditingRevenue, editingRevenueValue, isStarAnimating,
+  onNavigate, onToggleFavorite, onEditRevenue, onRevenueChange, onSaveRevenue, onCancelRevenue,
+}) {
+  return (
+    <Draggable draggableId={company.id} index={index}>
+      {(prov, snap) => (
+        <div
+          ref={prov.innerRef}
+          {...prov.draggableProps}
+          className={`group rounded-lg p-3.5 cursor-pointer ${company.doNotCall ? 'bg-red-50' : 'bg-white'} ${snap.isDragging ? '' : 'pipeline-card'}`}
+          style={{
+            ...getDragStyle(prov.draggableProps.style, snap.isDragging),
+            border: company.doNotCall
+              ? `1px solid ${dark ? 'rgba(239,68,68,0.25)' : '#fecaca'}`
+              : `1px solid ${dark ? stage.borderColorDark : `${stage.borderColor}30`}`,
+            borderLeftWidth: '3px',
+            borderLeftColor: company.doNotCall ? '#ef4444' : stage.color,
+            boxShadow: snap.isDragging
+              ? `0 12px 36px rgba(0,0,0,${dark ? '0.4' : '0.18'}), 0 0 0 2px ${stage.color}60`
+              : company.doNotCall
+              ? `0 1px 3px rgba(239,68,68,${dark ? '0.2' : '0.1'})`
+              : `0 1px 2px rgba(0,0,0,${dark ? '0.2' : '0.04'}), 0 1px 4px rgba(0,0,0,${dark ? '0.15' : '0.02'})`,
+          }}
+          onClick={() => onNavigate(company.id)}
+        >
+          {company.doNotCall && (
+            <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-red-600 font-body">
+              <PhoneOff className="w-3 h-3" />
+              <span>Nicht mehr anrufen!</span>
+            </div>
+          )}
+          <div className="flex items-start gap-2">
+            <div {...prov.dragHandleProps} className="mt-0.5 text-gray-300 hover:text-gray-500 rounded focus-visible:ring-2 focus-visible:ring-brand-300" style={{ transition: 'color 150ms ease' }}>
+              <GripVertical className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleFavorite(company.id); }}
+                  className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${isStarAnimating ? 'star-animate' : ''}`}
+                  title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
+                  style={{ transition: 'transform 150ms ease' }}
+                >
+                  <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
+                </button>
+                <span className={`font-display font-semibold text-[13px] truncate leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
+                  {company.name}
+                </span>
+                {score != null && <ProbabilityBadge score={score} size={28} />}
+              </div>
+              {company.website && (
+                <p className="text-[11px] text-gray-400 truncate font-body mt-0.5">{company.website}</p>
+              )}
+              <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                {(company._count?.contacts || 0) > 0 && (
+                  <span className="flex items-center gap-1 text-[11px] text-gray-500 font-body">
+                    <Users className="w-3 h-3" /> {company._count.contacts}
+                  </span>
+                )}
+                {company.assignedTo && (
+                  <span
+                    className="text-[11px] px-2 py-0.5 rounded-md font-medium"
+                    style={{ background: dark ? stage.bgLightDark : stage.bgLight, color: stage.color }}
+                  >
+                    {company.assignedTo.name}
+                  </span>
+                )}
+                {isEditingRevenue ? (
+                  <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Euro className="w-3 h-3 text-green-600" />
+                    <input
+                      type="number"
+                      autoFocus
+                      className="w-20 text-[11px] font-semibold text-green-600 font-body border border-green-300 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-green-400"
+                      value={editingRevenueValue}
+                      onChange={(e) => onRevenueChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); onSaveRevenue(company.id); }
+                        if (e.key === 'Escape') onCancelRevenue();
+                      }}
+                      onBlur={() => onSaveRevenue(company.id)}
+                      step="1000"
+                    />
+                  </span>
+                ) : company.expectedRevenue > 0 ? (
+                  <span
+                    className="flex items-center gap-1 text-[11px] font-semibold text-green-600 font-body cursor-pointer hover:bg-green-50 rounded px-1 -mx-1"
+                    style={{ transition: 'background-color 150ms ease' }}
+                    onDoubleClick={(e) => { e.stopPropagation(); onEditRevenue(company.id, String(company.expectedRevenue || '')); }}
+                    title="Doppelklick zum Bearbeiten"
+                  >
+                    <Euro className="w-3 h-3" />{formatEuro(company.expectedRevenue)}
+                  </span>
+                ) : (
+                  <span
+                    className="flex items-center gap-1 text-[11px] text-gray-300 font-body cursor-pointer hover:text-green-500 hover:bg-green-50 rounded px-1 -mx-1"
+                    style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
+                    onDoubleClick={(e) => { e.stopPropagation(); onEditRevenue(company.id, ''); }}
+                    title="Doppelklick zum Hinzufügen"
+                  >
+                    <Euro className="w-3 h-3" />—
+                  </span>
+                )}
+                {company.uisSchwierigkeiten && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 font-body" title={company.uisReason || 'Unternehmen in Schwierigkeiten'}>
+                    <AlertTriangle className="w-3 h-3" />UiS
+                  </span>
+                )}
+                {company.meetingStatus === 'MEETING_SET' && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 font-body" title={company.meetingDate ? `Meeting: ${new Date(company.meetingDate).toLocaleDateString('de-DE')}` : 'Meeting geplant'}>
+                    <CalendarClock className="w-3 h-3" />Meeting
+                  </span>
+                )}
+                {company.meetingStatus === 'MEETING_DONE' && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 font-body" title={company.meetingFollowUpAt ? `Follow-up: ${new Date(company.meetingFollowUpAt).toLocaleDateString('de-DE')}` : 'Meeting erledigt'}>
+                    <CalendarCheck className="w-3 h-3" />Erledigt
+                  </span>
+                )}
+              </div>
+              {(company.eigenkapital || company.verlustvortrag || company.gewinnvortrag) && (
+                <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400 font-body">
+                  {company.eigenkapital && <span>EK: {company.eigenkapital}</span>}
+                  {company.verlustvortrag && <span className="text-red-400">VV: {company.verlustvortrag}</span>}
+                  {company.gewinnvortrag && <span className="text-green-500">GV: {company.gewinnvortrag}</span>}
+                </div>
+              )}
+              {company.updatedAt && (
+                <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-body">
+                  <Clock className="w-3 h-3" />
+                  <span>Zuletzt: {timeAgo(company.updatedAt)}</span>
+                </div>
+              )}
+              {latestComment && (
+                <div className="flex items-start gap-1.5 mt-2 text-[10px] text-gray-400 font-body">
+                  <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
+                  <span className="truncate" title={latestComment.content}>
+                    <span className="font-semibold text-gray-500">{latestComment.user?.name || 'Unbekannt'}:</span>{' '}
+                    {latestComment.content.length > 40
+                      ? latestComment.content.slice(0, 40) + '...'
+                      : latestComment.content}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
+});
+
+// ── Memoized card for closed stages ──
+const ClosedStageCard = memo(function ClosedStageCard({
+  company, index, stage, dark, isStarAnimating,
+  onNavigate, onToggleFavorite,
+}) {
+  return (
+    <Draggable draggableId={company.id} index={index}>
+      {(prov, snap) => (
+        <div
+          ref={prov.innerRef}
+          {...prov.draggableProps}
+          className={`group rounded-lg p-3 cursor-pointer ${company.doNotCall ? 'bg-red-50' : 'bg-white'} ${snap.isDragging ? '' : 'pipeline-card'}`}
+          style={{
+            ...getDragStyle(prov.draggableProps.style, snap.isDragging),
+            border: company.doNotCall
+              ? `1px solid ${dark ? 'rgba(239,68,68,0.25)' : '#fecaca'}`
+              : `1px solid ${dark ? stage.borderColorDark : `${stage.borderColor}30`}`,
+            borderLeftWidth: '3px',
+            borderLeftColor: company.doNotCall ? '#ef4444' : stage.color,
+            boxShadow: snap.isDragging
+              ? `0 12px 36px rgba(0,0,0,${dark ? '0.4' : '0.18'}), 0 0 0 2px ${stage.color}60`
+              : company.doNotCall
+              ? `0 1px 3px rgba(239,68,68,${dark ? '0.2' : '0.1'})`
+              : `0 1px 2px rgba(0,0,0,${dark ? '0.2' : '0.04'}), 0 1px 4px rgba(0,0,0,${dark ? '0.15' : '0.02'})`,
+          }}
+          onClick={() => onNavigate(company.id)}
+        >
+          {company.doNotCall && (
+            <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-red-600 font-body">
+              <PhoneOff className="w-3 h-3" />
+              <span>Nicht mehr anrufen!</span>
+            </div>
+          )}
+          <div className="flex items-start gap-2">
+            <div {...prov.dragHandleProps} className="mt-0.5 text-gray-300 hover:text-gray-500 rounded focus-visible:ring-2 focus-visible:ring-brand-300" style={{ transition: 'color 150ms ease' }}>
+              <GripVertical className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleFavorite(company.id); }}
+                  className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${isStarAnimating ? 'star-animate' : ''}`}
+                  title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
+                  style={{ transition: 'transform 150ms ease' }}
+                >
+                  <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
+                </button>
+                <span className={`font-display font-semibold text-[13px] truncate leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
+                  {company.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {company.assignedTo && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-md font-medium" style={{ background: dark ? stage.bgLightDark : stage.bgLight, color: stage.color }}>
+                    {company.assignedTo.name}
+                  </span>
+                )}
+                {company.expectedRevenue > 0 && (
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600 font-body">
+                    <Euro className="w-3 h-3" />{formatEuro(company.expectedRevenue)}
+                  </span>
+                )}
+                {company.uisSchwierigkeiten && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 font-body" title={company.uisReason || 'Unternehmen in Schwierigkeiten'}>
+                    <AlertTriangle className="w-3 h-3" />UiS
+                  </span>
+                )}
+                {company.meetingStatus === 'MEETING_SET' && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 font-body">
+                    <CalendarClock className="w-3 h-3" />Meeting
+                  </span>
+                )}
+                {company.meetingStatus === 'MEETING_DONE' && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 font-body">
+                    <CalendarCheck className="w-3 h-3" />Erledigt
+                  </span>
+                )}
+              </div>
+              {company.updatedAt && (
+                <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-body">
+                  <Clock className="w-3 h-3" />
+                  <span>Zuletzt: {timeAgo(company.updatedAt)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
+});
+
 export default function PipelinePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -167,8 +413,7 @@ export default function PipelinePage() {
   const [scores, setScores] = useState({});
   const [starAnimatingId, setStarAnimatingId] = useState(null);
 
-  async function toggleFavorite(e, companyId) {
-    e.stopPropagation();
+  const toggleFavorite = useCallback(async (companyId) => {
     const comp = companies.find((c) => c.id === companyId);
     if (!comp) return;
     const newVal = !comp.isFavorite;
@@ -179,7 +424,7 @@ export default function PipelinePage() {
     }
     try { await api.patch(`/companies/${companyId}/favorite`); }
     catch { refresh(); }
-  }
+  }, [companies, updateCompany, refresh]);
 
   useEffect(() => {
     if (user?.id && !selectedUserId) setSelectedUserId(user.id);
@@ -253,7 +498,17 @@ export default function PipelinePage() {
     setShowCreate(false);
   }
 
-  async function saveRevenue(companyId) {
+  const handleNavigate = useCallback((companyId) => navigate(`/company/${companyId}`), [navigate]);
+
+  const handleEditRevenue = useCallback((companyId, value) => {
+    setEditingRevenueId(companyId);
+    setEditingRevenueValue(value);
+  }, []);
+
+  const handleRevenueChange = useCallback((value) => setEditingRevenueValue(value), []);
+  const handleCancelRevenue = useCallback(() => setEditingRevenueId(null), []);
+
+  const saveRevenue = useCallback(async (companyId) => {
     const val = editingRevenueValue.trim();
     const num = val ? parseFloat(val) : null;
     try {
@@ -264,7 +519,7 @@ export default function PipelinePage() {
       addToast('Fehler beim Speichern', 'error');
     }
     setEditingRevenueId(null);
-  }
+  }, [editingRevenueValue, updateCompany, addToast]);
 
   const filtered = useMemo(() => {
     const withPipeline = companies.filter((c) => c.pipelineStage);
@@ -445,160 +700,24 @@ export default function PipelinePage() {
                       {/* Cards */}
                       <div className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2">
                         {stageCompanies.map((company, index) => (
-                          <Draggable key={company.id} draggableId={company.id} index={index}>
-                            {(prov, snap) => (
-                              <div
-                                ref={prov.innerRef}
-                                {...prov.draggableProps}
-                                className={`group rounded-lg p-3.5 cursor-pointer ${company.doNotCall ? 'bg-red-50' : 'bg-white'} ${snap.isDragging ? '' : 'pipeline-card'}`}
-                                style={{
-                                  ...getDragStyle(prov.draggableProps.style, snap.isDragging),
-                                  border: company.doNotCall
-                                    ? `1px solid ${dark ? 'rgba(239,68,68,0.25)' : '#fecaca'}`
-                                    : `1px solid ${dark ? stage.borderColorDark : `${stage.borderColor}30`}`,
-                                  borderLeftWidth: '3px',
-                                  borderLeftColor: company.doNotCall ? '#ef4444' : stage.color,
-                                  boxShadow: snap.isDragging
-                                    ? `0 12px 36px rgba(0,0,0,${dark ? '0.4' : '0.18'}), 0 0 0 2px ${stage.color}60`
-                                    : company.doNotCall
-                                    ? `0 1px 3px rgba(239,68,68,${dark ? '0.2' : '0.1'})`
-                                    : `0 1px 2px rgba(0,0,0,${dark ? '0.2' : '0.04'}), 0 1px 4px rgba(0,0,0,${dark ? '0.15' : '0.02'})`,
-                                }}
-                                onClick={() => navigate(`/company/${company.id}`)}
-                              >
-                                {company.doNotCall && (
-                                  <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-red-600 font-body">
-                                    <PhoneOff className="w-3 h-3" />
-                                    <span>Nicht mehr anrufen!</span>
-                                  </div>
-                                )}
-                                <div className="flex items-start gap-2">
-                                  <div {...prov.dragHandleProps} className="mt-0.5 text-gray-300 hover:text-gray-500 rounded focus-visible:ring-2 focus-visible:ring-brand-300" style={{ transition: 'color 150ms ease' }}>
-                                    <GripVertical className="w-3.5 h-3.5" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        onClick={(e) => toggleFavorite(e, company.id)}
-                                        className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${starAnimatingId === company.id ? 'star-animate' : ''}`}
-                                        title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
-                                        style={{ transition: 'transform 150ms ease' }}
-                                      >
-                                        <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
-                                      </button>
-                                      <span className={`font-display font-semibold text-[13px] truncate leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
-                                        {company.name}
-                                      </span>
-                                      {scores[company.id] != null && (
-                                        <ProbabilityBadge score={scores[company.id]} size={28} />
-                                      )}
-                                    </div>
-                                    {company.website && (
-                                      <p className="text-[11px] text-gray-400 truncate font-body mt-0.5">{company.website}</p>
-                                    )}
-                                    <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                                      {(company._count?.contacts || 0) > 0 && (
-                                        <span className="flex items-center gap-1 text-[11px] text-gray-500 font-body">
-                                          <Users className="w-3 h-3" /> {company._count.contacts}
-                                        </span>
-                                      )}
-                                      {company.assignedTo && (
-                                        <span
-                                          className="text-[11px] px-2 py-0.5 rounded-md font-medium"
-                                          style={{ background: dark ? stage.bgLightDark : stage.bgLight, color: stage.color }}
-                                        >
-                                          {company.assignedTo.name}
-                                        </span>
-                                      )}
-                                      {editingRevenueId === company.id ? (
-                                        <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                          <Euro className="w-3 h-3 text-green-600" />
-                                          <input
-                                            type="number"
-                                            autoFocus
-                                            className="w-20 text-[11px] font-semibold text-green-600 font-body border border-green-300 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-green-400"
-                                            value={editingRevenueValue}
-                                            onChange={(e) => setEditingRevenueValue(e.target.value)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') { e.preventDefault(); saveRevenue(company.id); }
-                                              if (e.key === 'Escape') setEditingRevenueId(null);
-                                            }}
-                                            onBlur={() => saveRevenue(company.id)}
-                                            step="1000"
-                                          />
-                                        </span>
-                                      ) : company.expectedRevenue > 0 ? (
-                                        <span
-                                          className="flex items-center gap-1 text-[11px] font-semibold text-green-600 font-body cursor-pointer hover:bg-green-50 rounded px-1 -mx-1"
-                                          style={{ transition: 'background-color 150ms ease' }}
-                                          onDoubleClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingRevenueId(company.id);
-                                            setEditingRevenueValue(String(company.expectedRevenue || ''));
-                                          }}
-                                          title="Doppelklick zum Bearbeiten"
-                                        >
-                                          <Euro className="w-3 h-3" />{formatEuro(company.expectedRevenue)}
-                                        </span>
-                                      ) : (
-                                        <span
-                                          className="flex items-center gap-1 text-[11px] text-gray-300 font-body cursor-pointer hover:text-green-500 hover:bg-green-50 rounded px-1 -mx-1"
-                                          style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
-                                          onDoubleClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingRevenueId(company.id);
-                                            setEditingRevenueValue('');
-                                          }}
-                                          title="Doppelklick zum Hinzufügen"
-                                        >
-                                          <Euro className="w-3 h-3" />—
-                                        </span>
-                                      )}
-                                      {company.uisSchwierigkeiten && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 font-body" title={company.uisReason || 'Unternehmen in Schwierigkeiten'}>
-                                          <AlertTriangle className="w-3 h-3" />UiS
-                                        </span>
-                                      )}
-                                      {company.meetingStatus === 'MEETING_SET' && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 font-body" title={company.meetingDate ? `Meeting: ${new Date(company.meetingDate).toLocaleDateString('de-DE')}` : 'Meeting geplant'}>
-                                          <CalendarClock className="w-3 h-3" />Meeting
-                                        </span>
-                                      )}
-                                      {company.meetingStatus === 'MEETING_DONE' && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 font-body" title={company.meetingFollowUpAt ? `Follow-up: ${new Date(company.meetingFollowUpAt).toLocaleDateString('de-DE')}` : 'Meeting erledigt'}>
-                                          <CalendarCheck className="w-3 h-3" />Erledigt
-                                        </span>
-                                      )}
-                                    </div>
-                                    {(company.eigenkapital || company.verlustvortrag || company.gewinnvortrag) && (
-                                      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400 font-body">
-                                        {company.eigenkapital && <span>EK: {company.eigenkapital}</span>}
-                                        {company.verlustvortrag && <span className="text-red-400">VV: {company.verlustvortrag}</span>}
-                                        {company.gewinnvortrag && <span className="text-green-500">GV: {company.gewinnvortrag}</span>}
-                                      </div>
-                                    )}
-                                    {company.updatedAt && (
-                                      <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-body">
-                                        <Clock className="w-3 h-3" />
-                                        <span>Zuletzt: {timeAgo(company.updatedAt)}</span>
-                                      </div>
-                                    )}
-                                    {latestComments[company.id] && (
-                                      <div className="flex items-start gap-1.5 mt-2 text-[10px] text-gray-400 font-body">
-                                        <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
-                                        <span className="truncate" title={latestComments[company.id].content}>
-                                          <span className="font-semibold text-gray-500">{latestComments[company.id].user?.name || 'Unbekannt'}:</span>{' '}
-                                          {latestComments[company.id].content.length > 40
-                                            ? latestComments[company.id].content.slice(0, 40) + '...'
-                                            : latestComments[company.id].content}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
+                          <MainPipelineCard
+                            key={company.id}
+                            company={company}
+                            index={index}
+                            stage={stage}
+                            dark={dark}
+                            score={scores[company.id]}
+                            latestComment={latestComments[company.id]}
+                            isEditingRevenue={editingRevenueId === company.id}
+                            editingRevenueValue={editingRevenueId === company.id ? editingRevenueValue : ''}
+                            isStarAnimating={starAnimatingId === company.id}
+                            onNavigate={handleNavigate}
+                            onToggleFavorite={toggleFavorite}
+                            onEditRevenue={handleEditRevenue}
+                            onRevenueChange={handleRevenueChange}
+                            onSaveRevenue={saveRevenue}
+                            onCancelRevenue={handleCancelRevenue}
+                          />
                         ))}
                         {provided.placeholder}
                         {stageCompanies.length === 0 && (
@@ -683,89 +802,16 @@ export default function PipelinePage() {
                       {/* Cards */}
                       <div className="flex-1 overflow-y-auto px-2.5 pb-2.5 space-y-2">
                         {stageCompanies.map((company, index) => (
-                          <Draggable key={company.id} draggableId={company.id} index={index}>
-                            {(prov, snap) => (
-                              <div
-                                ref={prov.innerRef}
-                                {...prov.draggableProps}
-                                className={`group rounded-lg p-3 cursor-pointer ${company.doNotCall ? 'bg-red-50' : 'bg-white'} ${snap.isDragging ? '' : 'pipeline-card'}`}
-                                style={{
-                                  ...getDragStyle(prov.draggableProps.style, snap.isDragging),
-                                  border: company.doNotCall
-                                    ? `1px solid ${dark ? 'rgba(239,68,68,0.25)' : '#fecaca'}`
-                                    : `1px solid ${dark ? stage.borderColorDark : `${stage.borderColor}30`}`,
-                                  borderLeftWidth: '3px',
-                                  borderLeftColor: company.doNotCall ? '#ef4444' : stage.color,
-                                  boxShadow: snap.isDragging
-                                    ? `0 12px 36px rgba(0,0,0,${dark ? '0.4' : '0.18'}), 0 0 0 2px ${stage.color}60`
-                                    : company.doNotCall
-                                    ? `0 1px 3px rgba(239,68,68,${dark ? '0.2' : '0.1'})`
-                                    : `0 1px 2px rgba(0,0,0,${dark ? '0.2' : '0.04'}), 0 1px 4px rgba(0,0,0,${dark ? '0.15' : '0.02'})`,
-                                }}
-                                onClick={() => navigate(`/company/${company.id}`)}
-                              >
-                                {company.doNotCall && (
-                                  <div className="flex items-center gap-1.5 mb-2 text-[10px] font-bold text-red-600 font-body">
-                                    <PhoneOff className="w-3 h-3" />
-                                    <span>Nicht mehr anrufen!</span>
-                                  </div>
-                                )}
-                                <div className="flex items-start gap-2">
-                                  <div {...prov.dragHandleProps} className="mt-0.5 text-gray-300 hover:text-gray-500 rounded focus-visible:ring-2 focus-visible:ring-brand-300" style={{ transition: 'color 150ms ease' }}>
-                                    <GripVertical className="w-3.5 h-3.5" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        onClick={(e) => toggleFavorite(e, company.id)}
-                                        className={`shrink-0 rounded focus-visible:ring-2 focus-visible:ring-amber-400 ${starAnimatingId === company.id ? 'star-animate' : ''}`}
-                                        title={company.isFavorite ? 'Aus Scope entfernen' : 'In Scope setzen'}
-                                        style={{ transition: 'transform 150ms ease' }}
-                                      >
-                                        <Star className={`w-3.5 h-3.5 ${company.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-400'}`} style={{ transition: 'color 150ms ease' }} />
-                                      </button>
-                                      <span className={`font-display font-semibold text-[13px] truncate leading-snug ${company.doNotCall ? 'text-red-800' : 'text-gray-900'}`}>
-                                        {company.name}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                      {company.assignedTo && (
-                                        <span className="text-[11px] px-2 py-0.5 rounded-md font-medium" style={{ background: dark ? stage.bgLightDark : stage.bgLight, color: stage.color }}>
-                                          {company.assignedTo.name}
-                                        </span>
-                                      )}
-                                      {company.expectedRevenue > 0 && (
-                                        <span className="flex items-center gap-1 text-[11px] font-semibold text-green-600 font-body">
-                                          <Euro className="w-3 h-3" />{formatEuro(company.expectedRevenue)}
-                                        </span>
-                                      )}
-                                      {company.uisSchwierigkeiten && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 font-body" title={company.uisReason || 'Unternehmen in Schwierigkeiten'}>
-                                          <AlertTriangle className="w-3 h-3" />UiS
-                                        </span>
-                                      )}
-                                      {company.meetingStatus === 'MEETING_SET' && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 font-body">
-                                          <CalendarClock className="w-3 h-3" />Meeting
-                                        </span>
-                                      )}
-                                      {company.meetingStatus === 'MEETING_DONE' && (
-                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 font-body">
-                                          <CalendarCheck className="w-3 h-3" />Erledigt
-                                        </span>
-                                      )}
-                                    </div>
-                                    {company.updatedAt && (
-                                      <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400 font-body">
-                                        <Clock className="w-3 h-3" />
-                                        <span>Zuletzt: {timeAgo(company.updatedAt)}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
+                          <ClosedStageCard
+                            key={company.id}
+                            company={company}
+                            index={index}
+                            stage={stage}
+                            dark={dark}
+                            isStarAnimating={starAnimatingId === company.id}
+                            onNavigate={handleNavigate}
+                            onToggleFavorite={toggleFavorite}
+                          />
                         ))}
                         {provided.placeholder}
                         {stageCompanies.length === 0 && (
