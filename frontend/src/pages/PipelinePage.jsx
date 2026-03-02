@@ -132,7 +132,7 @@ function timeAgo(dateStr) {
 }
 
 // Compensate for CSS zoom on <html> — DnD measures zoomed px but renders inside zoom context
-const ZOOM = 1.5;
+const ZOOM = 1;
 function getDragStyle(draggableStyle, isDragging) {
   if (!isDragging || !draggableStyle) return draggableStyle;
   const s = { ...draggableStyle };

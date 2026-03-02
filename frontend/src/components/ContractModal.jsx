@@ -216,7 +216,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 <div>
                   <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                     <Percent className="w-3 h-3 inline mr-1 -mt-0.5" />
-                    % Förderkosten
+                    % auf die Bescheinigten Förderkosten
                   </label>
                   <input
                     type="number"

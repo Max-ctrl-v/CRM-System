@@ -14,6 +14,7 @@ import ActivityTimeline from '../components/ActivityTimeline';
 import NextActionBanner from '../components/NextActionBanner';
 import AttachmentList from '../components/AttachmentList';
 import CreateCompanyModal from '../components/CreateCompanyModal';
+import ContractModal from '../components/ContractModal';
 import SimilarCompanies from '../components/SimilarCompanies';
 import {
   ArrowLeft,
@@ -155,6 +156,7 @@ export default function CompanyDetailPage() {
   const [showMeetingPicker, setShowMeetingPicker] = useState(false);
   const [meetingDateInput, setMeetingDateInput] = useState('');
   const [starAnimating, setStarAnimating] = useState(false);
+  const [showContract, setShowContract] = useState(false);
 
   async function toggleFavorite() {
     try {
@@ -435,6 +437,15 @@ export default function CompanyDetailPage() {
                 <PhoneOff className="w-3.5 h-3.5" />
                 {company.doNotCall ? 'Anrufsperre aktiv' : 'Do Not Call'}
               </button>
+              <button
+                onClick={() => setShowContract(true)}
+                className="flex items-center gap-1.5 text-[13px] px-3 py-2 rounded-lg font-semibold font-body bg-brand-50 text-brand-700 border border-brand-200 hover:bg-brand-100 hover:border-brand-300 focus-visible:ring-2 focus-visible:ring-brand-300 active:scale-95"
+                style={{ transition: 'transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, color 150ms ease' }}
+                title="Vertrag erstellen"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Vertrag erstellen
+              </button>
               <button onClick={() => setEditing(true)} className="btn-secondary flex items-center gap-1.5 text-[13px]"><Edit3 className="w-3.5 h-3.5" /> Bearbeiten</button>
               <button onClick={handleDelete} className="btn-danger flex items-center gap-1.5 text-[13px] px-3"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
@@ -600,6 +611,17 @@ export default function CompanyDetailPage() {
           onCreated={(newCompany) => {
             setCreateModalData(null);
             navigate(`/company/${newCompany.id}`);
+          }}
+        />
+      )}
+
+      {showContract && company && (
+        <ContractModal
+          company={company}
+          onClose={() => setShowContract(false)}
+          onComplete={() => {
+            setShowContract(false);
+            addToast('Vertrag wurde erstellt', 'success');
           }}
         />
       )}
