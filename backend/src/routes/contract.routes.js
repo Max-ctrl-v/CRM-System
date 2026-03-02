@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 const asyncHandler = require('../utils/asyncHandler');
 const contractService = require('../services/contract.service');
 const { generateContractPdf } = require('../services/contractPdf.service');
 const activityService = require('../services/activity.service');
+const commentService = require('../services/comment.service');
+const prisma = require('../lib/prisma');
 const authenticate = require('../middleware/auth');
-const path = require('path');
 
 router.use(authenticate);
 
@@ -39,6 +42,29 @@ router.post('/', asyncHandler(async (req, res) => {
   activityService.log('CONTRACT_CREATED', 'COMPANY', companyId, req.user.id, {
     contractNumber: contract.contractNumber,
     companyName: contract.company?.name,
+  }).catch(() => {});
+
+  // Auto-comment on the company
+  const commentText = `📄 Vertrag erstellt: ${contract.contractNumber} (${contract.durationMonths} Monate, ${contract.commissionRate}% auf die Bescheinigten Förderkosten)`;
+  commentService.create({
+    content: commentText,
+    entityType: 'COMPANY',
+    entityId: companyId,
+  }, req.user.id).catch(() => {});
+
+  // Auto-attach the PDF to the company's file list
+  const uploadsDir = path.resolve(__dirname, '../../uploads');
+  const absPath = path.resolve(uploadsDir, pdfPath);
+  const fileSize = fs.existsSync(absPath) ? fs.statSync(absPath).size : 0;
+  prisma.attachment.create({
+    data: {
+      fileName: `Vertrag-${contract.contractNumber}.pdf`,
+      fileSize,
+      mimeType: 'application/pdf',
+      path: pdfPath,
+      companyId,
+      uploadedById: req.user.id,
+    },
   }).catch(() => {});
 
   res.status(201).json({ ...contract, pdfPath });
