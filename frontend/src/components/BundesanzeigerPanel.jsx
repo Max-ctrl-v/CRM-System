@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import api from '../services/api';
 import {
   FileText,
@@ -104,7 +105,7 @@ export default function BundesanzeigerPanel({ companyName }) {
                   <div className="prose prose-sm max-w-none text-gray-700
                     prose-headings:text-gray-900 prose-headings:font-display prose-headings:font-bold
                     prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-                    <ReactMarkdown skipHtml>{result.content}</ReactMarkdown>
+                    <ReactMarkdown skipHtml remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
                   </div>
                 </div>
 
@@ -115,10 +116,13 @@ export default function BundesanzeigerPanel({ companyName }) {
                   >
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 font-body">Quellen</p>
                     <div className="space-y-1.5">
-                      {result.citations.map((url, i) => (
+                      {result.citations.map((url, i) => {
+                        let safeUrl = '#';
+                        try { safeUrl = ['http:', 'https:'].includes(new URL(url).protocol) ? url : '#'; } catch {}
+                        return (
                         <a
                           key={i}
-                          href={url}
+                          href={safeUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1.5 text-xs text-brand-500 hover:text-brand-600 truncate font-body focus-visible:ring-2 focus-visible:ring-brand-300 rounded"
@@ -127,7 +131,8 @@ export default function BundesanzeigerPanel({ companyName }) {
                           <ExternalLink className="w-3 h-3 shrink-0" />
                           {url}
                         </a>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

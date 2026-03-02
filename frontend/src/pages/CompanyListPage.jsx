@@ -163,7 +163,7 @@ export default function CompanyListPage() {
         if (c.createdAt > advancedFilters.dateTo + 'T23:59:59') return false;
       }
       if (advancedFilters.uisOnly) {
-        if (!c.uis) return false;
+        if (!c.uisSchwierigkeiten) return false;
       }
 
       return true;
@@ -554,7 +554,7 @@ export default function CompanyListPage() {
         <CreateCompanyModal onClose={() => setShowCreate(false)} onCreated={handleCompanyCreated} showPipelineOption />
       )}
       {showImport && (
-        <ImportModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); refresh(); }} />
+        <ImportModal onClose={() => setShowImport(false)} onComplete={() => { setShowImport(false); refresh(); }} />
       )}
     </div>
   );

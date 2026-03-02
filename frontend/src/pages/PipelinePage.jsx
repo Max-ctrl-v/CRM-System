@@ -32,6 +32,7 @@ import PipelineAnalyticsBar from '../components/PipelineAnalyticsBar';
 import ConfettiCelebration from '../components/ConfettiCelebration';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import ContractModal from '../components/ContractModal';
 
 const PIPELINE_STAGES = [
   {
@@ -159,6 +160,7 @@ export default function PipelinePage() {
   const [editingRevenueId, setEditingRevenueId] = useState(null);
   const [editingRevenueValue, setEditingRevenueValue] = useState('');
   const [pendingClose, setPendingClose] = useState(null); // { companyId, companyName, stage }
+  const [pendingContract, setPendingContract] = useState(null); // company object for contract modal
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [latestComments, setLatestComments] = useState({});
@@ -222,6 +224,14 @@ export default function PipelinePage() {
       const comp = companies.find((c) => c.id === draggableId);
       if (comp && comp.pipelineStage !== newStage) {
         setPendingClose({ companyId: draggableId, companyName: comp?.name, stage: newStage });
+        return;
+      }
+    }
+    // Contract creation when moving to Verhandlung
+    if (newStage === 'VERHANDLUNG') {
+      const comp = companies.find((c) => c.id === draggableId);
+      if (comp && comp.pipelineStage !== 'VERHANDLUNG') {
+        setPendingContract(comp);
         return;
       }
     }
@@ -842,6 +852,23 @@ export default function PipelinePage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Contract modal for Verhandlung stage */}
+      {pendingContract && (
+        <ContractModal
+          company={pendingContract}
+          onClose={() => {
+            // Skip contract — still move to Verhandlung
+            applyStageChange(pendingContract.id, 'VERHANDLUNG');
+            setPendingContract(null);
+          }}
+          onComplete={() => {
+            applyStageChange(pendingContract.id, 'VERHANDLUNG');
+            setPendingContract(null);
+            addToast('Vertrag erstellt & Firma in Verhandlung verschoben', 'success');
+          }}
+        />
       )}
 
       {showConfetti && <ConfettiCelebration onComplete={() => setShowConfetti(false)} />}

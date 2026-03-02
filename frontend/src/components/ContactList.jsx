@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import CommentSection from './CommentSection';
@@ -227,7 +228,7 @@ function ContactResearchPanel({ contact, companyName }) {
                 </div>
               )}
               <div className="prose prose-sm max-w-none text-gray-700 prose-headings:text-gray-900 prose-headings:text-sm prose-headings:font-semibold prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-                <ReactMarkdown skipHtml>{result.content}</ReactMarkdown>
+                <ReactMarkdown skipHtml remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
               </div>
             </div>
             {result.citations?.length > 0 && (
@@ -271,7 +272,7 @@ function ContactResearchPanel({ contact, companyName }) {
           >
             <div className="flex items-center gap-2 mb-2"><Sparkles className="w-3.5 h-3.5 text-amber-500" /><span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">KI-Antwort</span></div>
             <div className="prose prose-sm max-w-none text-gray-700 prose-headings:text-gray-900 prose-headings:text-sm prose-headings:font-semibold prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-              <ReactMarkdown skipHtml>{searchResult.content}</ReactMarkdown>
+              <ReactMarkdown skipHtml remarkPlugins={[remarkGfm]}>{searchResult.content}</ReactMarkdown>
             </div>
             {searchResult.citations?.length > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-100">

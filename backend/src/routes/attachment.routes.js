@@ -60,7 +60,10 @@ router.get('/:id/download', asyncHandler(async (req, res) => {
   const attachment = await attachmentService.getById(req.params.id);
   if (!attachment) return res.status(404).json({ error: 'Datei nicht gefunden.' });
 
-  const filePath = path.join(attachmentService.UPLOADS_DIR, attachment.path);
+  const filePath = path.resolve(attachmentService.UPLOADS_DIR, attachment.path);
+  if (!filePath.startsWith(path.resolve(attachmentService.UPLOADS_DIR))) {
+    return res.status(400).json({ error: 'Ungültiger Dateipfad.' });
+  }
   res.download(filePath, attachment.fileName);
 }));
 

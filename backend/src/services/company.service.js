@@ -6,7 +6,7 @@ async function getAll(filters = {}, requestingUser = null) {
   if (filters.stage) where.pipelineStage = filters.stage;
   if (filters.assignedToId) where.assignedToId = filters.assignedToId;
   if (filters.search) {
-    where.name = { contains: filters.search };
+    where.name = { contains: filters.search, mode: 'insensitive' };
   }
 
   // Non-admin users cannot see companies assigned to an admin

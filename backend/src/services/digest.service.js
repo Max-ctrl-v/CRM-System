@@ -48,7 +48,7 @@ function buildDigestHtml(digest, userName) {
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #0D7377, #094e51); padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <h1 style="color: white; margin: 0; font-size: 22px;">CRM Pipeline — Wochenübersicht</h1>
-        <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0;">Hallo ${userName}!</p>
+        <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0;">Hallo ${userName.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}!</p>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
         <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; text-align: center;">

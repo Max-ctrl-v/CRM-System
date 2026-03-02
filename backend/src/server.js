@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const { PORT, CORS_ORIGIN, NODE_ENV, SENTRY_DSN } = require('./config/env');
@@ -27,8 +28,12 @@ const notificationRoutes = require('./routes/notification.routes');
 const attachmentRoutes = require('./routes/attachment.routes');
 const savedViewRoutes = require('./routes/savedView.routes');
 const totpRoutes = require('./routes/totp.routes');
+const contractRoutes = require('./routes/contract.routes');
 
 const app = express();
+
+// Trust proxy (Railway, Vercel, etc.) for correct req.ip in rate limiters
+app.set('trust proxy', 1);
 
 // Security
 app.use(helmet());
@@ -38,10 +43,12 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 app.use(compression());
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve uploaded files (require authentication)
+const { authenticate } = require('./middleware/auth');
+app.use('/uploads', authenticate, express.static(path.join(__dirname, '../uploads')));
 
 // Rate limiting for login, 2FA, and refresh endpoints
 const authLimiter = rateLimit({
@@ -75,6 +82,7 @@ app.use('/api/notifications', apiLimiter, notificationRoutes);
 app.use('/api/attachments', apiLimiter, attachmentRoutes);
 app.use('/api/saved-views', apiLimiter, savedViewRoutes);
 app.use('/api/totp', apiLimiter, totpRoutes);
+app.use('/api/contracts', apiLimiter, contractRoutes);
 
 // Health check with DB verification
 app.get('/api/health', async (req, res) => {

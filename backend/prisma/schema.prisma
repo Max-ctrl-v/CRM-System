@@ -60,6 +60,7 @@ model User {
   notifications     Notification[]
   attachments       Attachment[]
   savedViews        SavedView[]
+  createdContracts  Contract[] @relation("ContractCreatedBy")
 
   @@map("users")
 }
@@ -98,6 +99,7 @@ model Company {
   contacts      Contact[]
   tasks         Task[]
   attachments   Attachment[]
+  contracts     Contract[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -226,6 +228,34 @@ model Attachment {
 
   @@index([companyId])
   @@map("attachments")
+}
+
+model Contract {
+  id               String   @id @default(uuid())
+  contractNumber   String   @unique
+  durationMonths   Int
+  commissionRate   Float    // % on Beantragte Förderkosten
+  street           String
+  streetNumber     String
+  zipCode          String
+  city             String
+  country          String   @default("Deutschland")
+
+  pdfPath          String?
+  pdfGeneratedAt   DateTime?
+
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdById      String
+  createdBy        User     @relation("ContractCreatedBy", fields: [createdById], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([contractNumber])
+  @@map("contracts")
 }
 
 model SavedView {

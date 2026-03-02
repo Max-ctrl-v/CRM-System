@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Sparkles, Loader2, AlertCircle, RefreshCw, Clock, Search, Send, ExternalLink } from 'lucide-react';
 
 export default function PerplexityPanel({ companyId, companyName, website }) {
@@ -130,7 +131,7 @@ export default function PerplexityPanel({ companyId, companyName, website }) {
               <div className="prose prose-sm max-w-none text-gray-700
                 prose-headings:text-gray-900 prose-headings:font-display prose-headings:font-bold
                 prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-                <ReactMarkdown skipHtml>{result.content}</ReactMarkdown>
+                <ReactMarkdown skipHtml remarkPlugins={[remarkGfm]}>{result.content}</ReactMarkdown>
               </div>
 
               {result.citations && result.citations.length > 0 && (
@@ -234,7 +235,7 @@ export default function PerplexityPanel({ companyId, companyName, website }) {
             <div className="prose prose-sm max-w-none text-gray-700
               prose-headings:text-gray-900 prose-headings:font-display prose-headings:font-bold
               prose-strong:text-gray-900 prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
-              <ReactMarkdown skipHtml>{searchResult.content}</ReactMarkdown>
+              <ReactMarkdown skipHtml remarkPlugins={[remarkGfm]}>{searchResult.content}</ReactMarkdown>
             </div>
 
             {searchResult.citations && searchResult.citations.length > 0 && (

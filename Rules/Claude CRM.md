@@ -4,6 +4,17 @@
 - Read the plan file at `.claude/plans/silly-leaping-sonnet.md` to understand the full data model, views, and architecture before touching any code.
 **Invoke the `frontend-design` skill** before writing any frontend code, every session, no exceptions.
 
+### MCP Servers (configured in `~/.claude/settings.json`)
+- **Perplexity** — AI-powered web search via `@perplexity-ai/mcp-server`
+- **Firecrawl** — Web scraping and crawling via `firecrawl-mcp`
+- **Supabase** — Database management via `@supabase/mcp-server-supabase`
+- **Context7** — Up-to-date documentation lookup via `@upstash/context7-mcp`. Add `use context7` to prompts when you need current library docs.
+- **Playwright** — Browser automation and testing via `@playwright/mcp`
+
+### Skills (install via `/install <name>` in Claude Code terminal)
+- **security-guidance** — Trail of Bits security auditing skill
+- **superpowers** — Enhanced Claude Code capabilities (TDD, brainstorming, subagent review)
+
 ## Project Overview
 - **App:** CRM Sales Tool — Pipeline-Management for tracking companies through a Forschungszulagengesetz sales process.
 - **Language:** All UI text in **German**.
