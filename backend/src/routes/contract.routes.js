@@ -14,7 +14,7 @@ router.use(authenticate);
 
 // POST /api/contracts — create contract + generate PDF
 router.post('/', asyncHandler(async (req, res) => {
-  const { companyId, durationMonths, commissionRate, street, streetNumber, zipCode, city, country } = req.body;
+  const { companyId, durationMonths, commissionRate, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt } = req.body;
 
   if (!companyId) return res.status(400).json({ error: 'Firma ist erforderlich.' });
   if (!durationMonths || durationMonths < 1) return res.status(400).json({ error: 'Vertragslaufzeit ist erforderlich.' });
@@ -33,6 +33,8 @@ router.post('/', asyncHandler(async (req, res) => {
     zipCode: zipCode.trim(),
     city: city.trim(),
     country: country?.trim() || 'Deutschland',
+    paymentBewilligung: parseInt(paymentBewilligung) || 50,
+    paymentFinanzamt: parseInt(paymentFinanzamt) || 50,
   }, req.user.id);
 
   // Generate PDF
@@ -45,7 +47,7 @@ router.post('/', asyncHandler(async (req, res) => {
   }).catch(() => {});
 
   // Auto-comment on the company
-  const commentText = `📄 Vertrag erstellt: ${contract.contractNumber} (${contract.durationMonths} Monate, ${contract.commissionRate}% auf die Bescheinigten Förderkosten)`;
+  const commentText = `📄 Vertrag erstellt: ${contract.contractNumber} (${contract.durationMonths} Monate, ${contract.commissionRate}% auf die Bescheinigten Projektkosten)`;
   commentService.create({
     content: commentText,
     entityType: 'COMPANY',

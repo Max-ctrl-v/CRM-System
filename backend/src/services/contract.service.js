@@ -25,6 +25,8 @@ async function create(data, userId) {
       zipCode: data.zipCode,
       city: data.city,
       country: data.country || 'Deutschland',
+      paymentBewilligung: data.paymentBewilligung ?? 50,
+      paymentFinanzamt: data.paymentFinanzamt ?? 50,
       companyId: data.companyId,
       createdById: userId,
     },

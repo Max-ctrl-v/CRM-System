@@ -11,6 +11,7 @@ import {
   Loader2,
   Building2,
   CheckCircle,
+  Euro,
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -20,6 +21,8 @@ export default function ContractModal({ company, onClose, onComplete }) {
   const [form, setForm] = useState({
     durationMonths: 12,
     commissionRate: '',
+    paymentBewilligung: 50,
+    paymentFinanzamt: 50,
     street: '',
     streetNumber: '',
     zipCode: '',
@@ -32,7 +35,15 @@ export default function ContractModal({ company, onClose, onComplete }) {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'paymentBewilligung') {
+      const v = Math.max(0, Math.min(100, parseInt(value) || 0));
+      setForm((prev) => ({ ...prev, paymentBewilligung: v, paymentFinanzamt: 100 - v }));
+    } else if (name === 'paymentFinanzamt') {
+      const v = Math.max(0, Math.min(100, parseInt(value) || 0));
+      setForm((prev) => ({ ...prev, paymentFinanzamt: v, paymentBewilligung: 100 - v }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   }
 
   async function handleSubmit(e) {
@@ -45,6 +56,8 @@ export default function ContractModal({ company, onClose, onComplete }) {
         companyId: company.id,
         durationMonths: parseInt(form.durationMonths),
         commissionRate: parseFloat(form.commissionRate),
+        paymentBewilligung: parseInt(form.paymentBewilligung),
+        paymentFinanzamt: parseInt(form.paymentFinanzamt),
         street: form.street,
         streetNumber: form.streetNumber,
         zipCode: form.zipCode,
@@ -240,6 +253,47 @@ export default function ContractModal({ company, onClose, onComplete }) {
                     required
                     className="input-field w-full"
                     placeholder="z.B. 15"
+                  />
+                </div>
+              </div>
+
+              {/* Zahlungsziele */}
+              <div className="flex items-center gap-2 mt-5 mb-3">
+                <Euro className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                <span className="text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider">
+                  Zahlungsziele
+                </span>
+                <div className="flex-1 h-px" style={{ background: dark ? '#2a2d3d' : '#e5e7eb' }} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    % bei Bewilligung
+                  </label>
+                  <input
+                    type="number"
+                    name="paymentBewilligung"
+                    value={form.paymentBewilligung}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    required
+                    className="input-field w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    % bei Einreichung Finanzamt
+                  </label>
+                  <input
+                    type="number"
+                    name="paymentFinanzamt"
+                    value={form.paymentFinanzamt}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    required
+                    className="input-field w-full"
                   />
                 </div>
               </div>

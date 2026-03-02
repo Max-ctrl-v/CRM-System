@@ -130,20 +130,27 @@ async function generateContractPdf(contract) {
     doc.moveDown(1.2);
 
     // ── Compensation ──
+    const pctBewilligung = contract.paymentBewilligung || 50;
+    const pctFinanzamt = contract.paymentFinanzamt || 50;
+
     sectionHeading(doc, '§ 4 Vergütung', brandColor);
     doc.moveDown(0.5);
     doc.fontSize(10).font('Helvetica').fillColor(darkText)
       .text(
-        `Die Vergütung des Auftragnehmers beträgt ${contract.commissionRate.toFixed(1)}% der beantragten Förderkosten ` +
-        `(Beantragte Förderkosten). Die Vergütung wird nach erfolgreicher Einreichung des Antrags bei der BSFZ fällig. ` +
-        `Die Zahlung ist innerhalb von 14 Tagen nach Rechnungsstellung zu leisten.`,
+        `Die Vergütung des Auftragnehmers beträgt ${contract.commissionRate.toFixed(1)}% auf die Bescheinigten Projektkosten.`,
         { lineGap: 3 }
       );
     doc.moveDown(0.5);
+    doc.fontSize(10).font('Helvetica-Bold').fillColor(darkText)
+      .text('Zahlungsziele:', { lineGap: 3 });
+    doc.fontSize(10).font('Helvetica').fillColor(darkText)
+      .text(`    •  ${pctBewilligung}% der Vergütung werden fällig nach Bewilligung des Antrags durch die BSFZ.`, { lineGap: 3 });
+    doc.fontSize(10).font('Helvetica').fillColor(darkText)
+      .text(`    •  ${pctFinanzamt}% der Vergütung werden fällig nach Einreichung beim Finanzamt.`, { lineGap: 3 });
+    doc.moveDown(0.5);
     doc.fontSize(10).font('Helvetica').fillColor(darkText)
       .text(
-        `Sollte der Antrag auf Forschungszulage ganz oder teilweise abgelehnt werden, wird die Vergütung ` +
-        `anteilig auf den tatsächlich bewilligten Betrag angepasst.`,
+        `Die Zahlung ist jeweils innerhalb von 14 Tagen nach Rechnungsstellung zu leisten.`,
         { lineGap: 3 }
       );
 
