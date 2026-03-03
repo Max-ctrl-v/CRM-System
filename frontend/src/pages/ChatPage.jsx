@@ -274,37 +274,64 @@ export default function ChatPage() {
     }
   }
 
-  // --- Send ---
+  // --- Send (optimistic UI — message appears instantly) ---
   async function handleSend() {
     if (sending) return;
     if (!content.trim() && !pendingFile) return;
+
+    const tempId = `temp-${Date.now()}`;
+    const text = content.trim();
+    const file = pendingFile;
+
+    // Optimistic: show message immediately for text-only
+    if (!file && text) {
+      const optimistic = {
+        id: tempId,
+        content: text,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        filePath: null,
+        userId: user.id,
+        user: { id: user.id, name: user.name, role: user.role },
+        createdAt: new Date().toISOString(),
+        _optimistic: true,
+      };
+      setMessages((prev) => [...prev, optimistic]);
+      setContent('');
+      setTimeout(() => scrollToBottom('smooth'), 30);
+    }
 
     setSending(true);
     setUploadProgress(0);
 
     try {
       let res;
-      if (pendingFile) {
-        // File attached → send as multipart FormData
+      if (file) {
         const formData = new FormData();
-        if (content.trim()) formData.append('content', content.trim());
-        formData.append('file', pendingFile);
+        if (text) formData.append('content', text);
+        formData.append('file', file);
         res = await api.post('/chat/messages', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (e) => {
             if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100));
           },
         });
+        setMessages((prev) => [...prev, res.data]);
+        setContent('');
       } else {
-        // Text only → send as JSON
-        res = await api.post('/chat/messages', { content: content.trim() });
+        res = await api.post('/chat/messages', { content: text });
+        // Replace optimistic message with real server data
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? res.data : m)),
+        );
       }
-      setMessages((prev) => [...prev, res.data]);
-      setContent('');
       setPendingFile(null);
       lastPollTime.current = res.data.createdAt;
       setTimeout(() => scrollToBottom('smooth'), 50);
     } catch (err) {
+      // Remove optimistic message on error
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       addToast(err.response?.data?.error || 'Fehler beim Senden.', 'error');
     } finally {
       setSending(false);

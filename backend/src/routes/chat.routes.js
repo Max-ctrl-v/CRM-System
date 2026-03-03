@@ -83,38 +83,40 @@ router.post('/messages', (req, res, next) => {
     userId: req.user.id,
   });
 
-  // Parse @mentions and @all (same pattern as comment.routes.js)
-  if (content?.trim()) {
-    const allUsers = await prisma.user.findMany({ select: { id: true, name: true } });
-    const contentLower = content.trim().toLowerCase();
-    const mentionedUserIds = new Set();
+  // Respond immediately — don't block on mention parsing
+  res.status(201).json(message);
 
-    if (contentLower.includes('@all')) {
-      for (const u of allUsers) {
-        mentionedUserIds.add(u.id);
-      }
-    } else {
-      for (const u of allUsers) {
-        if (u.id === req.user.id) continue;
-        if (contentLower.includes(`@${u.name.toLowerCase()}`)) {
-          mentionedUserIds.add(u.id);
+  // Parse @mentions and @all AFTER response is sent
+  if (content?.trim()) {
+    const senderName = req.user.name;
+    const senderId = req.user.id;
+    prisma.user.findMany({ select: { id: true, name: true } }).then((allUsers) => {
+      const contentLower = content.trim().toLowerCase();
+      const mentionedUserIds = new Set();
+
+      if (contentLower.includes('@all')) {
+        for (const u of allUsers) mentionedUserIds.add(u.id);
+      } else {
+        for (const u of allUsers) {
+          if (u.id === senderId) continue;
+          if (contentLower.includes(`@${u.name.toLowerCase()}`)) {
+            mentionedUserIds.add(u.id);
+          }
         }
       }
-    }
 
-    const snippet = content.trim().slice(0, 80) + (content.trim().length > 80 ? '...' : '');
-    for (const userId of mentionedUserIds) {
-      notificationService.create({
-        type: 'CHAT_MENTION',
-        title: 'Neue Chat-Erwähnung',
-        message: `${req.user.name}: "${snippet}"`,
-        link: '/chat',
-        userId,
-      }).catch(() => {});
-    }
+      const snippet = content.trim().slice(0, 80) + (content.trim().length > 80 ? '...' : '');
+      for (const userId of mentionedUserIds) {
+        notificationService.create({
+          type: 'CHAT_MENTION',
+          title: 'Neue Chat-Erwähnung',
+          message: `${senderName}: "${snippet}"`,
+          link: '/chat',
+          userId,
+        }).catch(() => {});
+      }
+    }).catch(() => {});
   }
-
-  res.status(201).json(message);
 }));
 
 // DELETE /api/chat/messages/:id
