@@ -14,11 +14,12 @@ router.use(authenticate);
 
 // POST /api/contracts — create contract + generate PDF
 router.post('/', asyncHandler(async (req, res) => {
-  const { companyId, durationMonths, commissionRate, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt } = req.body;
+  const { companyId, durationMonths, commissionRate, foerderquote, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt } = req.body;
 
   if (!companyId) return res.status(400).json({ error: 'Firma ist erforderlich.' });
   if (!durationMonths || durationMonths < 1) return res.status(400).json({ error: 'Vertragslaufzeit ist erforderlich.' });
   if (commissionRate === undefined || commissionRate < 0 || commissionRate > 100) return res.status(400).json({ error: 'Prozentsatz muss zwischen 0 und 100 liegen.' });
+  if (foerderquote !== undefined && (foerderquote < 25 || foerderquote > 35)) return res.status(400).json({ error: 'Förderquote muss zwischen 25% und 35% liegen.' });
   if (!street?.trim()) return res.status(400).json({ error: 'Straße ist erforderlich.' });
   if (!streetNumber?.trim()) return res.status(400).json({ error: 'Hausnummer ist erforderlich.' });
   if (!zipCode?.trim()) return res.status(400).json({ error: 'PLZ ist erforderlich.' });
@@ -28,6 +29,7 @@ router.post('/', asyncHandler(async (req, res) => {
     companyId,
     durationMonths: parseInt(durationMonths),
     commissionRate: parseFloat(commissionRate),
+    foerderquote: foerderquote !== undefined ? parseFloat(foerderquote) : 25,
     street: street.trim(),
     streetNumber: streetNumber.trim(),
     zipCode: zipCode.trim(),
@@ -47,7 +49,7 @@ router.post('/', asyncHandler(async (req, res) => {
   }).catch(() => {});
 
   // Auto-comment on the company
-  const commentText = `📄 Vertrag erstellt: ${contract.contractNumber} (${contract.durationMonths} Monate, ${contract.commissionRate}% auf die Bescheinigten Projektkosten)`;
+  const commentText = `📄 Vertrag erstellt: ${contract.contractNumber} (${contract.durationMonths} Monate, ${contract.commissionRate}% Vergütung, ${contract.foerderquote}% Förderquote)`;
   commentService.create({
     content: commentText,
     entityType: 'COMPANY',

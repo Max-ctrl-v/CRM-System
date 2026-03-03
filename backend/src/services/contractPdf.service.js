@@ -32,6 +32,7 @@ async function generateContractPdf(contract) {
   const pctB = contract.paymentBewilligung || 50;
   const pctF = contract.paymentFinanzamt || 50;
   const rate = contract.commissionRate;
+  const fq = contract.foerderquote || 25;
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -129,6 +130,9 @@ async function generateContractPdf(contract) {
       .text('Die Vergütung des Auftragnehmers beträgt ', L, y, { continued: true, lineGap: 2.5 });
     doc.font('Helvetica-Bold').fillColor(navy)
       .text(`${rate.toFixed(1)}% auf die bescheinigten Projektkosten`, { continued: true });
+    doc.font('Helvetica').fillColor(body).text('. ', { continued: true, lineGap: 2.5 });
+    doc.text('Die Förderquote beträgt ', { continued: true, lineGap: 2.5 });
+    doc.font('Helvetica-Bold').fillColor(navy).text(`${fq}%`, { continued: true });
     doc.font('Helvetica').fillColor(body).text('.', { lineGap: 2.5 });
 
     doc.y += 3;
@@ -140,112 +144,137 @@ async function generateContractPdf(contract) {
     doc.text('Zahlung jeweils innerhalb von 14 Tagen nach Rechnungsstellung.', { lineGap: 2.5 });
 
     // ════════════════════════════════════════════════════
-    // CALCULATION EXAMPLE — prominent, professional table
+    // CALCULATION EXAMPLE — Two-column layout
     // ════════════════════════════════════════════════════
     doc.y += 10;
 
     const exAmt = 1000000;
+    const forschungszulage = exAmt * (fq / 100);
     const fee = exAmt * (rate / 100);
     const p1 = fee * (pctB / 100);
     const p2 = fee * (pctF / 100);
 
-    // If not enough room, start on page 2
-    if (doc.y > doc.page.height - 220) doc.addPage();
-
     const bx = L;
     const bw = W;
     const bt = doc.y;
-    const bp = 14; // padding
-
-    // Measure box height
-    const rh = 20; // row height
-    const bh = bp + 15 + 30 + 18 + rh + rh + 8 + rh + rh + 10 + rh + 16 + bp;
+    const bp = 14;
+    const colGap = 14;
+    const innerPad = bp + 8; // left accent + padding
+    const iw = bw - innerPad - bp; // inner width
+    const colW = (iw - colGap) / 2;
+    const bh = 248;
 
     // Outer box
     doc.save();
     doc.roundedRect(bx, bt, bw, bh, 5).fillColor('#f0f4fa').fill();
     doc.roundedRect(bx, bt, bw, bh, 5).strokeColor('#c7d2e4').lineWidth(0.75).stroke();
-    // Left accent stripe
     doc.roundedRect(bx, bt + 5, 3.5, bh - 10, 2).fillColor(navy).fill();
     doc.restore();
 
-    const ix = bx + bp + 8; // inner left
-    const iw = bw - bp * 2 - 8; // inner width
+    const ix = bx + innerPad;
     y = bt + bp;
 
     // Title
     doc.fontSize(11).font('Helvetica-Bold').fillColor(navy).text('Berechnungsbeispiel', ix, y);
-    y += 16;
+    y += 15;
 
     // Description
     doc.fontSize(7.5).font('Helvetica').fillColor(gray)
       .text(
-        'Exemplarische Darstellung der Vergütungsstruktur auf Basis einer angenommenen ' +
-        'Projektkostensumme von 1.000.000 €. Die tatsächliche Vergütung richtet sich nach ' +
-        'den tatsächlich bescheinigten Projektkosten.',
+        'Exemplarische Darstellung auf Basis angenommener bescheinigter Projektkosten von 1.000.000 €.',
         ix, y, { width: iw, lineGap: 2 }
       );
-    y += 30;
+    y += 14;
 
-    // ── Table ──
-    const tw = iw; // table width
-    const tx = ix;
-    const tr = tx + tw; // table right edge
-
-    // Header row
-    doc.roundedRect(tx, y, tw, 17, 3).fillColor(navy).fill();
+    // Full-width base amount bar
+    doc.roundedRect(ix, y, iw, 17, 3).fillColor(navy).fill();
     doc.fontSize(7).font('Helvetica-Bold').fillColor('#ffffff');
-    doc.text('POSITION', tx + 10, y + 5, { width: tw * 0.55 });
-    doc.text('BETRAG', tx, y + 5, { width: tw - 10, align: 'right' });
-    y += 21;
+    doc.text('BESCHEINIGTE PROJEKTKOSTEN (BEISPIEL)', ix + 10, y + 5);
+    doc.text(fmtEur(exAmt), ix, y + 5, { width: iw - 10, align: 'right' });
+    y += 24;
 
-    // Row: Projektkosten
-    doc.fontSize(9).font('Helvetica').fillColor(body)
-      .text('Bescheinigte Projektkosten (Beispiel)', tx + 10, y + 3, { width: tw * 0.55 });
-    doc.fontSize(9).font('Helvetica-Bold').fillColor(dark)
-      .text(fmtEur(exAmt), tx, y + 3, { width: tw - 10, align: 'right' });
-    y += rh;
+    // ── Two columns ──
+    const leftX = ix;
+    const rightX = ix + colW + colGap;
+    const colTop = y;
 
-    // Row: Vergütung (highlighted)
-    doc.roundedRect(tx, y, tw, rh, 3).fillColor('#dbeafe').fill();
-    doc.roundedRect(tx, y, tw, rh, 3).strokeColor('#93c5fd').lineWidth(0.5).stroke();
-    doc.fontSize(9).font('Helvetica-Bold').fillColor(blue)
-      .text(`Vergütung (${rate.toFixed(1)}%)`, tx + 10, y + 4, { width: tw * 0.55 });
-    doc.fontSize(10).font('Helvetica-Bold').fillColor(blue)
-      .text(fmtEur(fee), tx, y + 4, { width: tw - 10, align: 'right' });
-    y += rh + 8;
+    // Vertical dashed divider
+    doc.save();
+    const divX = ix + colW + colGap / 2;
+    doc.moveTo(divX, colTop).lineTo(divX, colTop + 148)
+      .strokeColor('#c7d2e4').lineWidth(0.5).dash(3, { space: 2 }).stroke();
+    doc.restore();
 
-    // Divider
-    doc.moveTo(tx + 8, y).lineTo(tr - 8, y).strokeColor('#c7d2e4').lineWidth(0.5).stroke();
-    y += 8;
+    // ═══ LEFT COLUMN: Ihre Forschungszulage ═══
+    let ly = colTop;
 
-    // Payment rows
-    doc.fontSize(8.5).font('Helvetica').fillColor(gray)
-      .text(`1. Zahlung  —  ${pctB}% bei Bewilligung (BSFZ)`, tx + 10, y + 3, { width: tw * 0.6 });
-    doc.fontSize(9).font('Helvetica-Bold').fillColor(dark)
-      .text(fmtEur(p1), tx, y + 3, { width: tw - 10, align: 'right' });
-    y += rh;
+    doc.roundedRect(leftX, ly, colW, 15, 2).fillColor('#d1fae5').fill();
+    doc.fontSize(7).font('Helvetica-Bold').fillColor('#065f46')
+      .text('IHRE FORSCHUNGSZULAGE', leftX + 8, ly + 4, { width: colW - 16 });
+    ly += 22;
 
-    doc.fontSize(8.5).font('Helvetica').fillColor(gray)
-      .text(`2. Zahlung  —  ${pctF}% bei Einreichung Finanzamt`, tx + 10, y + 3, { width: tw * 0.6 });
-    doc.fontSize(9).font('Helvetica-Bold').fillColor(dark)
-      .text(fmtEur(p2), tx, y + 3, { width: tw - 10, align: 'right' });
-    y += rh + 4;
+    doc.fontSize(8).font('Helvetica').fillColor(gray)
+      .text('Bescheinigte Projektkosten', leftX + 8, ly);
+    ly += 12;
+    doc.fontSize(9.5).font('Helvetica-Bold').fillColor(dark)
+      .text(fmtEur(exAmt), leftX + 8, ly);
+    ly += 18;
 
-    // Total divider
-    doc.moveTo(tx + 8, y).lineTo(tr - 8, y).strokeColor(navy).lineWidth(1.2).stroke();
-    y += 8;
+    // Forschungszulage highlight
+    doc.roundedRect(leftX, ly, colW, 30, 3).fillColor('#d1fae5').fill();
+    doc.roundedRect(leftX, ly, colW, 30, 3).strokeColor('#6ee7b7').lineWidth(0.5).stroke();
+    doc.fontSize(8).font('Helvetica').fillColor('#065f46')
+      .text(`Forschungszulage (${fq}%)`, leftX + 8, ly + 4);
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#059669')
+      .text(fmtEur(forschungszulage), leftX + 8, ly + 16);
+    ly += 36;
 
-    // Total
-    doc.fontSize(10).font('Helvetica-Bold').fillColor(navy)
-      .text('Gesamtvergütung', tx + 10, y, { width: tw * 0.55 });
-    doc.fontSize(10.5).font('Helvetica-Bold').fillColor(navy)
-      .text(fmtEur(p1 + p2), tx, y, { width: tw - 10, align: 'right' });
-    y += 16;
+    doc.fontSize(7).font('Helvetica-Oblique').fillColor(light)
+      .text('Erstattung vom Finanzamt', leftX + 8, ly);
+
+    // ═══ RIGHT COLUMN: Unsere Vergütung ═══
+    let ry = colTop;
+
+    doc.roundedRect(rightX, ry, colW, 15, 2).fillColor('#dbeafe').fill();
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(blue)
+      .text('UNSERE VERGÜTUNG', rightX + 8, ry + 4, { width: colW - 16 });
+    ry += 22;
+
+    // Fee highlight
+    doc.roundedRect(rightX, ry, colW, 26, 3).fillColor('#dbeafe').fill();
+    doc.roundedRect(rightX, ry, colW, 26, 3).strokeColor('#93c5fd').lineWidth(0.5).stroke();
+    doc.fontSize(8.5).font('Helvetica-Bold').fillColor(blue)
+      .text(`Vergütung (${rate.toFixed(1)}%)`, rightX + 8, ry + 3);
+    doc.fontSize(10.5).font('Helvetica-Bold').fillColor(blue)
+      .text(fmtEur(fee), rightX + 8, ry + 14);
+    ry += 32;
+
+    // Payment 1
+    doc.fontSize(8).font('Helvetica').fillColor(gray)
+      .text(`1. Zahlung — ${pctB}% Bewilligung`, rightX + 8, ry);
+    doc.fontSize(8.5).font('Helvetica-Bold').fillColor(dark)
+      .text(fmtEur(p1), rightX, ry, { width: colW - 8, align: 'right' });
+    ry += 14;
+
+    // Payment 2
+    doc.fontSize(8).font('Helvetica').fillColor(gray)
+      .text(`2. Zahlung — ${pctF}% Finanzamt`, rightX + 8, ry);
+    doc.fontSize(8.5).font('Helvetica-Bold').fillColor(dark)
+      .text(fmtEur(p2), rightX, ry, { width: colW - 8, align: 'right' });
+    ry += 18;
+
+    // Total line
+    doc.moveTo(rightX + 6, ry).lineTo(rightX + colW - 6, ry)
+      .strokeColor(navy).lineWidth(1).stroke();
+    ry += 8;
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(navy)
+      .text('Gesamt', rightX + 8, ry);
+    doc.fontSize(9.5).font('Helvetica-Bold').fillColor(navy)
+      .text(fmtEur(fee), rightX, ry, { width: colW - 8, align: 'right' });
 
     // Footnote
     doc.fontSize(7).font('Helvetica-Oblique').fillColor(light)
-      .text('Alle Beträge netto zzgl. gesetzlicher USt.', tx + 10, y);
+      .text('Alle Beträge netto zzgl. gesetzlicher USt.', ix + 4, bt + bh - bp - 4);
 
     doc.y = bt + bh + 12;
 

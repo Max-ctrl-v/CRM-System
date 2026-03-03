@@ -20,6 +20,7 @@ async function create(data, userId) {
       contractNumber,
       durationMonths: data.durationMonths,
       commissionRate: data.commissionRate,
+      foerderquote: data.foerderquote ?? 25,
       street: data.street,
       streetNumber: data.streetNumber,
       zipCode: data.zipCode,

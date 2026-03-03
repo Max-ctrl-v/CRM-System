@@ -23,6 +23,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
   const [form, setForm] = useState({
     durationMonths: 12,
     commissionRate: '',
+    foerderquote: 25,
     paymentBewilligung: 50,
     paymentFinanzamt: 50,
     street: '',
@@ -58,6 +59,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
         companyId: company.id,
         durationMonths: parseInt(form.durationMonths),
         commissionRate: parseFloat(form.commissionRate),
+        foerderquote: parseFloat(form.foerderquote),
         paymentBewilligung: parseInt(form.paymentBewilligung),
         paymentFinanzamt: parseInt(form.paymentFinanzamt),
         street: form.street,
@@ -220,8 +222,8 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 </div>
               )}
 
-              {/* Duration + Commission row */}
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Duration + Commission + Förderquote row */}
+              <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
                   <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                     <Clock className="w-3 h-3 inline mr-1 -mt-0.5" />
@@ -242,7 +244,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 <div>
                   <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                     <Percent className="w-3 h-3 inline mr-1 -mt-0.5" />
-                    % auf die Bescheinigten Förderkosten
+                    Vergütungssatz (%)
                   </label>
                   <input
                     type="number"
@@ -255,6 +257,24 @@ export default function ContractModal({ company, onClose, onComplete }) {
                     required
                     className="input-field w-full"
                     placeholder="z.B. 15"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    <Percent className="w-3 h-3 inline mr-1 -mt-0.5" />
+                    Förderquote (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="foerderquote"
+                    value={form.foerderquote}
+                    onChange={handleChange}
+                    min="25"
+                    max="35"
+                    step="1"
+                    required
+                    className="input-field w-full"
+                    placeholder="25"
                   />
                 </div>
               </div>
@@ -389,7 +409,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 />
               </div>
 
-              {/* Calculation Example */}
+              {/* Calculation Example — Two-Column */}
               {form.commissionRate > 0 && (
                 <>
                   <div className="flex items-center gap-2 mt-5 mb-3">
@@ -401,13 +421,15 @@ export default function ContractModal({ company, onClose, onComplete }) {
                   </div>
 
                   {(() => {
-                    const exampleAmount = 1000000;
+                    const exAmt = 1000000;
                     const rate = parseFloat(form.commissionRate) || 0;
-                    const totalFee = exampleAmount * (rate / 100);
-                    const bewilligungPct = parseInt(form.paymentBewilligung) || 0;
-                    const finanzamtPct = parseInt(form.paymentFinanzamt) || 0;
-                    const payment1 = totalFee * (bewilligungPct / 100);
-                    const payment2 = totalFee * (finanzamtPct / 100);
+                    const fq = parseFloat(form.foerderquote) || 25;
+                    const forschungszulage = exAmt * (fq / 100);
+                    const totalFee = exAmt * (rate / 100);
+                    const bewPct = parseInt(form.paymentBewilligung) || 0;
+                    const finPct = parseInt(form.paymentFinanzamt) || 0;
+                    const p1 = totalFee * (bewPct / 100);
+                    const p2 = totalFee * (finPct / 100);
                     const fmt = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
                     return (
@@ -421,108 +443,86 @@ export default function ContractModal({ company, onClose, onComplete }) {
                           boxShadow: '0 1px 3px rgba(13,115,119,0.06), 0 2px 8px rgba(13,115,119,0.03)',
                         }}
                       >
-                        {/* Example header */}
+                        {/* Header: example base amount */}
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[11px] font-body font-semibold text-gray-400 uppercase tracking-wider">
                             Beispiel: Bescheinigte Projektkosten
                           </span>
                           <span className="text-[13px] font-display font-bold text-gray-800">
-                            {fmt(exampleAmount)} €
+                            {fmt(exAmt)} €
                           </span>
                         </div>
 
-                        {/* Total fee calculation */}
-                        <div
-                          className="rounded-lg px-3.5 py-2.5 mb-3 flex items-center justify-between"
-                          style={{
-                            background: dark ? 'rgba(13,115,119,0.12)' : 'rgba(13,115,119,0.06)',
-                            border: `1px solid ${dark ? 'rgba(13,115,119,0.25)' : 'rgba(13,115,119,0.1)'}`,
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Percent className="w-3.5 h-3.5" style={{ color: brandColor }} />
-                            <span className="text-[12px] font-body font-medium text-gray-600">
-                              Vergütung ({rate}%)
-                            </span>
-                          </div>
-                          <span className="text-[14px] font-display font-bold" style={{ color: brandColor }}>
-                            {fmt(totalFee)} €
-                          </span>
-                        </div>
-
-                        {/* Payment terms */}
-                        <div className="space-y-2">
+                        {/* Two columns */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* LEFT: Ihre Forschungszulage */}
                           <div
-                            className="rounded-lg px-3.5 py-2.5 flex items-center justify-between"
+                            className="rounded-lg p-3"
                             style={{
-                              background: dark ? '#1e2130' : '#ffffff',
-                              border: `1px solid ${dark ? '#2a2d3d' : '#eef0f4'}`,
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                              background: dark ? 'rgba(16,185,129,0.08)' : 'rgba(16,185,129,0.04)',
+                              border: `1px solid ${dark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.12)'}`,
                             }}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div
-                                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold text-white"
-                                style={{ background: brandColor }}
-                              >
-                                1
-                              </div>
-                              <div className="min-w-0">
-                                <span className="text-[12px] font-body font-semibold text-gray-700 block">
-                                  {bewilligungPct}% bei Bewilligung
-                                </span>
-                                <span className="text-[10px] font-body text-gray-400">
-                                  Fällig nach Erhalt des Bewilligungsbescheids
-                                </span>
-                              </div>
+                            <div className="text-[10px] font-body font-bold text-emerald-600 uppercase tracking-wider mb-2.5">
+                              Ihre Forschungszulage
                             </div>
-                            <span className="text-[13px] font-display font-bold text-gray-800 shrink-0 ml-3">
-                              {fmt(payment1)} €
-                            </span>
+                            <div className="text-[11px] font-body text-gray-500 mb-0.5">
+                              Projektkosten
+                            </div>
+                            <div className="text-[12px] font-display font-semibold text-gray-700 mb-2">
+                              {fmt(exAmt)} €
+                            </div>
+                            <div className="h-px mb-2" style={{ background: dark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)' }} />
+                            <div className="text-[11px] font-body text-gray-500 mb-0.5">
+                              Forschungszulage ({fq}%)
+                            </div>
+                            <div className="text-[16px] font-display font-bold text-emerald-600">
+                              {fmt(forschungszulage)} €
+                            </div>
+                            <div className="text-[9px] font-body text-gray-400 mt-1">
+                              Erstattung vom Finanzamt
+                            </div>
                           </div>
 
-                          <div className="flex justify-center">
-                            <ArrowRight className="w-3 h-3 text-gray-300 rotate-90" />
-                          </div>
-
+                          {/* RIGHT: Unsere Vergütung */}
                           <div
-                            className="rounded-lg px-3.5 py-2.5 flex items-center justify-between"
+                            className="rounded-lg p-3"
                             style={{
-                              background: dark ? '#1e2130' : '#ffffff',
-                              border: `1px solid ${dark ? '#2a2d3d' : '#eef0f4'}`,
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                              background: dark ? 'rgba(13,115,119,0.08)' : 'rgba(13,115,119,0.04)',
+                              border: `1px solid ${dark ? 'rgba(13,115,119,0.2)' : 'rgba(13,115,119,0.12)'}`,
                             }}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div
-                                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold text-white"
-                                style={{ background: '#10b981' }}
-                              >
-                                2
-                              </div>
-                              <div className="min-w-0">
-                                <span className="text-[12px] font-body font-semibold text-gray-700 block">
-                                  {finanzamtPct}% bei Einreichung Finanzamt
-                                </span>
-                                <span className="text-[10px] font-body text-gray-400">
-                                  Fällig nach Einreichung beim Finanzamt
-                                </span>
+                            <div className="text-[10px] font-body font-bold uppercase tracking-wider mb-2.5" style={{ color: brandColor }}>
+                              Unsere Vergütung
+                            </div>
+                            <div
+                              className="rounded-md px-2.5 py-2 mb-2.5"
+                              style={{
+                                background: dark ? 'rgba(13,115,119,0.12)' : 'rgba(13,115,119,0.06)',
+                                border: `1px solid ${dark ? 'rgba(13,115,119,0.25)' : 'rgba(13,115,119,0.1)'}`,
+                              }}
+                            >
+                              <div className="text-[11px] font-body text-gray-500">Vergütung ({rate}%)</div>
+                              <div className="text-[14px] font-display font-bold" style={{ color: brandColor }}>
+                                {fmt(totalFee)} €
                               </div>
                             </div>
-                            <span className="text-[13px] font-display font-bold text-gray-800 shrink-0 ml-3">
-                              {fmt(payment2)} €
-                            </span>
+                            <div className="flex items-center justify-between text-[11px] mb-1.5">
+                              <span className="font-body text-gray-500">1. {bewPct}% Bewilligung</span>
+                              <span className="font-display font-bold text-gray-700">{fmt(p1)} €</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-body text-gray-500">2. {finPct}% Finanzamt</span>
+                              <span className="font-display font-bold text-gray-700">{fmt(p2)} €</span>
+                            </div>
+                            <div
+                              className="mt-2 pt-2 flex items-center justify-between"
+                              style={{ borderTop: `1px dashed ${dark ? '#2a2d3d' : '#e5e7eb'}` }}
+                            >
+                              <span className="text-[10px] font-body text-gray-400">Gesamt</span>
+                              <span className="text-[12px] font-display font-bold text-gray-700">{fmt(totalFee)} €</span>
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Summary line */}
-                        <div className="mt-3 pt-2.5 flex items-center justify-between" style={{ borderTop: `1px dashed ${dark ? '#2a2d3d' : '#e5e7eb'}` }}>
-                          <span className="text-[11px] font-body text-gray-400">
-                            Gesamt
-                          </span>
-                          <span className="text-[12px] font-display font-bold text-gray-600">
-                            {fmt(payment1 + payment2)} €
-                          </span>
                         </div>
                       </div>
                     );

@@ -237,6 +237,7 @@ model Contract {
   contractNumber   String   @unique
   durationMonths   Int
   commissionRate   Float    // % auf die Bescheinigten Projektkosten
+  foerderquote     Float    @default(25)  // Förderquote in % (25-35)
   paymentBewilligung Int   @default(50)  // % bei Bewilligung
   paymentFinanzamt   Int   @default(50)  // % bei Einreichung beim Finanzamt
   street           String
