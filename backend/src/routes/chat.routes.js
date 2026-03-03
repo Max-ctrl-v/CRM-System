@@ -59,8 +59,15 @@ router.get('/messages/new', asyncHandler(async (req, res) => {
   res.json(messages);
 }));
 
-// POST /api/chat/messages (multipart: content + optional file)
-router.post('/messages', upload.single('file'), asyncHandler(async (req, res) => {
+// POST /api/chat/messages (JSON for text-only, multipart when file attached)
+router.post('/messages', (req, res, next) => {
+  const ct = req.headers['content-type'] || '';
+  if (ct.includes('multipart/form-data')) {
+    upload.single('file')(req, res, next);
+  } else {
+    next();
+  }
+}, asyncHandler(async (req, res) => {
   const { content } = req.body;
 
   if (!content?.trim() && !req.file) {

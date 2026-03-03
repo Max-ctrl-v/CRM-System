@@ -282,21 +282,27 @@ export default function ChatPage() {
     setSending(true);
     setUploadProgress(0);
 
-    const formData = new FormData();
-    if (content.trim()) formData.append('content', content.trim());
-    if (pendingFile) formData.append('file', pendingFile);
-
     try {
-      const { data } = await api.post('/chat/messages', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (e) => {
-          if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-        },
-      });
-      setMessages((prev) => [...prev, data]);
+      let res;
+      if (pendingFile) {
+        // File attached → send as multipart FormData
+        const formData = new FormData();
+        if (content.trim()) formData.append('content', content.trim());
+        formData.append('file', pendingFile);
+        res = await api.post('/chat/messages', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (e) => {
+            if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          },
+        });
+      } else {
+        // Text only → send as JSON
+        res = await api.post('/chat/messages', { content: content.trim() });
+      }
+      setMessages((prev) => [...prev, res.data]);
       setContent('');
       setPendingFile(null);
-      lastPollTime.current = data.createdAt;
+      lastPollTime.current = res.data.createdAt;
       setTimeout(() => scrollToBottom('smooth'), 50);
     } catch (err) {
       addToast(err.response?.data?.error || 'Fehler beim Senden.', 'error');
