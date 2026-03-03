@@ -91,7 +91,7 @@ router.post('/messages', (req, res, next) => {
 
     if (contentLower.includes('@all')) {
       for (const u of allUsers) {
-        if (u.id !== req.user.id) mentionedUserIds.add(u.id);
+        mentionedUserIds.add(u.id);
       }
     } else {
       for (const u of allUsers) {
