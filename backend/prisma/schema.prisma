@@ -45,7 +45,7 @@ model User {
   passwordHash  String
   name          String
   role          Role      @default(USER)
-  refreshToken  String?
+  refreshToken  String?   // deprecated — kept for backward compat, use RefreshToken table
   createdAt     DateTime  @default(now())
   lastLogin     DateTime?
 
@@ -63,8 +63,21 @@ model User {
   savedViews        SavedView[]
   createdContracts  Contract[] @relation("ContractCreatedBy")
   chatMessages      ChatMessage[]
+  refreshTokens     RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 model Company {

@@ -79,7 +79,8 @@ router.get('/users', authenticate, asyncHandler(async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', authenticate, asyncHandler(async (req, res) => {
-  await authService.logout(req.user.id);
+  const refreshToken = req.cookies?.refreshToken;
+  await authService.logout(req.user.id, refreshToken);
   clearRefreshCookie(res);
   res.json({ message: 'Erfolgreich abgemeldet.' });
 }));

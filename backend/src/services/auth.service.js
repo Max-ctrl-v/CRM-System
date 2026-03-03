@@ -8,6 +8,7 @@ const { AppError } = require('../middleware/errorHandler');
 const SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = '1h';
 const REFRESH_TOKEN_EXPIRY = '7d';
+const REFRESH_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** SHA-256 hash a token for safe DB storage */
 function hashToken(token) {
@@ -30,6 +31,36 @@ function generateRefreshToken(user) {
   );
 }
 
+/** Create a new session (refresh token row) for the user */
+async function createSession(user) {
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  await prisma.$transaction([
+    prisma.refreshToken.create({
+      data: {
+        tokenHash: hashToken(refreshToken),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
+      },
+    }),
+    prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    }),
+    // Clean up expired tokens for this user
+    prisma.refreshToken.deleteMany({
+      where: { userId: user.id, expiresAt: { lt: new Date() } },
+    }),
+  ]);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+  };
+}
+
 async function login(email, password) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new AppError('Ungültige Anmeldedaten.', 401);
@@ -47,19 +78,7 @@ async function login(email, password) {
     return { requires2FA: true, tempToken };
   }
 
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { refreshToken: hashToken(refreshToken), lastLogin: new Date() },
-  });
-
-  return {
-    accessToken,
-    refreshToken,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
-  };
+  return createSession(user);
 }
 
 async function verify2FA(tempToken, code) {
@@ -78,19 +97,7 @@ async function verify2FA(tempToken, code) {
   const valid = verifySync(code, user.totpSecret);
   if (!valid) throw new AppError('Ungültiger 2FA-Code.', 401);
 
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { refreshToken: hashToken(refreshToken), lastLogin: new Date() },
-  });
-
-  return {
-    accessToken,
-    refreshToken,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
-  };
+  return createSession(user);
 }
 
 async function refresh(refreshToken) {
@@ -103,22 +110,41 @@ async function refresh(refreshToken) {
     throw new AppError('Ungültiges Refresh-Token.', 401);
   }
 
-  const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-  if (!user || !user.refreshToken) {
-    throw new AppError('Ungültiges Refresh-Token.', 401);
-  }
-
-  // Compare hashed token (with backward compat for plaintext migration)
   const hashed = hashToken(refreshToken);
-  if (user.refreshToken !== hashed && user.refreshToken !== refreshToken) {
-    throw new AppError('Ungültiges Refresh-Token.', 401);
+
+  // Look up session in RefreshToken table
+  const session = await prisma.refreshToken.findUnique({ where: { tokenHash: hashed } });
+
+  if (session) {
+    // Multi-device session found — issue new access token, keep same refresh token
+    const user = await prisma.user.findUnique({ where: { id: session.userId } });
+    if (!user) throw new AppError('Ungültiges Refresh-Token.', 401);
+    const newAccessToken = generateAccessToken(user);
+    return { accessToken: newAccessToken, refreshToken };
   }
 
-  const newAccessToken = generateAccessToken(user);
+  // Fallback: check legacy single-token field on User (for existing sessions before migration)
+  const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+  if (user && user.refreshToken && (user.refreshToken === hashed || user.refreshToken === refreshToken)) {
+    // Migrate this legacy session to the new table
+    await prisma.$transaction([
+      prisma.refreshToken.create({
+        data: {
+          tokenHash: hashed,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
+        },
+      }),
+      prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken: null },
+      }),
+    ]);
+    const newAccessToken = generateAccessToken(user);
+    return { accessToken: newAccessToken, refreshToken };
+  }
 
-  // Don't rotate refresh token — reuse the existing one to prevent
-  // multi-tab race conditions where concurrent refreshes invalidate each other
-  return { accessToken: newAccessToken, refreshToken };
+  throw new AppError('Ungültiges Refresh-Token.', 401);
 }
 
 function validatePassword(password) {
@@ -145,11 +171,17 @@ async function createUser(email, password, name, role = 'USER') {
   });
 }
 
-async function logout(userId) {
+async function logout(userId, refreshToken) {
+  if (refreshToken) {
+    // Delete only this session
+    const hashed = hashToken(refreshToken);
+    await prisma.refreshToken.deleteMany({ where: { tokenHash: hashed } }).catch(() => {});
+  }
+  // Also clear legacy field if still set
   await prisma.user.update({
     where: { id: userId },
     data: { refreshToken: null },
-  });
+  }).catch(() => {});
 }
 
 async function getAllUsers() {
