@@ -272,9 +272,9 @@ async function generateContractPdf(contract) {
     doc.fontSize(9.5).font('Helvetica-Bold').fillColor(navy)
       .text(fmtEur(fee), rightX, ry, { width: colW - 8, align: 'right' });
 
-    // Footnote
+    // Footnote — only applies to Novaris fee (right column)
     doc.fontSize(7).font('Helvetica-Oblique').fillColor(light)
-      .text('Alle Beträge netto zzgl. gesetzlicher USt.', ix + 4, bt + bh - bp - 4);
+      .text('Vergütung netto zzgl. gesetzlicher USt.', rightX + 8, bt + bh - bp - 4);
 
     doc.y = bt + bh + 12;
 
