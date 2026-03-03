@@ -59,7 +59,8 @@ router.post('/', asyncHandler(async (req, res) => {
   // Auto-attach the PDF to the company's file list
   const uploadsDir = path.resolve(__dirname, '../../uploads');
   const absPath = path.resolve(uploadsDir, pdfPath);
-  const fileSize = fs.existsSync(absPath) ? fs.statSync(absPath).size : 0;
+  let fileSize = 0;
+  try { fileSize = (await fs.promises.stat(absPath)).size; } catch {}
   prisma.attachment.create({
     data: {
       fileName: `Vertrag ${contract.contractNumber.split('-').pop()}.pdf`,

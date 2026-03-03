@@ -160,6 +160,25 @@ router.post('/similar-companies', asyncHandler(async (req, res) => {
     industry,
     company.city
   );
+
+  // Cross-reference AI suggestions against existing CRM companies
+  if (results.length > 0) {
+    const names = results.map(r => r.name?.toLowerCase()).filter(Boolean);
+    const existing = await prisma.company.findMany({
+      where: { name: { in: names, mode: 'insensitive' } },
+      select: { id: true, name: true, pipelineStage: true },
+    });
+    const existingMap = new Map(existing.map(c => [c.name.toLowerCase(), c]));
+    for (const r of results) {
+      const match = existingMap.get(r.name?.toLowerCase());
+      if (match) {
+        r.existsInCrm = true;
+        r.existingCompanyId = match.id;
+        r.existingStage = match.pipelineStage;
+      }
+    }
+  }
+
   res.json(results);
 }));
 

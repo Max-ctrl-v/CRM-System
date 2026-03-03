@@ -8,6 +8,14 @@ export function formatEuro(value) {
   }).format(value);
 }
 
+const eurCentsFmt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export function formatDeCents(value) {
+  return eurCentsFmt.format(value);
+}
+export function formatEuroCents(value) {
+  return eurCentsFmt.format(value) + ' €';
+}
+
 export function timeAgo(dateStr) {
   if (!dateStr) return null;
   const diff = Date.now() - new Date(dateStr).getTime();

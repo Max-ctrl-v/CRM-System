@@ -120,9 +120,6 @@ router.post('/bulk', asyncHandler(async (req, res) => {
     return res.json({ message: `${ids.length} Firmen zugewiesen.` });
   }
   if (action === 'delete') {
-    if (req.user.role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Nur Admins dürfen Firmen löschen.' });
-    }
     await companyService.bulkDelete(ids);
     return res.json({ message: `${ids.length} Firmen gelöscht.` });
   }
@@ -245,9 +242,6 @@ router.get('/:id/similar', asyncHandler(async (req, res) => {
 
 // DELETE /api/companies/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
-  if (req.user.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Nur Admins dürfen Firmen löschen.' });
-  }
   await companyService.remove(req.params.id);
   res.json({ message: 'Firma gelöscht.' });
 }));

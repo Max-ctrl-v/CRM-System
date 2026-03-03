@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
+import { formatDeCents } from '../utils/formatters';
 import {
   FileText,
   X,
@@ -13,7 +14,6 @@ import {
   CheckCircle,
   Euro,
   Calculator,
-  ArrowRight,
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -430,7 +430,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                     const finPct = parseInt(form.paymentFinanzamt) || 0;
                     const p1 = totalFee * (bewPct / 100);
                     const p2 = totalFee * (finPct / 100);
-                    const fmt = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    const fmt = formatDeCents;
 
                     return (
                       <div

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, MapPin, TrendingUp, Sparkles, Globe, Loader2, Plus } from 'lucide-react';
+import { Building2, MapPin, TrendingUp, Sparkles, Globe, Loader2, Plus, CheckCircle } from 'lucide-react';
 import api from '../services/api';
 
 const STAGE_LABELS = {
@@ -144,49 +144,71 @@ export default function SimilarCompanies({ companyId, onCreateCompany }) {
               KI-Empfehlungen
             </h4>
             <div className="space-y-2">
-              {aiResults.map((c, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 px-4 py-3 bg-surface-elevated dark:bg-dark-elevated rounded-xl border border-amber-100 dark:border-amber-900/20
-                    hover:border-amber-300 dark:hover:border-amber-700/40 cursor-pointer"
-                  style={{ transition: 'border-color 150ms ease, box-shadow 150ms ease' }}
-                  onClick={() => onCreateCompany?.({ name: c.name, website: c.website || '', city: c.city || '' })}
-                >
-                  <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-display font-semibold text-text-primary dark:text-dark-text-primary truncate">
-                      {c.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {c.city && (
-                        <span className="flex items-center gap-0.5 text-[11px] text-text-tertiary dark:text-dark-text-tertiary font-body">
-                          <MapPin className="w-3 h-3" />
-                          {c.city}
-                        </span>
+              {aiResults.map((c, idx) => {
+                const exists = c.existsInCrm;
+                const Wrapper = exists ? Link : 'div';
+                const wrapperProps = exists
+                  ? { to: `/company/${c.existingCompanyId}` }
+                  : { onClick: () => onCreateCompany?.({ name: c.name, website: c.website || '', city: c.city || '' }) };
+                return (
+                  <Wrapper
+                    key={idx}
+                    {...wrapperProps}
+                    className={`flex items-center gap-3 px-4 py-3 bg-surface-elevated dark:bg-dark-elevated rounded-xl border cursor-pointer
+                      ${exists
+                        ? 'border-emerald-200 dark:border-emerald-800/30 hover:border-emerald-400 dark:hover:border-emerald-600/40'
+                        : 'border-amber-100 dark:border-amber-900/20 hover:border-amber-300 dark:hover:border-amber-700/40'
+                      }`}
+                    style={{ transition: 'border-color 150ms ease, box-shadow 150ms ease' }}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                      exists ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20'
+                    }`}>
+                      {exists
+                        ? <CheckCircle className="w-4 h-4 text-emerald-500" />
+                        : <Sparkles className="w-4 h-4 text-amber-500" />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-display font-semibold text-text-primary dark:text-dark-text-primary truncate">
+                        {c.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {c.city && (
+                          <span className="flex items-center gap-0.5 text-[11px] text-text-tertiary dark:text-dark-text-tertiary font-body">
+                            <MapPin className="w-3 h-3" />
+                            {c.city}
+                          </span>
+                        )}
+                        {c.website && (
+                          <span className="flex items-center gap-0.5 text-[11px] text-text-tertiary dark:text-dark-text-tertiary font-body">
+                            <Globe className="w-3 h-3" />
+                            {c.website}
+                          </span>
+                        )}
+                      </div>
+                      {c.reason && (
+                        <p className="text-[11px] text-text-secondary dark:text-dark-text-secondary font-body mt-1 leading-relaxed">
+                          {c.reason}
+                        </p>
                       )}
-                      {c.website && (
-                        <span className="flex items-center gap-0.5 text-[11px] text-text-tertiary dark:text-dark-text-tertiary font-body">
-                          <Globe className="w-3 h-3" />
-                          {c.website}
+                    </div>
+                    <div className="shrink-0">
+                      {exists ? (
+                        <span className="flex items-center gap-1 text-[10px] font-semibold font-body text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg">
+                          <CheckCircle className="w-3 h-3" />
+                          Bereits angelegt
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-semibold font-body text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg">
+                          <Plus className="w-3 h-3" />
+                          Anlegen
                         </span>
                       )}
                     </div>
-                    {c.reason && (
-                      <p className="text-[11px] text-text-secondary dark:text-dark-text-secondary font-body mt-1 leading-relaxed">
-                        {c.reason}
-                      </p>
-                    )}
-                  </div>
-                  <div className="shrink-0">
-                    <span className="flex items-center gap-1 text-[10px] font-semibold font-body text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg">
-                      <Plus className="w-3 h-3" />
-                      Anlegen
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  </Wrapper>
+                );
+              })}
             </div>
             <button
               onClick={requestAiSuggestions}

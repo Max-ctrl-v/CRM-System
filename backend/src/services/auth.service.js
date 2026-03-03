@@ -115,14 +115,10 @@ async function refresh(refreshToken) {
   }
 
   const newAccessToken = generateAccessToken(user);
-  const newRefreshToken = generateRefreshToken(user);
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { refreshToken: hashToken(newRefreshToken) },
-  });
-
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  // Don't rotate refresh token — reuse the existing one to prevent
+  // multi-tab race conditions where concurrent refreshes invalidate each other
+  return { accessToken: newAccessToken, refreshToken };
 }
 
 function validatePassword(password) {

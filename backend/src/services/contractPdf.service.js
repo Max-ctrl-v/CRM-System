@@ -5,7 +5,7 @@ const path = require('path');
 const UPLOADS_DIR = path.join(__dirname, '../../uploads/contracts');
 
 function ensureDir() {
-  if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 function formatDate(date) {
@@ -54,6 +54,14 @@ async function generateContractPdf(contract) {
     const light = '#94a3b8';
     const border = '#d4dced';
     const surface = '#f1f5fb';
+    const greenSurface = '#d1fae5';
+    const greenDark = '#065f46';
+    const greenAccent = '#059669';
+    const greenBorder = '#6ee7b7';
+    const blueSurface = '#dbeafe';
+    const blueBorder = '#93c5fd';
+    const boxBg = '#f0f4fa';
+    const boxBorder = '#c7d2e4';
     const W = doc.page.width - 116; // pageWidth
     const L = 58; // left margin
     const R = doc.page.width - 58; // right edge
@@ -63,8 +71,7 @@ async function generateContractPdf(contract) {
     // ════════════════════════════════════════════════════
 
     // Top band
-    doc.rect(0, 0, doc.page.width, 5).fill(navy);
-    doc.rect(0, 5, doc.page.width, 1.5).fill(cyan);
+    drawPageBands(doc, navy, cyan);
 
     // Company name
     let y = 32;
@@ -166,8 +173,8 @@ async function generateContractPdf(contract) {
 
     // Outer box
     doc.save();
-    doc.roundedRect(bx, bt, bw, bh, 5).fillColor('#f0f4fa').fill();
-    doc.roundedRect(bx, bt, bw, bh, 5).strokeColor('#c7d2e4').lineWidth(0.75).stroke();
+    doc.roundedRect(bx, bt, bw, bh, 5).fillColor(boxBg).fill();
+    doc.roundedRect(bx, bt, bw, bh, 5).strokeColor(boxBorder).lineWidth(0.75).stroke();
     doc.roundedRect(bx, bt + 5, 3.5, bh - 10, 2).fillColor(navy).fill();
     doc.restore();
 
@@ -202,14 +209,14 @@ async function generateContractPdf(contract) {
     doc.save();
     const divX = ix + colW + colGap / 2;
     doc.moveTo(divX, colTop).lineTo(divX, colTop + 148)
-      .strokeColor('#c7d2e4').lineWidth(0.5).dash(3, { space: 2 }).stroke();
+      .strokeColor(boxBorder).lineWidth(0.5).dash(3, { space: 2 }).stroke();
     doc.restore();
 
     // ═══ LEFT COLUMN: Ihre Forschungszulage ═══
     let ly = colTop;
 
-    doc.roundedRect(leftX, ly, colW, 15, 2).fillColor('#d1fae5').fill();
-    doc.fontSize(7).font('Helvetica-Bold').fillColor('#065f46')
+    doc.roundedRect(leftX, ly, colW, 15, 2).fillColor(greenSurface).fill();
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(greenDark)
       .text('IHRE FORSCHUNGSZULAGE', leftX + 8, ly + 4, { width: colW - 16 });
     ly += 22;
 
@@ -221,11 +228,11 @@ async function generateContractPdf(contract) {
     ly += 18;
 
     // Forschungszulage highlight
-    doc.roundedRect(leftX, ly, colW, 30, 3).fillColor('#d1fae5').fill();
-    doc.roundedRect(leftX, ly, colW, 30, 3).strokeColor('#6ee7b7').lineWidth(0.5).stroke();
-    doc.fontSize(8).font('Helvetica').fillColor('#065f46')
+    doc.roundedRect(leftX, ly, colW, 30, 3).fillColor(greenSurface).fill();
+    doc.roundedRect(leftX, ly, colW, 30, 3).strokeColor(greenBorder).lineWidth(0.5).stroke();
+    doc.fontSize(8).font('Helvetica').fillColor(greenDark)
       .text(`Forschungszulage (${fq}%)`, leftX + 8, ly + 4);
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#059669')
+    doc.fontSize(12).font('Helvetica-Bold').fillColor(greenAccent)
       .text(fmtEur(forschungszulage), leftX + 8, ly + 16);
     ly += 36;
 
@@ -235,14 +242,14 @@ async function generateContractPdf(contract) {
     // ═══ RIGHT COLUMN: Unsere Vergütung ═══
     let ry = colTop;
 
-    doc.roundedRect(rightX, ry, colW, 15, 2).fillColor('#dbeafe').fill();
+    doc.roundedRect(rightX, ry, colW, 15, 2).fillColor(blueSurface).fill();
     doc.fontSize(7).font('Helvetica-Bold').fillColor(blue)
       .text('UNSERE VERGÜTUNG', rightX + 8, ry + 4, { width: colW - 16 });
     ry += 22;
 
     // Fee highlight
-    doc.roundedRect(rightX, ry, colW, 26, 3).fillColor('#dbeafe').fill();
-    doc.roundedRect(rightX, ry, colW, 26, 3).strokeColor('#93c5fd').lineWidth(0.5).stroke();
+    doc.roundedRect(rightX, ry, colW, 26, 3).fillColor(blueSurface).fill();
+    doc.roundedRect(rightX, ry, colW, 26, 3).strokeColor(blueBorder).lineWidth(0.5).stroke();
     doc.fontSize(8.5).font('Helvetica-Bold').fillColor(blue)
       .text(`Vergütung (${rate.toFixed(1)}%)`, rightX + 8, ry + 3);
     doc.fontSize(10.5).font('Helvetica-Bold').fillColor(blue)

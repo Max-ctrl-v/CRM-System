@@ -57,7 +57,7 @@ const authLimiter = rateLimit({
   max: 10,
   message: { error: 'Zu viele Anmeldeversuche. Bitte in 15 Minuten erneut versuchen.' },
   keyGenerator: (req) => req.ip,
-  skip: (req) => !['/login', '/login/2fa', '/refresh'].includes(req.path),
+  skip: (req) => !['/login', '/login/2fa'].includes(req.path),
 });
 
 // General API rate limiting
