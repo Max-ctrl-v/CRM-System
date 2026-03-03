@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LayoutDashboard, LogOut, List, KanbanSquare, CheckSquare, Search, Moon, Sun, Settings } from 'lucide-react';
+import { LayoutDashboard, LogOut, List, KanbanSquare, CheckSquare, Search, Moon, Sun, Settings, MessageCircle } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
 import KeyboardShortcuts from './KeyboardShortcuts';
 import CommandPalette from './CommandPalette';
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { path: '/pipeline', label: 'Pipeline', icon: KanbanSquare },
   { path: '/companies', label: 'Alle Firmen', icon: List },
   { path: '/aufgaben', label: 'Aufgaben', icon: CheckSquare },
+  { path: '/chat', label: 'Chat', icon: MessageCircle },
 ];
 
 export default function Layout() {

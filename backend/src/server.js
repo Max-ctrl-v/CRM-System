@@ -29,6 +29,7 @@ const attachmentRoutes = require('./routes/attachment.routes');
 const savedViewRoutes = require('./routes/savedView.routes');
 const totpRoutes = require('./routes/totp.routes');
 const contractRoutes = require('./routes/contract.routes');
+const chatRoutes = require('./routes/chat.routes');
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use('/api/attachments', apiLimiter, attachmentRoutes);
 app.use('/api/saved-views', apiLimiter, savedViewRoutes);
 app.use('/api/totp', apiLimiter, totpRoutes);
 app.use('/api/contracts', apiLimiter, contractRoutes);
+app.use('/api/chat', apiLimiter, chatRoutes);
 
 // Health check with DB verification
 app.get('/api/health', async (req, res) => {

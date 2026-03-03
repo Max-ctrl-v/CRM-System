@@ -10,6 +10,7 @@ const CompanyListPage = lazy(() => import('./pages/CompanyListPage'));
 const CompanyDetailPage = lazy(() => import('./pages/CompanyDetailPage'));
 const AufgabenPage = lazy(() => import('./pages/AufgabenPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="company/:id" element={<CompanyDetailPage />} />
           <Route path="aufgaben" element={<AufgabenPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="chat" element={<ChatPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
