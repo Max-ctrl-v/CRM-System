@@ -154,6 +154,81 @@ async function generateContractPdf(contract) {
         { lineGap: 3 }
       );
 
+    // ── Calculation example ──
+    doc.moveDown(1);
+    const exampleAmount = 1000000;
+    const totalFee = exampleAmount * (contract.commissionRate / 100);
+    const pay1 = totalFee * (pctBewilligung / 100);
+    const pay2 = totalFee * (pctFinanzamt / 100);
+    const fmtEur = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+    // Box background
+    const boxX = doc.page.margins.left;
+    const boxW = pageWidth;
+    const boxTop = doc.y;
+    const boxPadding = 14;
+
+    // Pre-calculate box height by measuring content
+    const lineH = 14;
+    const boxContentH = boxPadding + lineH + 8 + lineH + 6 + lineH + 6 + lineH + 10 + 1 + 8 + lineH + boxPadding;
+
+    // Draw box background
+    doc.save();
+    doc.roundedRect(boxX, boxTop, boxW, boxContentH, 6)
+      .fillColor('#f0fafa').fill();
+    doc.roundedRect(boxX, boxTop, boxW, boxContentH, 6)
+      .strokeColor('#d0e8e9').lineWidth(0.75).stroke();
+    doc.restore();
+
+    let yPos = boxTop + boxPadding;
+
+    // Title
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(brandColor)
+      .text('Berechnungsbeispiel', boxX + boxPadding, yPos);
+    yPos += lineH + 6;
+
+    // Example amount
+    doc.fontSize(9).font('Helvetica').fillColor(grayText)
+      .text('Bescheinigte Projektkosten (Beispiel):', boxX + boxPadding, yPos, { width: boxW * 0.6, continued: false });
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(darkText)
+      .text(fmtEur(exampleAmount), boxX + boxPadding, yPos, { width: boxW - boxPadding * 2, align: 'right' });
+    yPos += lineH + 4;
+
+    // Total fee
+    doc.fontSize(9).font('Helvetica').fillColor(grayText)
+      .text(`Vergütung (${contract.commissionRate.toFixed(1)}%):`, boxX + boxPadding, yPos, { width: boxW * 0.6 });
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(brandColor)
+      .text(fmtEur(totalFee), boxX + boxPadding, yPos, { width: boxW - boxPadding * 2, align: 'right' });
+    yPos += lineH + 6;
+
+    // Payment 1
+    doc.fontSize(9).font('Helvetica').fillColor(grayText)
+      .text(`  1.  ${pctBewilligung}% bei Bewilligung (BSFZ):`, boxX + boxPadding, yPos, { width: boxW * 0.6 });
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(darkText)
+      .text(fmtEur(pay1), boxX + boxPadding, yPos, { width: boxW - boxPadding * 2, align: 'right' });
+    yPos += lineH + 2;
+
+    // Payment 2
+    doc.fontSize(9).font('Helvetica').fillColor(grayText)
+      .text(`  2.  ${pctFinanzamt}% bei Einreichung Finanzamt:`, boxX + boxPadding, yPos, { width: boxW * 0.6 });
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(darkText)
+      .text(fmtEur(pay2), boxX + boxPadding, yPos, { width: boxW - boxPadding * 2, align: 'right' });
+    yPos += lineH + 8;
+
+    // Divider
+    doc.moveTo(boxX + boxPadding, yPos)
+      .lineTo(boxX + boxW - boxPadding, yPos)
+      .strokeColor('#c0d8d9').lineWidth(0.5).stroke();
+    yPos += 8;
+
+    // Total
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(darkText)
+      .text('Gesamt:', boxX + boxPadding, yPos, { width: boxW * 0.6 });
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(darkText)
+      .text(fmtEur(pay1 + pay2), boxX + boxPadding, yPos, { width: boxW - boxPadding * 2, align: 'right' });
+
+    doc.y = boxTop + boxContentH + 8;
+
     doc.moveDown(1.2);
 
     // ── Obligations ──
