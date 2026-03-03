@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import SkeletonTask from './skeletons/SkeletonTask';
 
-export default function TaskList({ companyId, contactId, assignedToId, showLinks = false, search = '', doneFilter = 'all' }) {
+export default function TaskList({ companyId, contactId, assignedToId, showLinks = false, search = '', doneFilter = 'all', onTabChange }) {
   const { user } = useAuth();
   const { addToast } = useToast();
   const [tasks, setTasks] = useState([]);
@@ -46,10 +46,23 @@ export default function TaskList({ companyId, contactId, assignedToId, showLinks
   }
 
   async function handleToggleDone(task) {
+    // Optimistic: toggle immediately
+    const newDone = !task.done;
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === task.id ? { ...t, done: newDone, doneAt: newDone ? new Date().toISOString() : null } : t,
+      ),
+    );
     try {
-      const { data } = await api.patch(`/tasks/${task.id}/done`, { done: !task.done });
+      const { data } = await api.patch(`/tasks/${task.id}/done`, { done: newDone });
       setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)));
     } catch (err) {
+      // Revert on error
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === task.id ? { ...t, done: !newDone, doneAt: task.doneAt } : t,
+        ),
+      );
       addToast(err.response?.data?.error || 'Fehler beim Aktualisieren.', 'error');
     }
   }
@@ -83,6 +96,7 @@ export default function TaskList({ companyId, contactId, assignedToId, showLinks
     let result = tasks;
     if (doneFilter === 'open') result = result.filter((t) => !t.done);
     else if (doneFilter === 'done') result = result.filter((t) => t.done);
+    else if (doneFilter === 'overdue') result = result.filter((t) => !t.done && t.dueDate && new Date(t.dueDate) < new Date());
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((t) =>
@@ -117,9 +131,12 @@ export default function TaskList({ companyId, contactId, assignedToId, showLinks
       {/* Stats bar */}
       {showLinks && (
         <div className="flex items-center gap-3 mb-4">
-          <StatPill icon={ListChecks} label="Offen" value={stats.open} color="brand" />
-          <StatPill icon={AlertCircle} label="Überfällig" value={stats.overdue} color="red" />
-          <StatPill icon={CircleCheck} label="Erledigt" value={stats.done} color="gray" />
+          <StatPill icon={ListChecks} label="Offen" value={stats.open} color="brand"
+            active={doneFilter === 'open'} onClick={() => onTabChange?.(doneFilter === 'open' ? 'all' : 'open')} />
+          <StatPill icon={AlertCircle} label="Überfällig" value={stats.overdue} color="red"
+            active={doneFilter === 'overdue'} onClick={() => onTabChange?.(doneFilter === 'overdue' ? 'all' : 'overdue')} />
+          <StatPill icon={CircleCheck} label="Erledigt" value={stats.done} color="gray"
+            active={doneFilter === 'done'} onClick={() => onTabChange?.(doneFilter === 'done' ? 'all' : 'done')} />
 
           {/* Progress bar */}
           {stats.total > 0 && (
@@ -324,7 +341,7 @@ export default function TaskList({ companyId, contactId, assignedToId, showLinks
   );
 }
 
-function StatPill({ icon: Icon, label, value, color }) {
+function StatPill({ icon: Icon, label, value, color, active, onClick }) {
   const colors = {
     brand: { bg: 'bg-brand-50', text: 'text-brand-700', iconColor: 'text-brand-500' },
     red: { bg: value > 0 ? 'bg-red-50' : 'bg-gray-50', text: value > 0 ? 'text-red-700' : 'text-gray-400', iconColor: value > 0 ? 'text-red-500' : 'text-gray-300' },
@@ -333,15 +350,25 @@ function StatPill({ icon: Icon, label, value, color }) {
   const c = colors[color] || colors.gray;
 
   return (
-    <div
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${c.bg}`}
-      style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)' }}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300
+        active:scale-95 ${c.bg} ${active ? 'ring-2 ring-brand-400 ring-offset-1' : ''}`}
+      style={{
+        boxShadow: active
+          ? '0 1px 3px rgba(13,115,119,0.2), inset 0 1px 0 rgba(255,255,255,0.6)'
+          : 'inset 0 1px 0 rgba(255,255,255,0.6)',
+        transition: 'transform 100ms ease, box-shadow 150ms ease',
+        cursor: 'pointer',
+      }}
     >
       <Icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
       <span className={`text-[12px] font-semibold font-body ${c.text}`}>
         {value}
       </span>
       <span className="text-[11px] text-gray-400 font-body">{label}</span>
-    </div>
+    </button>
   );
 }

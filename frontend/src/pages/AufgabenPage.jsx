@@ -28,6 +28,7 @@ export default function AufgabenPage() {
 
   const TABS = [
     { key: 'open', label: 'Offen', icon: ListChecks },
+    { key: 'overdue', label: 'Überfällig', icon: AlertCircle },
     { key: 'done', label: 'Erledigt', icon: CircleCheck },
     { key: 'all', label: 'Alle', icon: Filter },
   ];
@@ -108,6 +109,7 @@ export default function AufgabenPage() {
             assignedToId={assignedToId}
             search={search}
             doneFilter={tab}
+            onTabChange={setTab}
           />
         </div>
       </div>
