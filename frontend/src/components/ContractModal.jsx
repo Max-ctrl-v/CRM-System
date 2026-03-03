@@ -12,6 +12,8 @@ import {
   Building2,
   CheckCircle,
   Euro,
+  Calculator,
+  ArrowRight,
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -386,6 +388,147 @@ export default function ContractModal({ company, onClose, onComplete }) {
                   placeholder="Deutschland"
                 />
               </div>
+
+              {/* Calculation Example */}
+              {form.commissionRate > 0 && (
+                <>
+                  <div className="flex items-center gap-2 mt-5 mb-3">
+                    <Calculator className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                    <span className="text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider">
+                      Berechnungsbeispiel
+                    </span>
+                    <div className="flex-1 h-px" style={{ background: dark ? '#2a2d3d' : '#e5e7eb' }} />
+                  </div>
+
+                  {(() => {
+                    const exampleAmount = 1000000;
+                    const rate = parseFloat(form.commissionRate) || 0;
+                    const totalFee = exampleAmount * (rate / 100);
+                    const bewilligungPct = parseInt(form.paymentBewilligung) || 0;
+                    const finanzamtPct = parseInt(form.paymentFinanzamt) || 0;
+                    const payment1 = totalFee * (bewilligungPct / 100);
+                    const payment2 = totalFee * (finanzamtPct / 100);
+                    const fmt = (v) => v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    return (
+                      <div
+                        className="rounded-xl p-4 mb-5"
+                        style={{
+                          background: dark
+                            ? 'linear-gradient(135deg, rgba(13,115,119,0.08), rgba(16,185,129,0.06))'
+                            : 'linear-gradient(135deg, rgba(13,115,119,0.04), rgba(16,185,129,0.03))',
+                          border: `1px solid ${dark ? 'rgba(13,115,119,0.2)' : 'rgba(13,115,119,0.12)'}`,
+                          boxShadow: '0 1px 3px rgba(13,115,119,0.06), 0 2px 8px rgba(13,115,119,0.03)',
+                        }}
+                      >
+                        {/* Example header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[11px] font-body font-semibold text-gray-400 uppercase tracking-wider">
+                            Beispiel: Bescheinigte Projektkosten
+                          </span>
+                          <span className="text-[13px] font-display font-bold text-gray-800">
+                            {fmt(exampleAmount)} €
+                          </span>
+                        </div>
+
+                        {/* Total fee calculation */}
+                        <div
+                          className="rounded-lg px-3.5 py-2.5 mb-3 flex items-center justify-between"
+                          style={{
+                            background: dark ? 'rgba(13,115,119,0.12)' : 'rgba(13,115,119,0.06)',
+                            border: `1px solid ${dark ? 'rgba(13,115,119,0.25)' : 'rgba(13,115,119,0.1)'}`,
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Percent className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                            <span className="text-[12px] font-body font-medium text-gray-600">
+                              Vergütung ({rate}%)
+                            </span>
+                          </div>
+                          <span className="text-[14px] font-display font-bold" style={{ color: brandColor }}>
+                            {fmt(totalFee)} €
+                          </span>
+                        </div>
+
+                        {/* Payment terms */}
+                        <div className="space-y-2">
+                          <div
+                            className="rounded-lg px-3.5 py-2.5 flex items-center justify-between"
+                            style={{
+                              background: dark ? '#1e2130' : '#ffffff',
+                              border: `1px solid ${dark ? '#2a2d3d' : '#eef0f4'}`,
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                            }}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold text-white"
+                                style={{ background: brandColor }}
+                              >
+                                1
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[12px] font-body font-semibold text-gray-700 block">
+                                  {bewilligungPct}% bei Bewilligung
+                                </span>
+                                <span className="text-[10px] font-body text-gray-400">
+                                  Fällig nach Erhalt des Bewilligungsbescheids
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[13px] font-display font-bold text-gray-800 shrink-0 ml-3">
+                              {fmt(payment1)} €
+                            </span>
+                          </div>
+
+                          <div className="flex justify-center">
+                            <ArrowRight className="w-3 h-3 text-gray-300 rotate-90" />
+                          </div>
+
+                          <div
+                            className="rounded-lg px-3.5 py-2.5 flex items-center justify-between"
+                            style={{
+                              background: dark ? '#1e2130' : '#ffffff',
+                              border: `1px solid ${dark ? '#2a2d3d' : '#eef0f4'}`,
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                            }}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold text-white"
+                                style={{ background: '#10b981' }}
+                              >
+                                2
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-[12px] font-body font-semibold text-gray-700 block">
+                                  {finanzamtPct}% bei Einreichung Finanzamt
+                                </span>
+                                <span className="text-[10px] font-body text-gray-400">
+                                  Fällig nach Einreichung beim Finanzamt
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[13px] font-display font-bold text-gray-800 shrink-0 ml-3">
+                              {fmt(payment2)} €
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Summary line */}
+                        <div className="mt-3 pt-2.5 flex items-center justify-between" style={{ borderTop: `1px dashed ${dark ? '#2a2d3d' : '#e5e7eb'}` }}>
+                          <span className="text-[11px] font-body text-gray-400">
+                            Gesamt
+                          </span>
+                          <span className="text-[12px] font-display font-bold text-gray-600">
+                            {fmt(payment1 + payment2)} €
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
 
               {/* Actions */}
               <div className="flex gap-2.5">
