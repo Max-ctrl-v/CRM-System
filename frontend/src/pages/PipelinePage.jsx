@@ -389,6 +389,8 @@ export default function PipelinePage() {
   const [editingRevenueId, setEditingRevenueId] = useState(null);
   const [editingRevenueValue, setEditingRevenueValue] = useState('');
   const [pendingClose, setPendingClose] = useState(null); // { companyId, companyName, stage }
+  const [closeReason, setCloseReason] = useState('');
+  const [closeNote, setCloseNote] = useState('');
   const [pendingContract, setPendingContract] = useState(null); // company object for contract modal
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
@@ -478,14 +480,19 @@ export default function PipelinePage() {
     applyStageChange(draggableId, newStage);
   }
 
-  async function applyStageChange(companyId, newStage) {
+  async function applyStageChange(companyId, newStage, { closeReason: reason, closeNote: note } = {}) {
     updateCompany({ ...companies.find((c) => c.id === companyId), pipelineStage: newStage });
     if (newStage === 'CLOSED_WON') {
       setShowConfetti(true);
       addToast('Deal gewonnen!', 'success');
     }
-    try { await api.patch(`/companies/${companyId}/stage`, { stage: newStage }); }
-    catch { refresh(); }
+    try {
+      await api.patch(`/companies/${companyId}/stage`, {
+        stage: newStage,
+        closeReason: reason || undefined,
+        closeNote: note || undefined,
+      });
+    } catch { refresh(); }
   }
 
   function handleCompanyCreated(company) {
@@ -834,12 +841,12 @@ export default function PipelinePage() {
         <CreateCompanyModal onClose={() => setShowCreate(false)} onCreated={handleCompanyCreated} />
       )}
 
-      {/* Confirmation modal for closing deals */}
+      {/* Confirmation modal for closing deals with reason */}
       {pendingClose && (
         <>
-          <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setPendingClose(null)} style={{ backdropFilter: 'blur(2px)' }} />
+          <div className="fixed inset-0 z-50 bg-black/40" onClick={() => { setPendingClose(null); setCloseReason(''); setCloseNote(''); }} style={{ backdropFilter: 'blur(2px)' }} />
           <div
-            className="fixed z-50 bg-white rounded-xl border border-border-light p-6 w-[380px]"
+            className="fixed z-50 bg-white rounded-xl border border-border-light p-6 w-[420px]"
             style={{
               top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
               boxShadow: dark
@@ -875,23 +882,71 @@ export default function PipelinePage() {
               </div>
             </div>
             <div
-              className="rounded-lg px-3.5 py-2.5 mb-5 flex items-center gap-2"
+              className="rounded-lg px-3.5 py-2.5 mb-4 flex items-center gap-2"
               style={{ background: dark ? '#252838' : '#f8f9fc', border: `1px solid ${dark ? '#2a2d3d' : '#eef0f4'}` }}
             >
               <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
               <span className="text-[13px] font-display font-semibold text-gray-800 truncate">{pendingClose.companyName}</span>
             </div>
+            <div className="space-y-3 mb-5">
+              <div>
+                <label className="block text-[12px] font-semibold text-gray-600 mb-1.5 font-body">
+                  Grund {pendingClose.stage === 'CLOSED_WON' ? '(Warum gewonnen?)' : '(Warum verloren?)'} *
+                </label>
+                <select
+                  value={closeReason}
+                  onChange={(e) => setCloseReason(e.target.value)}
+                  className="input-field text-sm"
+                  autoFocus
+                >
+                  <option value="">— Grund auswählen —</option>
+                  {pendingClose.stage === 'CLOSED_WON' ? (
+                    <>
+                      <option value="Preis überzeugt">Preis überzeugt</option>
+                      <option value="Vertrauen aufgebaut">Vertrauen aufgebaut</option>
+                      <option value="Guter Service">Guter Service</option>
+                      <option value="Empfehlung">Empfehlung</option>
+                      <option value="Schnelle Reaktion">Schnelle Reaktion</option>
+                      <option value="Sonstiges">Sonstiges</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Kein Budget">Kein Budget</option>
+                      <option value="Kein Interesse">Kein Interesse</option>
+                      <option value="Wettbewerber gewählt">Wettbewerber gewählt</option>
+                      <option value="Keine Rückmeldung">Keine Rückmeldung</option>
+                      <option value="Nicht qualifiziert">Nicht qualifiziert</option>
+                      <option value="Timing passt nicht">Timing passt nicht</option>
+                      <option value="Sonstiges">Sonstiges</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold text-gray-600 mb-1.5 font-body">Notiz (optional)</label>
+                <textarea
+                  value={closeNote}
+                  onChange={(e) => setCloseNote(e.target.value)}
+                  className="input-field text-sm"
+                  rows={2}
+                  placeholder="Zusätzliche Details..."
+                />
+              </div>
+            </div>
             <div className="flex gap-2.5">
               <button
                 onClick={() => {
-                  applyStageChange(pendingClose.companyId, pendingClose.stage);
+                  applyStageChange(pendingClose.companyId, pendingClose.stage, { closeReason, closeNote });
                   setPendingClose(null);
+                  setCloseReason('');
+                  setCloseNote('');
                 }}
-                className={pendingClose.stage === 'CLOSED_WON' ? 'btn-primary flex-1' : 'btn-danger flex-1'}
+                disabled={!closeReason}
+                className={`${pendingClose.stage === 'CLOSED_WON' ? 'btn-primary' : 'btn-danger'} flex-1 disabled:opacity-50`}
               >
                 {pendingClose.stage === 'CLOSED_WON' ? 'Ja, gewonnen!' : 'Ja, verloren'}
               </button>
-              <button onClick={() => setPendingClose(null)} className="btn-secondary flex-1">
+              <button onClick={() => { setPendingClose(null); setCloseReason(''); setCloseNote(''); }} className="btn-secondary flex-1">
                 Abbrechen
               </button>
             </div>

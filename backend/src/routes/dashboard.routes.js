@@ -6,6 +6,14 @@ const prisma = require('../lib/prisma');
 
 router.use(authenticate);
 
+const STAGE_PROBABILITY = {
+  FIRMA_IDENTIFIZIERT: 0.10,
+  FIRMA_KONTAKTIERT: 0.25,
+  VERHANDLUNG: 0.60,
+  CLOSED_WON: 1.0,
+  CLOSED_LOST: 0,
+};
+
 function getDateFrom(range) {
   if (!range || range === 'all') return null;
   const now = new Date();
@@ -68,16 +76,23 @@ router.get('/stats', asyncHandler(async (req, res) => {
     .filter((g) => g.pipelineStage && !['CLOSED_WON', 'CLOSED_LOST'].includes(g.pipelineStage))
     .reduce((sum, g) => sum + g._count.id, 0);
 
+  // Calculate weighted revenue forecast
+  const weightedRevenueForecast = stageGroups
+    .filter((g) => g.pipelineStage && !['CLOSED_WON', 'CLOSED_LOST'].includes(g.pipelineStage))
+    .reduce((sum, g) => sum + (g._sum.expectedRevenue || 0) * (STAGE_PROBABILITY[g.pipelineStage] || 0), 0);
+
   res.json({
     totalCompanies,
     openDeals,
     totalRevenueForecast: totalRevenueResult._sum.expectedRevenue || 0,
+    weightedRevenueForecast,
     overdueTasks,
     stageBreakdown: stageGroups.map((g) => ({
       stage: g.pipelineStage,
       count: g._count.id,
       revenue: g._sum.expectedRevenue || 0,
     })),
+    stageProbabilities: STAGE_PROBABILITY,
     recentActivities,
     newCompanies,
     completedTasks,
@@ -118,14 +133,19 @@ router.get('/revenue-forecast', asyncHandler(async (req, res) => {
 
     let won = 0;
     let pipeline = 0;
+    let weighted = 0;
     for (const c of companies) {
       if (c.updatedAt >= start && c.updatedAt <= end && c.expectedRevenue) {
-        if (c.pipelineStage === 'CLOSED_WON') won += c.expectedRevenue;
-        else if (['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'].includes(c.pipelineStage)) pipeline += c.expectedRevenue;
+        if (c.pipelineStage === 'CLOSED_WON') {
+          won += c.expectedRevenue;
+        } else if (['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'].includes(c.pipelineStage)) {
+          pipeline += c.expectedRevenue;
+          weighted += c.expectedRevenue * (STAGE_PROBABILITY[c.pipelineStage] || 0);
+        }
       }
     }
 
-    months.push({ label, won, pipeline });
+    months.push({ label, won, pipeline, weighted });
   }
 
   res.json(months);

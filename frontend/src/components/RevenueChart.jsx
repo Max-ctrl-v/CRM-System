@@ -5,6 +5,7 @@ export default function RevenueChart() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredIdx, setHoveredIdx] = useState(null);
+  const [showWeighted, setShowWeighted] = useState(false);
 
   useEffect(() => {
     api.get('/dashboard/revenue-forecast')
@@ -19,7 +20,7 @@ export default function RevenueChart() {
     );
   }
 
-  const maxVal = Math.max(...data.map((d) => d.won + d.pipeline), 1);
+  const maxVal = Math.max(...data.map((d) => d.won + (showWeighted ? (d.weighted || 0) : d.pipeline)), 1);
 
   return (
     <div className="bg-surface-raised dark:bg-dark-raised rounded-2xl p-6"
@@ -27,13 +28,27 @@ export default function RevenueChart() {
         boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
       }}
     >
-      <h3 className="text-sm font-display font-bold text-text-primary dark:text-dark-text-primary mb-4">
-        Umsatzprognose (6 Monate)
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-display font-bold text-text-primary dark:text-dark-text-primary">
+          Umsatzprognose (6 Monate)
+        </h3>
+        <button
+          onClick={() => setShowWeighted((v) => !v)}
+          className={`text-[10px] font-semibold font-body px-2.5 py-1 rounded-md border ${
+            showWeighted
+              ? 'bg-brand-50 text-brand-700 border-brand-200'
+              : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+          }`}
+          style={{ transition: 'background-color 150ms ease, color 150ms ease' }}
+        >
+          {showWeighted ? 'Gewichtet' : 'Ungewichtet'}
+        </button>
+      </div>
 
       <div className="flex items-end gap-3 h-44">
         {data.map((month, i) => {
-          const total = month.won + month.pipeline;
+          const pipelineVal = showWeighted ? (month.weighted || 0) : month.pipeline;
+          const total = month.won + pipelineVal;
           const height = (total / maxVal) * 100;
           const wonHeight = total > 0 ? (month.won / total) * height : 0;
           const pipelineHeight = height - wonHeight;
@@ -44,11 +59,14 @@ export default function RevenueChart() {
               onMouseLeave={() => setHoveredIdx(null)}
             >
               {hoveredIdx === i && (
-                <div className="absolute -top-12 bg-gray-900 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap z-10 font-body"
+                <div className="absolute -top-16 bg-gray-900 text-white text-[10px] px-2 py-1.5 rounded-lg whitespace-nowrap z-10 font-body"
                   style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
                 >
                   <div>Won: {(month.won / 1000).toFixed(0)}k €</div>
                   <div>Pipeline: {(month.pipeline / 1000).toFixed(0)}k €</div>
+                  {month.weighted > 0 && (
+                    <div className="text-brand-300">Gewichtet: {(month.weighted / 1000).toFixed(0)}k €</div>
+                  )}
                 </div>
               )}
 
@@ -59,7 +77,9 @@ export default function RevenueChart() {
                     className="w-full rounded-t-md"
                     style={{
                       height: `${pipelineHeight}%`,
-                      background: 'linear-gradient(180deg, rgba(13,115,119,0.3), rgba(13,115,119,0.15))',
+                      background: showWeighted
+                        ? 'linear-gradient(180deg, rgba(245,158,11,0.4), rgba(245,158,11,0.15))'
+                        : 'linear-gradient(180deg, rgba(13,115,119,0.3), rgba(13,115,119,0.15))',
                       transition: 'height 500ms cubic-bezier(0.34, 1.56, 0.64, 1)',
                     }}
                   />
@@ -90,8 +110,10 @@ export default function RevenueChart() {
           <span className="text-[11px] text-text-secondary dark:text-dark-text-secondary font-body">Abgeschlossen</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded" style={{ background: 'rgba(13,115,119,0.3)' }} />
-          <span className="text-[11px] text-text-secondary dark:text-dark-text-secondary font-body">Pipeline</span>
+          <div className="w-3 h-3 rounded" style={{ background: showWeighted ? 'rgba(245,158,11,0.4)' : 'rgba(13,115,119,0.3)' }} />
+          <span className="text-[11px] text-text-secondary dark:text-dark-text-secondary font-body">
+            {showWeighted ? 'Pipeline (gewichtet)' : 'Pipeline'}
+          </span>
         </div>
       </div>
     </div>

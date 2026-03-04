@@ -479,6 +479,16 @@ export default function CompanyDetailPage() {
               );
             })}
           </div>
+          {/* Close Reason */}
+          {(company.pipelineStage === 'CLOSED_WON' || company.pipelineStage === 'CLOSED_LOST') && company.closeReason && (
+            <div className="mt-3 flex items-start gap-2 text-[12px] font-body">
+              <span className="font-semibold text-gray-500">Grund:</span>
+              <span className="text-gray-700">{company.closeReason}</span>
+              {company.closeNote && (
+                <span className="text-gray-500 ml-1">— {company.closeNote}</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Meeting Section */}
@@ -598,7 +608,7 @@ export default function CompanyDetailPage() {
         {activeTab === 'perplexity' && <PerplexityPanel companyId={company.id} companyName={company.name} website={company.website} />}
         {activeTab === 'bundesanzeiger' && <BundesanzeigerPanel companyName={company.name} />}
         {activeTab === 'tasks' && <TaskList companyId={company.id} />}
-        {activeTab === 'activities' && <ActivityTimeline entityType="COMPANY" entityId={company.id} />}
+        {activeTab === 'activities' && <ActivityTimeline entityType="COMPANY" entityId={company.id} unified />}
         {activeTab === 'attachments' && <AttachmentList companyId={company.id} />}
         {activeTab === 'similar' && <SimilarCompanies companyId={company.id} onCreateCompany={(data) => setCreateModalData(data)} />}
       </div>

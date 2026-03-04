@@ -59,6 +59,18 @@ router.get('/next-actions', asyncHandler(async (req, res) => {
   res.json(actions);
 }));
 
+// GET /api/companies/check-duplicate?name=... — duplicate detection (MUST be before /:id)
+router.get('/check-duplicate', asyncHandler(async (req, res) => {
+  const { name } = req.query;
+  if (!name || name.trim().length < 2) return res.json({ duplicates: [] });
+  const matches = await prisma.company.findMany({
+    where: { name: { contains: name.trim(), mode: 'insensitive' } },
+    select: { id: true, name: true, city: true, pipelineStage: true },
+    take: 5,
+  });
+  res.json({ duplicates: matches });
+}));
+
 // GET /api/companies/:id
 router.get('/:id', asyncHandler(async (req, res) => {
   const company = await companyService.getById(req.params.id);
@@ -151,19 +163,36 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
 // PATCH /api/companies/:id/stage
 router.patch('/:id/stage', asyncHandler(async (req, res) => {
-  const { stage } = req.body;
+  const { stage, closeReason, closeNote } = req.body;
   if (stage === undefined) return res.status(400).json({ error: 'Pipeline-Stufe erforderlich.' });
 
   const denied = await assertWriteAccess(req.user, req.params.id);
   if (denied) return res.status(denied.status).json({ error: denied.error });
 
   const current = await companyService.getById(req.params.id);
-  const company = await companyService.updateStage(req.params.id, stage);
+  const company = await companyService.updateStage(req.params.id, stage, { closeReason, closeNote });
   activityService.log('STAGE_CHANGE', 'COMPANY', req.params.id, req.user.id, {
     oldStage: current.pipelineStage,
     newStage: stage,
     companyName: company.name,
+    closeReason: closeReason || undefined,
   }).catch(() => {});
+
+  // Auto-create follow-up task when moving to FIRMA_KONTAKTIERT
+  if (stage === 'FIRMA_KONTAKTIERT' && current.pipelineStage !== 'FIRMA_KONTAKTIERT') {
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 5);
+    prisma.task.create({
+      data: {
+        title: 'Follow-up in 5 Tagen',
+        dueDate,
+        companyId: req.params.id,
+        createdById: req.user.id,
+        assignedToId: company.assignedToId || req.user.id,
+      },
+    }).catch(() => {});
+  }
+
   res.json(company);
 }));
 
@@ -238,6 +267,51 @@ router.get('/:id/next-action', asyncHandler(async (req, res) => {
 router.get('/:id/similar', asyncHandler(async (req, res) => {
   const similar = await similarityService.findSimilar(req.params.id);
   res.json(similar);
+}));
+
+// GET /api/companies/:id/timeline — unified activity timeline
+router.get('/:id/timeline', asyncHandler(async (req, res) => {
+  const companyId = req.params.id;
+  const [activities, comments, tasks, attachments] = await Promise.all([
+    prisma.activity.findMany({
+      where: { entityType: 'COMPANY', entityId: companyId },
+      include: { user: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    }),
+    prisma.comment.findMany({
+      where: { entityType: 'COMPANY', entityId: companyId },
+      include: { user: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    }),
+    prisma.task.findMany({
+      where: { companyId },
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        assignedTo: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    }),
+    prisma.attachment.findMany({
+      where: { companyId },
+      include: { uploadedBy: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    }),
+  ]);
+
+  // Merge into unified timeline
+  const timeline = [
+    ...activities.map((a) => ({ type: 'activity', id: a.id, createdAt: a.createdAt, user: a.user, action: a.action, metadata: a.metadata })),
+    ...comments.map((c) => ({ type: 'comment', id: c.id, createdAt: c.createdAt, user: c.user, content: c.content })),
+    ...tasks.map((t) => ({ type: 'task', id: t.id, createdAt: t.createdAt, user: t.createdBy, title: t.title, done: t.done, doneAt: t.doneAt, assignedTo: t.assignedTo, dueDate: t.dueDate })),
+    ...attachments.map((a) => ({ type: 'attachment', id: a.id, createdAt: a.createdAt, user: a.uploadedBy, fileName: a.fileName, fileSize: a.fileSize })),
+  ];
+  timeline.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  res.json(timeline.slice(0, 100));
 }));
 
 // DELETE /api/companies/:id

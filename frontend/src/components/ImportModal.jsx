@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Upload, Check, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 
@@ -10,6 +10,7 @@ export default function ImportModal({ onClose, onComplete }) {
   const [mapping, setMapping] = useState({ name: '', website: '', city: '', revenue: '' });
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [duplicateCount, setDuplicateCount] = useState(0);
   const inputRef = useRef(null);
 
   const parseCSV = (text) => {
@@ -134,7 +135,21 @@ export default function ImportModal({ onClose, onComplete }) {
                 </div>
               ))}
               <button
-                onClick={() => setStep(2)}
+                onClick={async () => {
+                  // Check for duplicates in preview
+                  if (mapping.name) {
+                    const names = csvData.rows.slice(0, 100).map((r) => r[mapping.name]).filter(Boolean);
+                    let dupCount = 0;
+                    for (const n of names.slice(0, 20)) {
+                      try {
+                        const { data } = await api.get(`/companies/check-duplicate?name=${encodeURIComponent(n)}`);
+                        if (data.duplicates?.length > 0) dupCount++;
+                      } catch { /* ignore */ }
+                    }
+                    setDuplicateCount(dupCount);
+                  }
+                  setStep(2);
+                }}
                 disabled={!mapping.name}
                 className="btn-primary mt-3 w-full py-2 text-sm disabled:opacity-50"
               >
@@ -148,6 +163,12 @@ export default function ImportModal({ onClose, onComplete }) {
               <p className="text-sm font-body text-text-secondary dark:text-dark-text-secondary">
                 Vorschau (erste 5 Zeilen):
               </p>
+              {duplicateCount > 0 && (
+                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-[12px] font-body text-amber-700">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>{duplicateCount} mögliche Duplikate in den ersten 20 Zeilen erkannt. Import wird trotzdem fortgesetzt.</span>
+                </div>
+              )}
               <div className="overflow-x-auto rounded-lg border border-border dark:border-dark-border">
                 <table className="w-full text-xs font-body">
                   <thead>

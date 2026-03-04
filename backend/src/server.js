@@ -110,6 +110,10 @@ app.listen(PORT, () => {
   // Start meeting follow-up cron job
   const { startMeetingFollowUpCron } = require('./jobs/meetingFollowUp');
   startMeetingFollowUpCron();
+
+  // Start stale deal alerts cron job
+  const { startStaleDealCron } = require('./jobs/staleDealAlerts');
+  startStaleDealCron();
 });
 
 module.exports = app;

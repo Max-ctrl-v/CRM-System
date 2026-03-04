@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useCompanies } from '../context/CompaniesContext';
-import { X, Building2, Sparkles, UserPlus, Trash2 } from 'lucide-react';
+import { X, Building2, Sparkles, UserPlus, Trash2, AlertTriangle } from 'lucide-react';
 
 const PIPELINE_OPTIONS = [
   { value: '', label: '— Keine Pipeline —' },
@@ -28,10 +29,22 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [duplicates, setDuplicates] = useState([]);
+  const dupTimerRef = useRef(null);
 
   useEffect(() => {
     if (user?.id) setAssignedToId(user.id);
   }, [user?.id]);
+
+  function checkDuplicates(value) {
+    clearTimeout(dupTimerRef.current);
+    if (!value || value.trim().length < 3) { setDuplicates([]); return; }
+    dupTimerRef.current = setTimeout(() => {
+      api.get(`/companies/check-duplicate?name=${encodeURIComponent(value.trim())}`)
+        .then(({ data }) => setDuplicates(data.duplicates || []))
+        .catch(() => {});
+    }, 400);
+  }
 
   function addContact() {
     setContacts((prev) => [...prev, { firstName: '', lastName: '', email: '', phone: '', position: '' }]);
@@ -106,7 +119,35 @@ export default function CreateCompanyModal({ onClose, onCreated, showPipelineOpt
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-body">Firmenname *</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-field" placeholder="z.B. Mustermann GmbH" required autoFocus />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => { setName(e.target.value); checkDuplicates(e.target.value); }}
+                className="input-field"
+                placeholder="z.B. Mustermann GmbH"
+                required
+                autoFocus
+              />
+              {duplicates.length > 0 && (
+                <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                    <span className="text-[11px] font-semibold text-amber-700 font-body">Mögliche Duplikate gefunden:</span>
+                  </div>
+                  {duplicates.map((d) => (
+                    <Link
+                      key={d.id}
+                      to={`/company/${d.id}`}
+                      className="flex items-center gap-2 text-[12px] font-body text-amber-800 hover:text-brand-700 py-0.5"
+                      onClick={onClose}
+                    >
+                      <Building2 className="w-3 h-3" />
+                      <span className="font-medium">{d.name}</span>
+                      {d.city && <span className="text-amber-600">({d.city})</span>}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>

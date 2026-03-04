@@ -120,14 +120,22 @@ async function update(id, data) {
   });
 }
 
-async function updateStage(id, stage) {
+async function updateStage(id, stage, { closeReason, closeNote } = {}) {
   const validStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST', null];
   if (!validStages.includes(stage)) {
     throw new AppError('Ungültige Pipeline-Stufe.', 400);
   }
+  const data = { pipelineStage: stage };
+  if (stage === 'CLOSED_WON' || stage === 'CLOSED_LOST') {
+    data.closeReason = closeReason || null;
+    data.closeNote = closeNote || null;
+  } else {
+    data.closeReason = null;
+    data.closeNote = null;
+  }
   return prisma.company.update({
     where: { id },
-    data: { pipelineStage: stage },
+    data,
     include: {
       assignedTo: { select: { id: true, name: true, email: true } },
       createdBy: { select: { id: true, name: true } },

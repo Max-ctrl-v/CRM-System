@@ -105,6 +105,9 @@ model Company {
   meetingDate       DateTime?
   meetingFollowUpAt DateTime?
 
+  closeReason   String?
+  closeNote     String?
+
   assignedToId  String?
   assignedTo    User?         @relation("AssignedTo", fields: [assignedToId], references: [id])
 

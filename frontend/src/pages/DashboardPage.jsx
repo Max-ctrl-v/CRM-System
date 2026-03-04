@@ -113,6 +113,7 @@ export default function DashboardPage() {
     {
       label: 'Umsatzprognose',
       value: formatEuro(stats.totalRevenueForecast),
+      subValue: stats.weightedRevenueForecast > 0 ? `Gewichtet: ${formatEuro(stats.weightedRevenueForecast)}` : null,
       icon: Euro,
       color: '#10b981',
       gradient: dark ? 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.08))' : 'linear-gradient(135deg, #ecfdf5, #d1fae5)',
@@ -182,6 +183,9 @@ export default function DashboardPage() {
                 </div>
               </div>
               <span className="text-2xl font-display font-bold text-gray-900 tracking-display">{kpi.value}</span>
+              {kpi.subValue && (
+                <p className="text-[10px] text-gray-400 font-body mt-1">{kpi.subValue}</p>
+              )}
             </div>
           );
         })}
