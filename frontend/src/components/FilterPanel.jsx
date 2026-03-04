@@ -109,6 +109,7 @@ export default function FilterPanel({ filters, onFiltersChange, expanded, onTogg
                   text-text-primary dark:text-dark-text-primary focus:ring-2 focus:ring-brand-300 focus:border-brand-300"
               >
                 <option value="">Alle</option>
+                <option value="UNASSIGNED">Nicht zugewiesen</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}

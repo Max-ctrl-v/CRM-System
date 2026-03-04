@@ -151,7 +151,9 @@ export default function CompanyListPage() {
         if (!c.pipelineStage || !advancedFilters.stages.includes(c.pipelineStage)) return false;
       }
       if (advancedFilters.assignedToId) {
-        if (c.assignedTo?.id !== advancedFilters.assignedToId) return false;
+        if (advancedFilters.assignedToId === 'UNASSIGNED') {
+          if (c.assignedToId || c.assignedTo) return false;
+        } else if (c.assignedTo?.id !== advancedFilters.assignedToId) return false;
       }
       if (advancedFilters.city) {
         if (!c.city || !c.city.toLowerCase().includes(advancedFilters.city.toLowerCase())) return false;
