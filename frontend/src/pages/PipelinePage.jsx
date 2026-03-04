@@ -529,6 +529,8 @@ export default function PipelinePage() {
       ? withPipeline
       : selectedUserId === 'ADMIN_ONLY'
       ? withPipeline.filter((c) => c.adminPipeline)
+      : selectedUserId === 'UNASSIGNED'
+      ? withPipeline.filter((c) => !c.assignedToId)
       : withPipeline.filter((c) => c.assignedToId === selectedUserId);
     if (!search) return byUser;
     const q = search.toLowerCase();
@@ -592,6 +594,7 @@ export default function PipelinePage() {
             >
               <option value={user?.id}>Meine Pipeline</option>
               {user?.role === 'ADMIN' && <option value="ADMIN_ONLY">Admin Pipeline</option>}
+              <option value="UNASSIGNED">Nicht zugewiesen</option>
               <option value="ALL">Alle Mitarbeiter</option>
               {allUsers.filter((u) => u.id !== user?.id).map((u) => (
                 <option key={u.id} value={u.id}>{u.name}</option>
