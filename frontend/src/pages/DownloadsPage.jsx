@@ -7,7 +7,7 @@ const DOWNLOADS = [
     id: 'fzulg',
     title: 'Forschungszulage (FZulG)',
     subtitle: 'Whitepaper',
-    description: 'Vollstandiger Leitfaden zur steuerlichen Forschungsforderung -- Forderbedingungen, Prozess und Vorteile.',
+    description: 'Vollständiger Leitfaden zur steuerlichen Forschungsförderung -- Förderbedingungen, Prozess und Vorteile.',
     route: '/downloads/fzulg',
     color: '#1E56B5',
     colorEnd: '#4DAEE5',

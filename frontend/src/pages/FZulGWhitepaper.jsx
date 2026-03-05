@@ -357,7 +357,7 @@ export default function FZulGWhitepaper() {
           onBlur={(e) => { e.currentTarget.style.outline = 'none'; }}
         >
           <ArrowLeft size={16} />
-          Zuruck zu Downloads
+          Zurück zu Downloads
         </button>
         <button
           onClick={handleDownload}
@@ -489,7 +489,7 @@ export default function FZulGWhitepaper() {
                 margin: 0,
               }}
             >
-              Ihr vollstandiger Leitfaden zur steuerlichen Forschungsforderung
+              Ihr vollständiger Leitfaden zur steuerlichen Forschungsförderung
               in Deutschland -- von den Grundlagen bis zur erfolgreichen Antragstellung.
             </p>
             <div
@@ -507,7 +507,7 @@ export default function FZulGWhitepaper() {
         <div className="whitepaper-section" style={{ padding: '48px 0 56px' }}>
           <Section>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <StatCard value="15 Mio.+" label="Fordervolumen gesichert" />
+              <StatCard value="15 Mio.+" label="Fördervolumen gesichert" />
               <StatCard value="25+" label="Mandate betreut" />
               <StatCard value="100%" label="Bewilligungsquote" />
               <StatCard value="6 Jahre" label="FZulG-Erfahrung" />
@@ -518,7 +518,7 @@ export default function FZulGWhitepaper() {
         {/* ===== WAS IST DIE FORSCHUNGSZULAGE? ===== */}
         <div className="whitepaper-section whitepaper-page-break" style={{ padding: '56px 0' }}>
           <Section>
-            <SectionTitle sub="Die Forschungszulage ist eine steuerliche Forderung des Bundes, die seit dem 1. Januar 2020 in Kraft ist.">
+            <SectionTitle sub="Die Forschungszulage ist eine steuerliche Förderung des Bundes, die seit dem 1. Januar 2020 in Kraft ist.">
               Was ist die Forschungszulage?
             </SectionTitle>
             <div
@@ -531,45 +531,45 @@ export default function FZulGWhitepaper() {
               }}
             >
               <p style={{ fontSize: 15, lineHeight: 1.7, color: C.text, margin: '0 0 16px' }}>
-                Das <strong style={{ color: C.white }}>Forschungszulagengesetz (FZulG)</strong> ermoglicht
-                allen in Deutschland steuerpflichtigen Unternehmen, unabhangig von Grosse und Branche,
+                Das <strong style={{ color: C.white }}>Forschungszulagengesetz (FZulG)</strong> ermöglicht
+                allen in Deutschland steuerpflichtigen Unternehmen, unabhängig von Größe und Branche,
                 eine steuerliche Erstattung ihrer Forschungs- und Entwicklungsausgaben.
               </p>
               <p style={{ fontSize: 15, lineHeight: 1.7, color: C.text, margin: '0 0 16px' }}>
-                Unternehmen erhalten <strong style={{ color: C.accent }}>25 % ihrer forderfähigen
-                F&E-Personalkosten</strong> als Steuergutschrift zuruck. Fur kleine und mittlere
-                Unternehmen (KMU) betragt der Satz sogar <strong style={{ color: C.accent }}>35 %</strong>.
+                Unternehmen erhalten <strong style={{ color: C.accent }}>25 % ihrer förderfähigen
+                F&E-Personalkosten</strong> als Steuergutschrift zurück. Für kleine und mittlere
+                Unternehmen (KMU) beträgt der Satz sogar <strong style={{ color: C.accent }}>35 %</strong>.
               </p>
               <p style={{ fontSize: 15, lineHeight: 1.7, color: C.text, margin: 0 }}>
                 Besonders attraktiv: Die Zulage wird als <strong style={{ color: C.white }}>direkte
-                Barauszahlung</strong> gewahrt, wenn keine Steuerschuld besteht. Sie ist ruckwirkend
-                fur Steuerjahre ab 2020 beantragbar.
+                Barauszahlung</strong> gewährt, wenn keine Steuerschuld besteht. Sie ist rückwirkend
+                für Steuerjahre ab 2020 beantragbar.
               </p>
             </div>
           </Section>
         </div>
 
-        {/* ===== FORDERFÄHIGE KOSTEN ===== */}
+        {/* ===== FÖRDERFÄHIGE KOSTEN ===== */}
         <div className="whitepaper-section" style={{ padding: '56px 0' }}>
           <Section>
-            <SectionTitle sub="Diese Kostenarten konnen im Rahmen der Forschungszulage geltend gemacht werden.">
-              Forderfähige Kosten
+            <SectionTitle sub="Diese Kostenarten können im Rahmen der Forschungszulage geltend gemacht werden.">
+              Förderfähige Kosten
             </SectionTitle>
             <div style={{ display: 'flex', gap: 16 }}>
               <CostCard
                 icon={Users}
                 title="Personalkosten"
-                description="Lohne und Gehalter fur Mitarbeiter, die direkt an F&E-Projekten arbeiten. Dies ist die primare Bemessungsgrundlage."
+                description="Löhne und Gehälter für Mitarbeiter, die direkt an F&E-Projekten arbeiten. Dies ist die primäre Bemessungsgrundlage."
               />
               <CostCard
                 icon={Briefcase}
                 title="Eigenleistungen"
-                description="Einkommen aus selbstandiger Tatigkeit im Bereich Forschung und Entwicklung innerhalb des Unternehmens."
+                description="Einkommen aus selbständiger Tätigkeit im Bereich Forschung und Entwicklung innerhalb des Unternehmens."
               />
               <CostCard
                 icon={FlaskConical}
                 title="Auftragsforschung"
-                description="60 % der Kosten fur externe Auftragsforschung konnen als forderfähige Aufwendungen geltend gemacht werden."
+                description="60 % der Kosten für externe Auftragsforschung können als förderfähige Aufwendungen geltend gemacht werden."
               />
             </div>
           </Section>
@@ -578,7 +578,7 @@ export default function FZulGWhitepaper() {
         {/* ===== FÖRDERHÖHE ===== */}
         <div className="whitepaper-section whitepaper-page-break" style={{ padding: '56px 0' }}>
           <Section>
-            <SectionTitle sub="Maximale jahrliche Forderung je nach Unternehmensgrösse.">
+            <SectionTitle sub="Maximale jährliche Förderung je nach Unternehmensgröße.">
               Förderhöhe
             </SectionTitle>
             <div style={{ display: 'flex', gap: 20 }}>
@@ -627,7 +627,7 @@ export default function FZulGWhitepaper() {
                   4,2 Mio.
                 </div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: C.textMuted, marginTop: 4 }}>
-                  Maximale jahrliche Zulage
+                  Maximale jährliche Zulage
                 </div>
                 <div
                   style={{
@@ -643,7 +643,7 @@ export default function FZulGWhitepaper() {
                 </div>
               </div>
 
-              {/* Grossunternehmen */}
+              {/* Großunternehmen */}
               <div
                 style={{
                   flex: 1,
@@ -674,7 +674,7 @@ export default function FZulGWhitepaper() {
                     marginBottom: 12,
                   }}
                 >
-                  Grossunternehmen
+                  Großunternehmen
                 </div>
                 <div
                   style={{
@@ -688,7 +688,7 @@ export default function FZulGWhitepaper() {
                   3,0 Mio.
                 </div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: C.textMuted, marginTop: 4 }}>
-                  Maximale jahrliche Zulage
+                  Maximale jährliche Zulage
                 </div>
                 <div
                   style={{
@@ -710,7 +710,7 @@ export default function FZulGWhitepaper() {
         {/* ===== BRANCHEN ===== */}
         <div className="whitepaper-section" style={{ padding: '56px 0' }}>
           <Section>
-            <SectionTitle sub="Die Forschungszulage gilt branchenubergreifend -- diese Sektoren profitieren besonders.">
+            <SectionTitle sub="Die Forschungszulage gilt branchenübergreifend -- diese Sektoren profitieren besonders.">
               Branchen
             </SectionTitle>
             <div
@@ -771,25 +771,25 @@ export default function FZulGWhitepaper() {
               <ProcessStep
                 number="1"
                 title="Kostenlose Erstanalyse"
-                description="Unverbindliche Prufung Ihres F&E-Potenzials. Wir identifizieren forderfähige Projekte und schatzen die mogliche Zulage."
+                description="Unverbindliche Prüfung Ihres F&E-Potenzials. Wir identifizieren förderfähige Projekte und schätzen die mögliche Zulage."
               />
               <div style={{ height: 1, background: 'rgba(77,174,229,0.1)', margin: '0 68px' }} />
               <ProcessStep
                 number="2"
                 title="Dokumentation & BSFZ-Antrag"
-                description="Vollstandige Projektdokumentation und Einreichung des Antrags bei der Bescheinigungsstelle Forschungszulage (BSFZ)."
+                description="Vollständige Projektdokumentation und Einreichung des Antrags bei der Bescheinigungsstelle Forschungszulage (BSFZ)."
               />
               <div style={{ height: 1, background: 'rgba(77,174,229,0.1)', margin: '0 68px' }} />
               <ProcessStep
                 number="3"
                 title="Steuererklärungs-Integration"
-                description="Koordination mit Ihrem Steuerberater zur optimalen Einbindung der Forschungszulage in Ihre Steuererklarung."
+                description="Koordination mit Ihrem Steuerberater zur optimalen Einbindung der Forschungszulage in Ihre Steuererklärung."
               />
               <div style={{ height: 1, background: 'rgba(77,174,229,0.1)', margin: '0 68px' }} />
               <ProcessStep
                 number="4"
                 title="Auszahlung & Honorar"
-                description="Erst bei erfolgreicher Bewilligung wird unser Honorar fallig. Kein Erfolg, keine Kosten."
+                description="Erst bei erfolgreicher Bewilligung wird unser Honorar fällig. Kein Erfolg, keine Kosten."
               />
             </div>
           </Section>
@@ -805,22 +805,22 @@ export default function FZulGWhitepaper() {
               <USPCard
                 icon={CheckCircle}
                 title="100 % erfolgsbasiert"
-                description="Unser Honorar ist vollstandig an den Erfolg geknupft. Keine versteckten Kosten, keine Vorauszahlung."
+                description="Unser Honorar ist vollständig an den Erfolg geknüpft. Keine versteckten Kosten, keine Vorauszahlung."
               />
               <USPCard
                 icon={Banknote}
                 title="0 Euro Vorabkosten"
-                description="Kein finanzielles Risiko fur Sie. Wir investieren unsere Expertise, Sie profitieren vom Ergebnis."
+                description="Kein finanzielles Risiko für Sie. Wir investieren unsere Expertise, Sie profitieren vom Ergebnis."
               />
               <USPCard
                 icon={Shield}
                 title="GoBD-konform"
-                description="Unsere Dokumentationssysteme entsprechen den Grundsatzen ordnungsmassiger Buchfuhrung und Datenverwaltung."
+                description="Unsere Dokumentationssysteme entsprechen den Grundsätzen ordnungsmäßiger Buchführung und Datenverwaltung."
               />
               <USPCard
                 icon={TrendingDown}
-                title="Bis zu 40 % gunstiger"
-                description="Unsere Konditionen liegen deutlich unter dem Branchendurchschnitt -- bei gleichbleibend hoher Qualitat."
+                title="Bis zu 40 % günstiger"
+                description="Unsere Konditionen liegen deutlich unter dem Branchendurchschnitt -- bei gleichbleibend hoher Qualität."
               />
             </div>
           </Section>
@@ -872,7 +872,7 @@ export default function FZulGWhitepaper() {
                   position: 'relative',
                 }}
               >
-                Erfahren Sie in einem unverbindlichen Gesprach, wie viel Forschungszulage
+                Erfahren Sie in einem unverbindlichen Gespräch, wie viel Forschungszulage
                 Ihr Unternehmen erhalten kann.
               </p>
               <div
@@ -915,7 +915,7 @@ export default function FZulGWhitepaper() {
               }}
             >
               NOVARIS Consulting -- Forschungszulage (FZulG) Whitepaper.
-              Alle Angaben ohne Gewahr. Stand: Marz 2026.
+              Alle Angaben ohne Gewähr. Stand: März 2026.
             </p>
           </Section>
         </div>
