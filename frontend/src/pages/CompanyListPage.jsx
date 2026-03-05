@@ -35,6 +35,7 @@ import ImportModal from '../components/ImportModal';
 const STAGE_LABELS = {
   FIRMA_IDENTIFIZIERT: { label: 'Identifiziert', color: '#6366f1', bg: '#eef2ff', bgDark: 'rgba(99,102,241,0.12)' },
   FIRMA_KONTAKTIERT: { label: 'Kontaktiert', color: '#3b82f6', bg: '#eff6ff', bgDark: 'rgba(59,130,246,0.12)' },
+  MEETING_VEREINBART: { label: 'Meeting', color: '#06b6d4', bg: '#ecfeff', bgDark: 'rgba(6,182,212,0.12)' },
   VERHANDLUNG: { label: 'Verhandlung', color: '#f59e0b', bg: '#fffbeb', bgDark: 'rgba(245,158,11,0.12)' },
   CLOSED_WON: { label: 'Won', color: '#10b981', bg: '#ecfdf5', bgDark: 'rgba(16,185,129,0.12)' },
   CLOSED_LOST: { label: 'Lost', color: '#ef4444', bg: '#fef2f2', bgDark: 'rgba(239,68,68,0.12)' },
@@ -43,6 +44,7 @@ const STAGE_LABELS = {
 const STAGE_OPTIONS = [
   { key: 'FIRMA_IDENTIFIZIERT', label: 'Identifiziert' },
   { key: 'FIRMA_KONTAKTIERT', label: 'Kontaktiert' },
+  { key: 'MEETING_VEREINBART', label: 'Meeting vereinbart' },
   { key: 'VERHANDLUNG', label: 'Verhandlung' },
   { key: 'CLOSED_WON', label: 'Closed Won' },
   { key: 'CLOSED_LOST', label: 'Closed Lost' },

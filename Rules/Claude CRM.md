@@ -48,9 +48,10 @@
 ## Pipeline Stages (in order)
 1. `FIRMA_IDENTIFIZIERT` — Firma Identifiziert
 2. `FIRMA_KONTAKTIERT` — Firma kontaktiert
-3. `VERHANDLUNG` — Verhandlung
-4. `CLOSED_WON` — Closed Won
-5. `CLOSED_LOST` — Closed Lost
+3. `MEETING_VEREINBART` — Meeting vereinbart
+4. `VERHANDLUNG` — Verhandlung
+5. `CLOSED_WON` — Closed Won
+6. `CLOSED_LOST` — Closed Lost
 
 ## Data Model (Prisma)
 - **User:** id, email, passwordHash, name, role (ADMIN/USER), refreshToken, createdAt, lastLogin

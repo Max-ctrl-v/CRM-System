@@ -28,7 +28,7 @@ async function compileDigest(userId) {
     }),
     prisma.company.count({
       where: {
-        pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
+        pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG'] },
       },
     }),
   ]);

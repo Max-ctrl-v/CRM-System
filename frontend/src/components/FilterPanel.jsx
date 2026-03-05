@@ -5,6 +5,7 @@ import api from '../services/api';
 const STAGES = [
   { value: 'FIRMA_IDENTIFIZIERT', label: 'Identifiziert' },
   { value: 'FIRMA_KONTAKTIERT', label: 'Kontaktiert' },
+  { value: 'MEETING_VEREINBART', label: 'Meeting vereinbart' },
   { value: 'VERHANDLUNG', label: 'Verhandlung' },
   { value: 'CLOSED_WON', label: 'Gewonnen' },
   { value: 'CLOSED_LOST', label: 'Verloren' },

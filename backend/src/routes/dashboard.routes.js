@@ -9,6 +9,7 @@ router.use(authenticate);
 const STAGE_PROBABILITY = {
   FIRMA_IDENTIFIZIERT: 0.10,
   FIRMA_KONTAKTIERT: 0.25,
+  MEETING_VEREINBART: 0.40,
   VERHANDLUNG: 0.60,
   CLOSED_WON: 1.0,
   CLOSED_LOST: 0,
@@ -64,7 +65,7 @@ router.get('/stats', asyncHandler(async (req, res) => {
     prisma.company.aggregate({
       _sum: { expectedRevenue: true },
       where: {
-        pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
+        pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG'] },
         ...companyScope,
       },
     }),
@@ -138,7 +139,7 @@ router.get('/revenue-forecast', asyncHandler(async (req, res) => {
       if (c.updatedAt >= start && c.updatedAt <= end && c.expectedRevenue) {
         if (c.pipelineStage === 'CLOSED_WON') {
           won += c.expectedRevenue;
-        } else if (['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'].includes(c.pipelineStage)) {
+        } else if (['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG'].includes(c.pipelineStage)) {
           pipeline += c.expectedRevenue;
           weighted += c.expectedRevenue * (STAGE_PROBABILITY[c.pipelineStage] || 0);
         }
@@ -174,7 +175,7 @@ router.get('/heatmap', asyncHandler(async (req, res) => {
 
 // GET /api/dashboard/funnel
 router.get('/funnel', asyncHandler(async (req, res) => {
-  const stages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON'];
+  const stages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG', 'CLOSED_WON'];
   const companyScope = req.user.role === 'ADMIN' ? {} : {
     OR: [{ assignedToId: req.user.id }, { createdById: req.user.id }],
   };

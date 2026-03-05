@@ -11,6 +11,8 @@ const CompanyDetailPage = lazy(() => import('./pages/CompanyDetailPage'));
 const AufgabenPage = lazy(() => import('./pages/AufgabenPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
+const DownloadsPage = lazy(() => import('./pages/DownloadsPage'));
+const FZulGWhitepaper = lazy(() => import('./pages/FZulGWhitepaper'));
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="aufgaben" element={<AufgabenPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="chat" element={<ChatPage />} />
+          <Route path="downloads" element={<DownloadsPage />} />
+          <Route path="downloads/fzulg" element={<FZulGWhitepaper />} />
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

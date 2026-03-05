@@ -23,6 +23,7 @@ import ConversionFunnel from '../components/ConversionFunnel';
 const STAGE_META = {
   FIRMA_IDENTIFIZIERT: { label: 'Identifiziert', color: '#6366f1', colorEnd: '#818cf8' },
   FIRMA_KONTAKTIERT: { label: 'Kontaktiert', color: '#3b82f6', colorEnd: '#60a5fa' },
+  MEETING_VEREINBART: { label: 'Meeting', color: '#06b6d4', colorEnd: '#22d3ee' },
   VERHANDLUNG: { label: 'Verhandlung', color: '#f59e0b', colorEnd: '#fbbf24' },
   CLOSED_WON: { label: 'Closed Won', color: '#10b981', colorEnd: '#34d399' },
   CLOSED_LOST: { label: 'Closed Lost', color: '#ef4444', colorEnd: '#f87171' },
@@ -130,7 +131,7 @@ export default function DashboardPage() {
   ];
 
   // Pipeline funnel data (only main stages)
-  const funnelStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST'];
+  const funnelStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST'];
   const stageMap = {};
   (stats.stageBreakdown || []).forEach((s) => { stageMap[s.stage] = s; });
   const maxCount = Math.max(...funnelStages.map((k) => stageMap[k]?.count || 0), 1);

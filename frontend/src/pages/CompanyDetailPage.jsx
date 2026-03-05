@@ -47,6 +47,7 @@ const STAGES = [
   { key: null, label: 'Keine Pipeline', color: '#94a3b8' },
   { key: 'FIRMA_IDENTIFIZIERT', label: 'Identifiziert', color: '#6366f1' },
   { key: 'FIRMA_KONTAKTIERT', label: 'Kontaktiert', color: '#3b82f6' },
+  { key: 'MEETING_VEREINBART', label: 'Meeting', color: '#06b6d4' },
   { key: 'VERHANDLUNG', label: 'Verhandlung', color: '#f59e0b' },
   { key: 'CLOSED_WON', label: 'Won', color: '#10b981' },
   { key: 'CLOSED_LOST', label: 'Lost', color: '#ef4444' },

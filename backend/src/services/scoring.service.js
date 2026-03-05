@@ -4,6 +4,7 @@ const prisma = require('../lib/prisma');
 const STAGE_WEIGHTS = {
   FIRMA_IDENTIFIZIERT: 10,
   FIRMA_KONTAKTIERT: 30,
+  MEETING_VEREINBART: 45,
   VERHANDLUNG: 60,
   CLOSED_WON: 100,
   CLOSED_LOST: 0,

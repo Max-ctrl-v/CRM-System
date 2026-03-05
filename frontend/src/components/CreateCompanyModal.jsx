@@ -10,6 +10,7 @@ const PIPELINE_OPTIONS = [
   { value: '', label: '— Keine Pipeline —' },
   { value: 'FIRMA_IDENTIFIZIERT', label: 'Firma Identifiziert' },
   { value: 'FIRMA_KONTAKTIERT', label: 'Firma kontaktiert' },
+  { value: 'MEETING_VEREINBART', label: 'Meeting vereinbart' },
   { value: 'VERHANDLUNG', label: 'Verhandlung' },
   { value: 'CLOSED_WON', label: 'Closed Won' },
   { value: 'CLOSED_LOST', label: 'Closed Lost' },

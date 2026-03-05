@@ -32,6 +32,7 @@ const TIMELINE_CONFIG = {
 const STAGE_LABELS = {
   FIRMA_IDENTIFIZIERT: 'Identifiziert',
   FIRMA_KONTAKTIERT: 'Kontaktiert',
+  MEETING_VEREINBART: 'Meeting vereinbart',
   VERHANDLUNG: 'Verhandlung',
   CLOSED_WON: 'Closed Won',
   CLOSED_LOST: 'Closed Lost',

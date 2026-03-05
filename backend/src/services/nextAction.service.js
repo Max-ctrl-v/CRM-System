@@ -70,6 +70,20 @@ async function suggest(companyId) {
         reason: 'Nächster Schritt in der Pipeline',
       });
       break;
+    case 'MEETING_VEREINBART':
+      if (daysSinceActivity > 5) {
+        suggestions.push({
+          priority: 'high',
+          action: 'Meeting-Termin bestätigen',
+          reason: `Letzte Aktivität vor ${Math.round(daysSinceActivity)} Tagen`,
+        });
+      }
+      suggestions.push({
+        priority: 'medium',
+        action: 'Meeting-Agenda vorbereiten',
+        reason: 'Nächster Schritt in der Pipeline',
+      });
+      break;
     case 'VERHANDLUNG':
       if (!company.expectedRevenue) {
         suggestions.push({
@@ -194,6 +208,12 @@ async function batchSuggest(companyIds) {
           suggestions.push({ priority: 'high', action: 'Follow-up Anruf planen', reason: `Letzte Aktivität vor ${Math.round(daysSinceActivity)} Tagen` });
         }
         suggestions.push({ priority: 'medium', action: 'Termin für Erstgespräch vereinbaren', reason: 'Nächster Schritt in der Pipeline' });
+        break;
+      case 'MEETING_VEREINBART':
+        if (daysSinceActivity > 5) {
+          suggestions.push({ priority: 'high', action: 'Meeting-Termin bestätigen', reason: `Letzte Aktivität vor ${Math.round(daysSinceActivity)} Tagen` });
+        }
+        suggestions.push({ priority: 'medium', action: 'Meeting-Agenda vorbereiten', reason: 'Nächster Schritt in der Pipeline' });
         break;
       case 'VERHANDLUNG':
         if (!company.expectedRevenue) {

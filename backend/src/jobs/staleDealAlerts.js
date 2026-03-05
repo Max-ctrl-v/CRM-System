@@ -15,7 +15,7 @@ function startStaleDealCron() {
       // Find companies in active pipeline stages with no update in 14+ days
       const staleCompanies = await prisma.company.findMany({
         where: {
-          pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG'] },
+          pipelineStage: { in: ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG'] },
           updatedAt: { lt: cutoff },
           assignedToId: { not: null },
         },
