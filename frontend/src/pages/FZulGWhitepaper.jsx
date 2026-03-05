@@ -575,11 +575,11 @@ export default function FZulGWhitepaper() {
           </Section>
         </div>
 
-        {/* ===== FORDERHÖHE ===== */}
+        {/* ===== FÖRDERHÖHE ===== */}
         <div className="whitepaper-section whitepaper-page-break" style={{ padding: '56px 0' }}>
           <Section>
             <SectionTitle sub="Maximale jahrliche Forderung je nach Unternehmensgrösse.">
-              Forderhohe
+              Förderhöhe
             </SectionTitle>
             <div style={{ display: 'flex', gap: 20 }}>
               {/* KMU */}
