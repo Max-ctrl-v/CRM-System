@@ -21,6 +21,7 @@ async function create(data) {
       lastName: data.lastName,
       email: data.email || null,
       phone: data.phone || null,
+      mobile: data.mobile || null,
       position: data.position || null,
       companyId: data.companyId,
     },
@@ -35,6 +36,7 @@ async function update(id, data) {
       ...(data.lastName !== undefined && { lastName: data.lastName }),
       ...(data.email !== undefined && { email: data.email }),
       ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.mobile !== undefined && { mobile: data.mobile }),
       ...(data.position !== undefined && { position: data.position }),
     },
   });

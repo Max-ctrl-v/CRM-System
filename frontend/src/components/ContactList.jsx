@@ -7,6 +7,7 @@ import CommentSection from './CommentSection';
 import {
   UserPlus,
   Phone,
+  Smartphone,
   Mail,
   Briefcase,
   Trash2,
@@ -29,7 +30,7 @@ export default function ContactList({ companyId, companyName }) {
   const [expandedId, setExpandedId] = useState(null);
   const [researchOpenId, setResearchOpenId] = useState(null);
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', email: '', phone: '', position: '',
+    firstName: '', lastName: '', email: '', phone: '', mobile: '', position: '',
   });
 
   useEffect(() => { loadContacts(); }, [companyId]);
@@ -43,7 +44,7 @@ export default function ContactList({ companyId, companyName }) {
   }
 
   function resetForm() {
-    setFormData({ firstName: '', lastName: '', email: '', phone: '', position: '' });
+    setFormData({ firstName: '', lastName: '', email: '', phone: '', mobile: '', position: '' });
     setShowForm(false);
     setEditingId(null);
   }
@@ -63,7 +64,7 @@ export default function ContactList({ companyId, companyName }) {
   }
 
   function handleEdit(contact) {
-    setFormData({ firstName: contact.firstName, lastName: contact.lastName, email: contact.email || '', phone: contact.phone || '', position: contact.position || '' });
+    setFormData({ firstName: contact.firstName, lastName: contact.lastName, email: contact.email || '', phone: contact.phone || '', mobile: contact.mobile || '', position: contact.position || '' });
     setEditingId(contact.id);
     setShowForm(true);
   }
@@ -97,6 +98,7 @@ export default function ContactList({ companyId, companyName }) {
             <div><label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Nachname *</label><input type="text" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className="input-field text-sm" required /></div>
             <div><label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">E-Mail</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="input-field text-sm" /></div>
             <div><label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Telefon</label><input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="input-field text-sm" /></div>
+            <div><label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Mobil</label><input type="tel" value={formData.mobile} onChange={(e) => setFormData({ ...formData, mobile: e.target.value })} className="input-field text-sm" /></div>
             <div className="col-span-2"><label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Position</label><input type="text" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} className="input-field text-sm" placeholder="z.B. Geschäftsführer, F&E-Leiter" /></div>
           </div>
           <div className="flex gap-2 mt-4">
@@ -125,6 +127,7 @@ export default function ContactList({ companyId, companyName }) {
                       {contact.position && <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{contact.position}</span>}
                       {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-1 text-brand-500 hover:text-brand-600 hover:underline rounded focus-visible:ring-2 focus-visible:ring-brand-300"><Mail className="w-3 h-3" />{contact.email}</a>}
                       {contact.phone && <a href={`tel:${contact.phone}`} className="flex items-center gap-1 text-brand-500 hover:text-brand-600 hover:underline rounded focus-visible:ring-2 focus-visible:ring-brand-300"><Phone className="w-3 h-3" />{contact.phone}</a>}
+                      {contact.mobile && <a href={`tel:${contact.mobile}`} className="flex items-center gap-1 text-brand-500 hover:text-brand-600 hover:underline rounded focus-visible:ring-2 focus-visible:ring-brand-300"><Smartphone className="w-3 h-3" />{contact.mobile}</a>}
                     </div>
                   </div>
                 </div>

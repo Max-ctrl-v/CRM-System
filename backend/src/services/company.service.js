@@ -69,6 +69,7 @@ async function create(data, userId) {
               lastName: contact.lastName.trim(),
               email: contact.email?.trim() || null,
               phone: contact.phone?.trim() || null,
+              mobile: contact.mobile?.trim() || null,
               position: contact.position?.trim() || null,
               companyId: company.id,
             },

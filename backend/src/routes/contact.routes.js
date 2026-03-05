@@ -6,8 +6,8 @@ const authenticate = require('../middleware/auth');
 const activityService = require('../services/activity.service');
 const pick = require('../utils/pick');
 
-const CONTACT_CREATE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'position', 'companyId'];
-const CONTACT_UPDATE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'position'];
+const CONTACT_CREATE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'mobile', 'position', 'companyId'];
+const CONTACT_UPDATE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'mobile', 'position'];
 
 router.use(authenticate);
 

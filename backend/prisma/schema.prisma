@@ -135,6 +135,7 @@ model Contact {
   lastName  String
   email     String?
   phone     String?
+  mobile    String?
   position  String?
 
   perplexityResult    String?
