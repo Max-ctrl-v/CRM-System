@@ -121,7 +121,7 @@ async function update(id, data) {
 }
 
 async function updateStage(id, stage, { closeReason, closeNote } = {}) {
-  const validStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST', null];
+  const validStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST', null];
   if (!validStages.includes(stage)) {
     throw new AppError('Ungültige Pipeline-Stufe.', 400);
   }
@@ -149,7 +149,7 @@ async function remove(id) {
 }
 
 async function bulkUpdateStage(ids, stage) {
-  const validStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST', null];
+  const validStages = ['FIRMA_IDENTIFIZIERT', 'FIRMA_KONTAKTIERT', 'MEETING_VEREINBART', 'VERHANDLUNG', 'CLOSED_WON', 'CLOSED_LOST', null];
   if (!validStages.includes(stage)) throw new AppError('Ungültige Pipeline-Stufe.', 400);
   return prisma.company.updateMany({ where: { id: { in: ids } }, data: { pipelineStage: stage } });
 }
