@@ -75,7 +75,7 @@ export default function CompanyDetailPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
   const { dark } = useTheme();
-  const { removeCompany, allUsers } = useCompanies();
+  const { removeCompany, refresh, allUsers } = useCompanies();
 
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,7 +139,8 @@ export default function CompanyDetailPage() {
       await api.delete(`/companies/${id}`);
       removeCompany(id);
       addToast(`"${company.name}" gelöscht.`, 'success');
-      navigate(-1);
+      navigate('/pipeline');
+      refresh();
     } catch (err) {
       addToast(err.response?.data?.error || 'Fehler beim Löschen.', 'error');
     }
