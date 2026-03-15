@@ -273,34 +273,7 @@ async function generateContractPdf(contract) {
     subPoint(doc, 13, 6, 'Der Auftragnehmer ist nur mit vorheriger ausdr\u00FCcklicher Zustimmung des Auftraggebers berechtigt, dessen Firma und Logo als Referenz zu verwenden. Die Zustimmung kann jederzeit mit Wirkung f\u00FCr die Zukunft widerrufen werden.', L, W);
 
     // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-    // SIGNATURES \u2014 check space, new page if needed
-    // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-    const remainingSpace = doc.page.height - doc.y - doc.page.margins.bottom;
-    if (remainingSpace < 120) {
-      doc.addPage();
-    }
-
-    const sigTop = doc.y + 24;
-    doc.moveTo(L, sigTop).lineTo(R, sigTop).strokeColor(borderColor).lineWidth(0.5).stroke();
-
-    const sW = (W - 40) / 2;
-    const sY = sigTop + 14;
-
-    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
-      .text('AUFTRAGGEBER', L, sY, { lineBreak: false });
-    doc.moveTo(L, sY + 36).lineTo(L + sW, sY + 36).strokeColor(borderColor).lineWidth(0.5).stroke();
-    doc.fontSize(7).font('Helvetica').fillColor(light)
-      .text('Ort, Datum, Unterschrift', L, sY + 40, { lineBreak: false });
-
-    const sR = L + sW + 40;
-    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
-      .text('AUFTRAGNEHMER', sR, sY, { lineBreak: false });
-    doc.moveTo(sR, sY + 36).lineTo(sR + sW, sY + 36).strokeColor(borderColor).lineWidth(0.5).stroke();
-    doc.fontSize(7).font('Helvetica').fillColor(light)
-      .text('Ort, Datum, Unterschrift', sR, sY + 40, { lineBreak: false });
-
-    // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-    // LAST PAGE \u2014 Berechnungsbeispiel
+    // LAST PAGE \u2014 Berechnungsbeispiel + Signatures
     // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
     doc.addPage();
 
@@ -424,6 +397,28 @@ async function generateContractPdf(contract) {
 
     doc.fontSize(7).font('Helvetica-Oblique').fillColor(light)
       .text('Verg\u00FCtung netto zzgl. gesetzlicher USt.', rightX + 8, bt + bh - bp - 4);
+
+    // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+    // SIGNATURES \u2014 below Berechnungsbeispiel
+    // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+    const sigTop = bt + bh + 30;
+    doc.moveTo(L, sigTop).lineTo(R, sigTop).strokeColor(borderColor).lineWidth(0.5).stroke();
+
+    const sW = (W - 40) / 2;
+    const sY = sigTop + 14;
+
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
+      .text('AUFTRAGGEBER', L, sY, { lineBreak: false });
+    doc.moveTo(L, sY + 36).lineTo(L + sW, sY + 36).strokeColor(borderColor).lineWidth(0.5).stroke();
+    doc.fontSize(7).font('Helvetica').fillColor(light)
+      .text('Ort, Datum, Unterschrift', L, sY + 40, { lineBreak: false });
+
+    const sR = L + sW + 40;
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
+      .text('AUFTRAGNEHMER', sR, sY, { lineBreak: false });
+    doc.moveTo(sR, sY + 36).lineTo(sR + sW, sY + 36).strokeColor(borderColor).lineWidth(0.5).stroke();
+    doc.fontSize(7).font('Helvetica').fillColor(light)
+      .text('Ort, Datum, Unterschrift', sR, sY + 40, { lineBreak: false });
 
     // \u2500\u2500 Footer on every page \u2500\u2500
     const range = doc.bufferedPageRange();
