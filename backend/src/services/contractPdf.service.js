@@ -137,9 +137,6 @@ async function generateContractPdf(contract) {
       .text('Die Vergütung des Auftragnehmers beträgt ', L, y, { continued: true, lineGap: 2.5 });
     doc.font('Helvetica-Bold').fillColor(navy)
       .text(`${rate.toFixed(1)}% auf die bescheinigten Projektkosten`, { continued: true });
-    doc.font('Helvetica').fillColor(body).text('. ', { continued: true, lineGap: 2.5 });
-    doc.text('Die Förderquote beträgt ', { continued: true, lineGap: 2.5 });
-    doc.font('Helvetica-Bold').fillColor(navy).text(`${fq}%`, { continued: true });
     doc.font('Helvetica').fillColor(body).text('.', { lineGap: 2.5 });
 
     doc.y += 3;
