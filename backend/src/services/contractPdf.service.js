@@ -201,7 +201,6 @@ async function generateContractPdf(contract) {
     ], L, W);
 
     subPoint(doc, 2, 3, 'Der Auftragnehmer ist berechtigt, zur Leistungserbringung qualifizierte Mitarbeiter sowie Unterauftragnehmer einzusetzen.', L, W);
-    subPoint(doc, 2, 4, 'Sofern der Auftragnehmer Muster, Checklisten, Textbausteine, Strukturierungsvorschl\u00E4ge oder sonstige Vorlagen bereitstellt, dienen diese ausschlie\u00DFlich der vertragsgegenst\u00E4ndlichen Zusammenarbeit.', L, W);
 
     // § 3 Mitwirkungspflichten des Auftraggebers
     sectionHeading(doc, 3, 'Mitwirkungspflichten des Auftraggebers', L, W);
