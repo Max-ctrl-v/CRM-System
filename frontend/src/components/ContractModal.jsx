@@ -14,6 +14,8 @@ import {
   CheckCircle,
   Euro,
   Calculator,
+  Shield,
+  ToggleLeft,
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -27,6 +29,12 @@ export default function ContractModal({ company, onClose, onComplete }) {
     paymentBewilligung: 50,
     paymentFinanzamt: 50,
     zahlungsfrist: 14,
+    verguetungsVariante: 'A',
+    verguetungsSatzB: 12,
+    tagessatz: 1500,
+    stundensatz: 200,
+    haftungProSchadensfall: 50000,
+    haftungProKalenderjahr: 250000,
     street: '',
     streetNumber: '',
     zipCode: '',
@@ -64,6 +72,12 @@ export default function ContractModal({ company, onClose, onComplete }) {
         paymentBewilligung: parseInt(form.paymentBewilligung),
         paymentFinanzamt: parseInt(form.paymentFinanzamt),
         zahlungsfrist: parseInt(form.zahlungsfrist),
+        verguetungsVariante: form.verguetungsVariante,
+        verguetungsSatzB: parseFloat(form.verguetungsSatzB),
+        tagessatz: parseFloat(form.tagessatz),
+        stundensatz: parseFloat(form.stundensatz),
+        haftungProSchadensfall: parseFloat(form.haftungProSchadensfall),
+        haftungProKalenderjahr: parseFloat(form.haftungProKalenderjahr),
         street: form.street,
         streetNumber: form.streetNumber,
         zipCode: form.zipCode,
@@ -338,6 +352,148 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 </div>
               </div>
 
+              {/* Vergütungsmodell */}
+              <div className="flex items-center gap-2 mt-5 mb-3">
+                <ToggleLeft className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                <span className="text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider">
+                  Vergütungsmodell
+                </span>
+                <div className="flex-1 h-px" style={{ background: dark ? '#2a2d3d' : '#e5e7eb' }} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, verguetungsVariante: 'A' }))}
+                  className="rounded-lg px-3 py-2.5 text-left"
+                  style={{
+                    background: form.verguetungsVariante === 'A'
+                      ? (dark ? 'rgba(13,115,119,0.15)' : 'rgba(13,115,119,0.08)')
+                      : (dark ? '#252838' : '#f8f9fc'),
+                    border: `1.5px solid ${form.verguetungsVariante === 'A' ? brandColor : (dark ? '#2a2d3d' : '#e5e7eb')}`,
+                    transition: 'border-color 150ms ease, background 150ms ease',
+                  }}
+                >
+                  <div className="text-[11px] font-body font-bold uppercase tracking-wider mb-0.5" style={{ color: form.verguetungsVariante === 'A' ? brandColor : '#9ca3af' }}>
+                    Variante A
+                  </div>
+                  <div className="text-[10px] font-body text-gray-500">
+                    % der Projektkosten
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, verguetungsVariante: 'B' }))}
+                  className="rounded-lg px-3 py-2.5 text-left"
+                  style={{
+                    background: form.verguetungsVariante === 'B'
+                      ? (dark ? 'rgba(13,115,119,0.15)' : 'rgba(13,115,119,0.08)')
+                      : (dark ? '#252838' : '#f8f9fc'),
+                    border: `1.5px solid ${form.verguetungsVariante === 'B' ? brandColor : (dark ? '#2a2d3d' : '#e5e7eb')}`,
+                    transition: 'border-color 150ms ease, background 150ms ease',
+                  }}
+                >
+                  <div className="text-[11px] font-body font-bold uppercase tracking-wider mb-0.5" style={{ color: form.verguetungsVariante === 'B' ? brandColor : '#9ca3af' }}>
+                    Variante B
+                  </div>
+                  <div className="text-[10px] font-body text-gray-500">
+                    % der Forschungszulage
+                  </div>
+                </button>
+              </div>
+              {form.verguetungsVariante === 'B' && (
+                <div className="mb-3">
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    <Percent className="w-3 h-3 inline mr-1 -mt-0.5" />
+                    Vergütungssatz Variante B (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="verguetungsSatzB"
+                    value={form.verguetungsSatzB}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    required
+                    className="input-field w-full"
+                    placeholder="12"
+                  />
+                </div>
+              )}
+
+              {/* Tagessätze & Haftung */}
+              <div className="flex items-center gap-2 mt-5 mb-3">
+                <Shield className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                <span className="text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider">
+                  Tagessätze & Haftung
+                </span>
+                <div className="flex-1 h-px" style={{ background: dark ? '#2a2d3d' : '#e5e7eb' }} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Tagessatz (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="tagessatz"
+                    value={form.tagessatz}
+                    onChange={handleChange}
+                    min="0"
+                    required
+                    className="input-field w-full"
+                    placeholder="1500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Stundensatz (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="stundensatz"
+                    value={form.stundensatz}
+                    onChange={handleChange}
+                    min="0"
+                    required
+                    className="input-field w-full"
+                    placeholder="200"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Haftung / Schadensfall (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="haftungProSchadensfall"
+                    value={form.haftungProSchadensfall}
+                    onChange={handleChange}
+                    min="0"
+                    required
+                    className="input-field w-full"
+                    placeholder="50000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Haftung / Kalenderjahr (€)
+                  </label>
+                  <input
+                    type="number"
+                    name="haftungProKalenderjahr"
+                    value={form.haftungProKalenderjahr}
+                    onChange={handleChange}
+                    min="0"
+                    required
+                    className="input-field w-full"
+                    placeholder="250000"
+                  />
+                </div>
+              </div>
+
               {/* Address section heading */}
               <div className="flex items-center gap-2 mt-5 mb-3">
                 <MapPin className="w-3.5 h-3.5" style={{ color: brandColor }} />
@@ -428,7 +584,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
               </div>
 
               {/* Calculation Example — Two-Column */}
-              {form.commissionRate > 0 && (
+              {((form.verguetungsVariante === 'A' && form.commissionRate > 0) || (form.verguetungsVariante === 'B' && form.verguetungsSatzB > 0)) && (
                 <>
                   <div className="flex items-center gap-2 mt-5 mb-3">
                     <Calculator className="w-3.5 h-3.5" style={{ color: brandColor }} />
@@ -443,7 +599,10 @@ export default function ContractModal({ company, onClose, onComplete }) {
                     const rate = parseFloat(form.commissionRate) || 0;
                     const fq = parseFloat(form.foerderquote) || 25;
                     const forschungszulage = exAmt * (fq / 100);
-                    const totalFee = exAmt * (rate / 100);
+                    const rateB = parseFloat(form.verguetungsSatzB) || 12;
+                    const totalFee = form.verguetungsVariante === 'A'
+                      ? exAmt * (rate / 100)
+                      : forschungszulage * (rateB / 100);
                     const bewPct = parseInt(form.paymentBewilligung) || 0;
                     const finPct = parseInt(form.paymentFinanzamt) || 0;
                     const p1 = totalFee * (bewPct / 100);
@@ -520,7 +679,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                                 border: `1px solid ${dark ? 'rgba(13,115,119,0.25)' : 'rgba(13,115,119,0.1)'}`,
                               }}
                             >
-                              <div className="text-[11px] font-body text-gray-500">Vergütung ({rate}%)</div>
+                              <div className="text-[11px] font-body text-gray-500">Vergütung ({form.verguetungsVariante === 'A' ? rate : rateB}%{form.verguetungsVariante === 'B' ? ' d. FZ' : ''})</div>
                               <div className="text-[14px] font-display font-bold" style={{ color: brandColor }}>
                                 {fmt(totalFee)} €
                               </div>

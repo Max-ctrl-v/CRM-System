@@ -14,7 +14,7 @@ router.use(authenticate);
 
 // POST /api/contracts — create contract + generate PDF
 router.post('/', asyncHandler(async (req, res) => {
-  const { companyId, durationMonths, commissionRate, foerderquote, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt, zahlungsfrist } = req.body;
+  const { companyId, durationMonths, commissionRate, foerderquote, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt, zahlungsfrist, verguetungsVariante, verguetungsSatzB, tagessatz, stundensatz, haftungProSchadensfall, haftungProKalenderjahr } = req.body;
 
   if (!companyId) return res.status(400).json({ error: 'Firma ist erforderlich.' });
   if (!durationMonths || durationMonths < 1) return res.status(400).json({ error: 'Vertragslaufzeit ist erforderlich.' });
@@ -38,6 +38,12 @@ router.post('/', asyncHandler(async (req, res) => {
     paymentBewilligung: parseInt(paymentBewilligung) || 50,
     paymentFinanzamt: parseInt(paymentFinanzamt) || 50,
     zahlungsfrist: parseInt(zahlungsfrist) || 14,
+    verguetungsVariante: verguetungsVariante === 'B' ? 'B' : 'A',
+    verguetungsSatzB: parseFloat(verguetungsSatzB) || 12,
+    tagessatz: parseFloat(tagessatz) || 1500,
+    stundensatz: parseFloat(stundensatz) || 200,
+    haftungProSchadensfall: parseFloat(haftungProSchadensfall) || 50000,
+    haftungProKalenderjahr: parseFloat(haftungProKalenderjahr) || 250000,
   }, req.user.id);
 
   // Generate PDF

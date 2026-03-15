@@ -259,6 +259,12 @@ model Contract {
   paymentBewilligung Int   @default(50)  // % bei Bewilligung
   paymentFinanzamt   Int   @default(50)  // % bei Einreichung beim Finanzamt
   zahlungsfrist      Int   @default(14)  // Zahlungsfrist in Tagen
+  verguetungsVariante    String  @default("A")   // "A" or "B"
+  verguetungsSatzB       Float   @default(12)    // % for Variante B
+  tagessatz              Float   @default(1500)  // EUR Tagessatz
+  stundensatz            Float   @default(200)   // EUR Stundensatz
+  haftungProSchadensfall Float   @default(50000) // EUR pro Schadensfall
+  haftungProKalenderjahr Float   @default(250000) // EUR pro Kalenderjahr
   street           String
   streetNumber     String
   zipCode          String
