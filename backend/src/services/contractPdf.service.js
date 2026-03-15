@@ -227,126 +227,99 @@ async function generateContractPdf(contract) {
 
     // § 5 Vergütung
     sectionHeading(doc, 5, 'Verg\u00FCtung', L, W);
-    subPoint(doc, 5, 1, `F\u00FCr die vertragsgegenst\u00E4ndlichen Leistungen erh\u00E4lt der Auftragnehmer eine erfolgsabh\u00E4ngige Verg\u00FCtung in H\u00F6he von ${variante === 'A' ? rate.toFixed(1) : rateB.toFixed(1)}% der ma\u00DFgeblichen Bemessungsgrundlage gem\u00E4\u00DF nachstehender Definition.`, L, W);
-
-    if (variante === 'A') {
-      subPoint(doc, 5, 2, `Die Verg\u00FCtungsbasis betr\u00E4gt ${rate.toFixed(1)}% der von der BSFZ bescheinigten bzw. vom Finanzamt ber\u00FCcksichtigten f\u00F6rderf\u00E4higen Aufwendungen des/der vertragsgegenst\u00E4ndlichen Vorhabens/Vorhaben.`, L, W);
-    } else {
-      subPoint(doc, 5, 2, `Die Verg\u00FCtungsbasis betr\u00E4gt ${rateB.toFixed(1)}% der durch Bescheid des Finanzamts festgesetzten Forschungszulage.`, L, W);
-    }
-
-    subPoint(doc, 5, 3, 'Aus Klarstellungsgr\u00FCnden gilt: Die gesetzliche H\u00F6he der Forschungszulage und die Bemessungsgrundlage ergeben sich ausschlie\u00DFlich aus den jeweils geltenden gesetzlichen Vorschriften und der beh\u00F6rdlichen Entscheidung; sie sind nicht Gegenstand einer Garantie des Auftragnehmers.', L, W);
-    subPoint(doc, 5, 4, 'Soweit die Parteien Abschlagszahlungen vereinbaren, gilt:', L, W);
+    subPoint(doc, 5, 1, `F\u00FCr die vertragsgegenst\u00E4ndlichen Leistungen erh\u00E4lt der Auftragnehmer eine erfolgsabh\u00E4ngige Verg\u00FCtung in H\u00F6he von ${rate.toFixed(1)}% auf die bescheinigten Projektkosten.`, L, W);
+    subPoint(doc, 5, 2, 'Soweit die Parteien Abschlagszahlungen vereinbaren, gilt:', L, W);
     bulletList(doc, [
-      `${pctB}% der voraussichtlichen Verg\u00FCtung werden f\u00E4llig nach Zugang der positiven Bescheinigung der BSFZ.`,
-      `${pctF}% werden f\u00E4llig nach Einreichung des vollst\u00E4ndigen Antrags beim Finanzamt oder \u2013 alternativ \u2013 nach Festsetzung der Forschungszulage durch das Finanzamt.`,
+      `${pctB}% der Verg\u00FCtung werden f\u00E4llig mit dem Erhalt der positiven F&E Bescheinigung.`,
+      `${pctF}% werden f\u00E4llig nach Festsetzung der Forschungszulage durch das Finanzamt.`,
     ], L, W);
-    subPoint(doc, 5, 5, 'Alle Preise verstehen sich zuz\u00FCglich gesetzlicher Umsatzsteuer.', L, W);
-    subPoint(doc, 5, 6, `S\u00E4mtliche Rechnungen sind zahlbar innerhalb von ${zf} Tagen ab Rechnungsdatum ohne Abzug.`, L, W);
-    subPoint(doc, 5, 7, 'Bei Zahlungsverzug gelten die gesetzlichen Regelungen.', L, W);
+    subPoint(doc, 5, 3, 'Alle Preise verstehen sich zuz\u00FCglich gesetzlicher Umsatzsteuer.', L, W);
+    subPoint(doc, 5, 4, `S\u00E4mtliche Rechnungen sind zahlbar innerhalb von ${zf} Tagen ab Rechnungsdatum ohne Abzug.`, L, W);
 
-    // § 6 Sondervergütung / Mehraufwand
-    sectionHeading(doc, 6, 'Sonderverg\u00FCtung / Mehraufwand', L, W);
-    subPoint(doc, 6, 1, `Leistungen, die \u00FCber den in diesem Vertrag vereinbarten Umfang hinausgehen, werden nur auf gesonderte Beauftragung erbracht und nach Aufwand zu einem Tagessatz von EUR ${fmtEurInt(ts)} bzw. Stundensatz von EUR ${fmtEurInt(ss)} zzgl. gesetzlicher Umsatzsteuer verg\u00FCtet.`, L, W);
-    subPoint(doc, 6, 2, 'Als gesondert verg\u00FCtungspflichtiger Mehraufwand gelten insbesondere:', L, W);
-    bulletList(doc, [
-      'nachtr\u00E4gliche wesentliche \u00C4nderungen des Projektzuschnitts;',
-      'zus\u00E4tzliche Wirtschaftsjahre oder zus\u00E4tzliche Gesellschaften;',
-      'erhebliche Nacharbeiten wegen unvollst\u00E4ndiger oder widerspr\u00FCchlicher Unterlagen;',
-      'umfangreiche R\u00FCckfragenverfahren, Einspruchs- oder \u00C4nderungsverfahren;',
-      'Vor-Ort-Workshops, Schulungen oder interne Audits.',
-    ], L, W);
-    subPoint(doc, 6, 3, 'Der Auftragnehmer wird den Auftraggeber vor Entstehen wesentlichen Mehraufwands informieren.', L, W);
-
-    // § 7 Keine Erfolgsgarantie / Behördenentscheidungen
-    sectionHeading(doc, 7, 'Keine Erfolgsgarantie / Beh\u00F6rdenentscheidungen', L, W);
-    subPoint(doc, 7, 1, 'Der Auftragnehmer schuldet keinen bestimmten wirtschaftlichen, steuerlichen oder beh\u00F6rdlichen Erfolg.', L, W);
-    subPoint(doc, 7, 2, 'Insbesondere \u00FCbernimmt der Auftragnehmer keine Gew\u00E4hr daf\u00FCr:', L, W);
+    // § 6 Keine Erfolgsgarantie / Behördenentscheidungen
+    sectionHeading(doc, 6, 'Keine Erfolgsgarantie / Beh\u00F6rdenentscheidungen', L, W);
+    subPoint(doc, 6, 1, 'Der Auftragnehmer schuldet keinen bestimmten wirtschaftlichen, steuerlichen oder beh\u00F6rdlichen Erfolg.', L, W);
+    subPoint(doc, 6, 2, 'Insbesondere \u00FCbernimmt der Auftragnehmer keine Gew\u00E4hr daf\u00FCr:', L, W);
     bulletList(doc, [
       'dass ein Vorhaben als beg\u00FCnstigtes FuE-Vorhaben eingestuft wird;',
       'dass eine bestimmte Bemessungsgrundlage anerkannt wird;',
       'dass eine bestimmte Forschungszulage festgesetzt oder ausgezahlt wird;',
       'dass eine Pr\u00FCfung durch BSFZ oder Finanzamt ohne R\u00FCckfragen oder K\u00FCrzungen erfolgt.',
     ], L, W);
-    subPoint(doc, 7, 3, 'Bewertungen des Auftragnehmers stellen fachliche Einsch\u00E4tzungen auf Grundlage der vom Auftraggeber bereitgestellten Informationen dar.', L, W);
+    subPoint(doc, 6, 3, 'Bewertungen des Auftragnehmers stellen fachliche Einsch\u00E4tzungen auf Grundlage der vom Auftraggeber bereitgestellten Informationen dar.', L, W);
 
-    // § 8 Haftung
-    sectionHeading(doc, 8, 'Haftung', L, W);
-    subPoint(doc, 8, 1, 'Der Auftragnehmer haftet unbeschr\u00E4nkt bei Vorsatz und grober Fahrl\u00E4ssigkeit, bei Verletzung von Leben, K\u00F6rper oder Gesundheit sowie in sonstigen gesetzlich zwingenden F\u00E4llen.', L, W);
-    subPoint(doc, 8, 2, 'Bei einfacher Fahrl\u00E4ssigkeit haftet der Auftragnehmer nur bei Verletzung einer wesentlichen Vertragspflicht; in diesem Fall ist die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt.', L, W);
-    subPoint(doc, 8, 3, 'Die Haftung f\u00FCr entgangenen Gewinn, ausgebliebene Steuer- oder F\u00F6rdervorteile, mittelbare Sch\u00E4den, Mangelfolgesch\u00E4den und sonstige reine Verm\u00F6gensfolgesch\u00E4den ist bei einfacher Fahrl\u00E4ssigkeit ausgeschlossen, soweit gesetzlich zul\u00E4ssig.', L, W);
-    subPoint(doc, 8, 4, `Die Haftung ist \u2013 au\u00DFer in den F\u00E4llen unbeschr\u00E4nkter Haftung \u2013 der H\u00F6he nach auf EUR ${fmtEurInt(haftSf)} pro Schadensfall und EUR ${fmtEurInt(haftKj)} pro Kalenderjahr begrenzt.`, L, W);
-    subPoint(doc, 8, 5, 'Die vorstehenden Haftungsbeschr\u00E4nkungen gelten auch zugunsten der gesetzlichen Vertreter, Mitarbeiter und Erf\u00FCllungsgehilfen des Auftragnehmers.', L, W);
+    // § 7 Haftung
+    sectionHeading(doc, 7, 'Haftung', L, W);
+    subPoint(doc, 7, 1, 'Der Auftragnehmer haftet unbeschr\u00E4nkt bei Vorsatz und grober Fahrl\u00E4ssigkeit, bei Verletzung von Leben, K\u00F6rper oder Gesundheit sowie in sonstigen gesetzlich zwingenden F\u00E4llen.', L, W);
+    subPoint(doc, 7, 2, 'Bei einfacher Fahrl\u00E4ssigkeit haftet der Auftragnehmer nur bei Verletzung einer wesentlichen Vertragspflicht; in diesem Fall ist die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt.', L, W);
+    subPoint(doc, 7, 3, 'Die Haftung f\u00FCr entgangenen Gewinn, ausgebliebene Steuer- oder F\u00F6rdervorteile, mittelbare Sch\u00E4den, Mangelfolgesch\u00E4den und sonstige reine Verm\u00F6gensfolgesch\u00E4den ist bei einfacher Fahrl\u00E4ssigkeit ausgeschlossen, soweit gesetzlich zul\u00E4ssig.', L, W);
+    subPoint(doc, 7, 4, `Die Haftung ist \u2013 au\u00DFer in den F\u00E4llen unbeschr\u00E4nkter Haftung \u2013 der H\u00F6he nach auf EUR ${fmtEurInt(haftSf)} pro Schadensfall und EUR ${fmtEurInt(haftKj)} pro Kalenderjahr begrenzt.`, L, W);
+    subPoint(doc, 7, 5, 'Die vorstehenden Haftungsbeschr\u00E4nkungen gelten auch zugunsten der gesetzlichen Vertreter, Mitarbeiter und Erf\u00FCllungsgehilfen des Auftragnehmers.', L, W);
 
-    // § 9 Freistellung
-    sectionHeading(doc, 9, 'Freistellung', L, W);
-    subPoint(doc, 9, 1, 'Der Auftraggeber stellt den Auftragnehmer von s\u00E4mtlichen Anspr\u00FCchen Dritter frei, die darauf beruhen, dass vom Auftraggeber bereitgestellte Informationen, Unterlagen oder Freigaben unrichtig, unvollst\u00E4ndig, irref\u00FChrend oder rechtswidrig waren.', L, W);
-    subPoint(doc, 9, 2, 'Die Freistellung umfasst auch angemessene Kosten der Rechtsverteidigung.', L, W);
+    // § 8 Freistellung
+    sectionHeading(doc, 8, 'Freistellung', L, W);
+    subPoint(doc, 8, 1, 'Der Auftraggeber stellt den Auftragnehmer von s\u00E4mtlichen Anspr\u00FCchen Dritter frei, die darauf beruhen, dass vom Auftraggeber bereitgestellte Informationen, Unterlagen oder Freigaben unrichtig, unvollst\u00E4ndig, irref\u00FChrend oder rechtswidrig waren.', L, W);
+    subPoint(doc, 8, 2, 'Die Freistellung umfasst auch angemessene Kosten der Rechtsverteidigung.', L, W);
 
-    // § 10 Vertraulichkeit
-    sectionHeading(doc, 10, 'Vertraulichkeit', L, W);
-    subPoint(doc, 10, 1, 'Beide Parteien verpflichten sich, alle ihnen im Zusammenhang mit diesem Vertrag bekannt gewordenen vertraulichen Informationen der jeweils anderen Partei streng vertraulich zu behandeln.', L, W);
-    subPoint(doc, 10, 2, 'Als vertraulich gelten insbesondere:', L, W);
+    // § 9 Vertraulichkeit
+    sectionHeading(doc, 9, 'Vertraulichkeit', L, W);
+    subPoint(doc, 9, 1, 'Beide Parteien verpflichten sich, alle ihnen im Zusammenhang mit diesem Vertrag bekannt gewordenen vertraulichen Informationen der jeweils anderen Partei streng vertraulich zu behandeln.', L, W);
+    subPoint(doc, 9, 2, 'Als vertraulich gelten insbesondere:', L, W);
     bulletList(doc, [
       'technische, betriebliche und kaufm\u00E4nnische Informationen;',
       'Projektinhalte, Entwicklungsst\u00E4nde, Personal- und Kostendaten;',
       'Unterlagen, Kalkulationen, Antr\u00E4ge, Entw\u00FCrfe und Bescheide.',
     ], L, W);
-    subPoint(doc, 10, 3, 'Die Vertraulichkeitsverpflichtung gilt nicht f\u00FCr Informationen, die allgemein bekannt sind oder ohne Versto\u00DF gegen diesen Vertrag allgemein bekannt werden, der empfangenden Partei bereits rechtm\u00E4\u00DFig bekannt waren, von einem berechtigten Dritten rechtm\u00E4\u00DFig erlangt wurden oder aufgrund gesetzlicher Vorschriften offengelegt werden m\u00FCssen.', L, W);
-    subPoint(doc, 10, 4, 'Die Verpflichtung besteht \u00FCber die Beendigung des Vertrages hinaus f\u00FCr f\u00FCnf Jahre fort; Gesch\u00E4ftsgeheimnisse sind dar\u00FCber hinaus so lange zu sch\u00FCtzen, wie ihr Geheimnischarakter besteht.', L, W);
+    subPoint(doc, 9, 3, 'Die Vertraulichkeitsverpflichtung gilt nicht f\u00FCr Informationen, die allgemein bekannt sind oder ohne Versto\u00DF gegen diesen Vertrag allgemein bekannt werden, der empfangenden Partei bereits rechtm\u00E4\u00DFig bekannt waren, von einem berechtigten Dritten rechtm\u00E4\u00DFig erlangt wurden oder aufgrund gesetzlicher Vorschriften offengelegt werden m\u00FCssen.', L, W);
+    subPoint(doc, 9, 4, 'Die Verpflichtung besteht \u00FCber die Beendigung des Vertrages hinaus f\u00FCr f\u00FCnf Jahre fort; Gesch\u00E4ftsgeheimnisse sind dar\u00FCber hinaus so lange zu sch\u00FCtzen, wie ihr Geheimnischarakter besteht.', L, W);
 
-    // § 11 Datenschutz
-    sectionHeading(doc, 11, 'Datenschutz', L, W);
-    subPoint(doc, 11, 1, 'Die Parteien beachten die jeweils anwendbaren datenschutzrechtlichen Vorschriften, insbesondere die DSGVO und das BDSG.', L, W);
-    subPoint(doc, 11, 2, 'Soweit der Auftragnehmer im Rahmen dieses Vertrages personenbezogene Daten im Auftrag des Auftraggebers verarbeitet, schlie\u00DFen die Parteien vor Beginn der Verarbeitung einen gesonderten Vertrag zur Auftragsverarbeitung, sofern gesetzlich erforderlich.', L, W);
-    subPoint(doc, 11, 3, 'Der Auftraggeber sichert zu, zur \u00DCbermittlung personenbezogener Daten an den Auftragnehmer berechtigt zu sein.', L, W);
+    // § 10 Datenschutz
+    sectionHeading(doc, 10, 'Datenschutz', L, W);
+    subPoint(doc, 10, 1, 'Die Parteien beachten die jeweils anwendbaren datenschutzrechtlichen Vorschriften, insbesondere die DSGVO und das BDSG.', L, W);
+    subPoint(doc, 10, 2, 'Soweit der Auftragnehmer im Rahmen dieses Vertrages personenbezogene Daten im Auftrag des Auftraggebers verarbeitet, schlie\u00DFen die Parteien vor Beginn der Verarbeitung einen gesonderten Vertrag zur Auftragsverarbeitung, sofern gesetzlich erforderlich.', L, W);
+    subPoint(doc, 10, 3, 'Der Auftraggeber sichert zu, zur \u00DCbermittlung personenbezogener Daten an den Auftragnehmer berechtigt zu sein.', L, W);
 
-    // § 12 Nutzungsrechte an Arbeitsergebnissen
-    sectionHeading(doc, 12, 'Nutzungsrechte an Arbeitsergebnissen', L, W);
-    subPoint(doc, 12, 1, 'Der Auftraggeber erh\u00E4lt an den im Rahmen dieses Vertrages individuell f\u00FCr ihn erstellten Arbeitsergebnissen ein einfaches, nicht \u00FCbertragbares Nutzungsrecht f\u00FCr eigene interne Gesch\u00E4ftszwecke.', L, W);
-    subPoint(doc, 12, 2, 'Allgemeine Methoden, Vorlagen, Strukturen, Checklisten, Formulierungsbausteine, Know-how, Prozesse und nicht kundenspezifische Arbeitsmittel des Auftragnehmers verbleiben im Eigentum und in den Rechten des Auftragnehmers.', L, W);
-    subPoint(doc, 12, 3, 'Eine Weitergabe oder kommerzielle Nutzung der Arbeitsergebnisse au\u00DFerhalb des eigenen Unternehmens des Auftraggebers bedarf der vorherigen Zustimmung des Auftragnehmers in Textform.', L, W);
+    // § 11 Nutzungsrechte an Arbeitsergebnissen
+    sectionHeading(doc, 11, 'Nutzungsrechte an Arbeitsergebnissen', L, W);
+    subPoint(doc, 11, 1, 'Der Auftraggeber erh\u00E4lt an den im Rahmen dieses Vertrages individuell f\u00FCr ihn erstellten Arbeitsergebnissen ein einfaches, nicht \u00FCbertragbares Nutzungsrecht f\u00FCr eigene interne Gesch\u00E4ftszwecke.', L, W);
+    subPoint(doc, 11, 2, 'Allgemeine Methoden, Vorlagen, Strukturen, Checklisten, Formulierungsbausteine, Know-how, Prozesse und nicht kundenspezifische Arbeitsmittel des Auftragnehmers verbleiben im Eigentum und in den Rechten des Auftragnehmers.', L, W);
+    subPoint(doc, 11, 3, 'Eine Weitergabe oder kommerzielle Nutzung der Arbeitsergebnisse au\u00DFerhalb des eigenen Unternehmens des Auftraggebers bedarf der vorherigen Zustimmung des Auftragnehmers in Textform.', L, W);
 
-    // § 13 Referenznennung
-    sectionHeading(doc, 13, 'Referenznennung', L, W);
-    subPoint(doc, 13, 1, 'Der Auftragnehmer ist nur mit vorheriger ausdr\u00FCcklicher Zustimmung des Auftraggebers berechtigt, dessen Firma und Logo als Referenz zu verwenden.', L, W);
-    subPoint(doc, 13, 2, 'Die Zustimmung kann jederzeit mit Wirkung f\u00FCr die Zukunft widerrufen werden.', L, W);
+    // § 12 Referenznennung
+    sectionHeading(doc, 12, 'Referenznennung', L, W);
+    subPoint(doc, 12, 1, 'Der Auftragnehmer ist nur mit vorheriger ausdr\u00FCcklicher Zustimmung des Auftraggebers berechtigt, dessen Firma und Logo als Referenz zu verwenden.', L, W);
+    subPoint(doc, 12, 2, 'Die Zustimmung kann jederzeit mit Wirkung f\u00FCr die Zukunft widerrufen werden.', L, W);
 
-    // § 14 Vertragslaufzeit
-    sectionHeading(doc, 14, 'Vertragslaufzeit', L, W);
-    subPoint(doc, 14, 1, 'Der Vertrag beginnt mit Unterzeichnung durch beide Parteien.', L, W);
-    subPoint(doc, 14, 2, `Er wird f\u00FCr die Dauer von ${dur} geschlossen.`, L, W);
-    subPoint(doc, 14, 3, `Bei einer festen Erstlaufzeit von ${dur} verl\u00E4ngert sich der Vertrag jeweils um weitere 12 Monate, sofern er nicht mit einer Frist von einem Monat zum Ende der jeweiligen Laufzeit in Textform gek\u00FCndigt wird.`, L, W);
-    subPoint(doc, 14, 4, 'Das Recht zur au\u00DFerordentlichen K\u00FCndigung aus wichtigem Grund bleibt unber\u00FChrt.', L, W);
-    subPoint(doc, 14, 5, 'Ein wichtiger Grund liegt f\u00FCr den Auftragnehmer insbesondere vor, wenn:', L, W);
+    // § 13 Vertragslaufzeit
+    sectionHeading(doc, 13, 'Vertragslaufzeit', L, W);
+    subPoint(doc, 13, 1, 'Der Vertrag beginnt mit Unterzeichnung durch beide Parteien.', L, W);
+    subPoint(doc, 13, 2, `Er wird f\u00FCr die Dauer von ${dur} geschlossen.`, L, W);
+    subPoint(doc, 13, 3, `Bei einer festen Erstlaufzeit von ${dur} verl\u00E4ngert sich der Vertrag jeweils um weitere 12 Monate, sofern er nicht mit einer Frist von einem Monat zum Ende der jeweiligen Laufzeit in Textform gek\u00FCndigt wird.`, L, W);
+    subPoint(doc, 13, 4, 'Das Recht zur au\u00DFerordentlichen K\u00FCndigung aus wichtigem Grund bleibt unber\u00FChrt.', L, W);
+    subPoint(doc, 13, 5, 'Ein wichtiger Grund liegt f\u00FCr den Auftragnehmer insbesondere vor, wenn:', L, W);
     bulletList(doc, [
       'der Auftraggeber trotz Fristsetzung wesentliche Mitwirkungspflichten verletzt;',
       'der Auftraggeber mit f\u00E4lligen Zahlungen trotz Mahnung in Verzug ger\u00E4t;',
       'sich herausstellt, dass bereitgestellte Angaben wesentlich unrichtig oder unvollst\u00E4ndig waren.',
     ], L, W);
 
-    // § 15 Folgen der Vertragsbeendigung
-    sectionHeading(doc, 15, 'Folgen der Vertragsbeendigung', L, W);
-    subPoint(doc, 15, 1, 'Bei Vertragsbeendigung verg\u00FCtet der Auftraggeber alle bis zum Beendigungszeitpunkt erbrachten Leistungen sowie bereits angefallenen Mehraufwand.', L, W);
-    subPoint(doc, 15, 2, 'Sofern eine erfolgsabh\u00E4ngige Verg\u00FCtung vereinbart wurde und der Vertrag nach wesentlicher Vorarbeit des Auftragnehmers durch den Auftraggeber ohne wichtigen, vom Auftragnehmer zu vertretenden Grund beendet wird, hat der Auftragnehmer Anspruch auf die bis dahin angefallene Mindestverg\u00FCtung.', L, W);
-    subPoint(doc, 15, 3, 'Herausgabeansprüche des Auftraggebers bestehen nur hinsichtlich der von ihm zur Verfügung gestellten und noch vorhandenen Unterlagen sowie hinsichtlich der final freigegebenen, für ihn erstellten Arbeitsergebnisse.', L, W);
+    // § 14 Folgen der Vertragsbeendigung
+    sectionHeading(doc, 14, 'Folgen der Vertragsbeendigung', L, W);
+    subPoint(doc, 14, 1, 'Bei Vertragsbeendigung verg\u00FCtet der Auftraggeber alle bis zum Beendigungszeitpunkt erbrachten Leistungen sowie bereits angefallenen Mehraufwand.', L, W);
+    subPoint(doc, 14, 2, 'Sofern eine erfolgsabh\u00E4ngige Verg\u00FCtung vereinbart wurde und der Vertrag nach wesentlicher Vorarbeit des Auftragnehmers durch den Auftraggeber ohne wichtigen, vom Auftragnehmer zu vertretenden Grund beendet wird, hat der Auftragnehmer Anspruch auf die bis dahin angefallene Mindestverg\u00FCtung.', L, W);
+    subPoint(doc, 14, 3, 'Herausgabeansprüche des Auftraggebers bestehen nur hinsichtlich der von ihm zur Verfügung gestellten und noch vorhandenen Unterlagen sowie hinsichtlich der final freigegebenen, für ihn erstellten Arbeitsergebnisse.', L, W);
 
-    // § 16 Kommunikation / Textform
-    sectionHeading(doc, 16, 'Kommunikation / Textform', L, W);
-    subPoint(doc, 16, 1, 'Rechtserhebliche Erkl\u00E4rungen nach diesem Vertrag, insbesondere K\u00FCndigungen, Fristsetzungen, Freigaben, \u00C4nderungsvereinbarungen und Leistungsanzeigen, bed\u00FCrfen mindestens der Textform, soweit nicht gesetzlich eine strengere Form vorgeschrieben ist.', L, W);
-    subPoint(doc, 16, 2, 'E-Mail gen\u00FCgt der Textform, sofern sich Absender und Inhalt der Erkl\u00E4rung hinreichend ergeben.', L, W);
+    // § 15 Kommunikation / Textform
+    sectionHeading(doc, 15, 'Kommunikation / Textform', L, W);
+    subPoint(doc, 15, 1, 'Rechtserhebliche Erkl\u00E4rungen nach diesem Vertrag, insbesondere K\u00FCndigungen, Fristsetzungen, Freigaben, \u00C4nderungsvereinbarungen und Leistungsanzeigen, bed\u00FCrfen mindestens der Textform, soweit nicht gesetzlich eine strengere Form vorgeschrieben ist.', L, W);
+    subPoint(doc, 15, 2, 'E-Mail gen\u00FCgt der Textform, sofern sich Absender und Inhalt der Erkl\u00E4rung hinreichend ergeben.', L, W);
 
-    // § 17 Abwerbeverbot
-    sectionHeading(doc, 17, 'Abwerbeverbot', L, W);
-    subPoint(doc, 17, 1, 'Der Auftraggeber verpflichtet sich, w\u00E4hrend der Laufzeit dieses Vertrages und f\u00FCr zw\u00F6lf Monate nach dessen Beendigung keine beim Auftragnehmer eingesetzten Mitarbeiter ohne vorherige Zustimmung des Auftragnehmers aktiv abzuwerben oder unmittelbar anzustellen.', L, W);
-    subPoint(doc, 17, 2, 'F\u00FCr jeden schuldhaften Versto\u00DF kann eine angemessene Vertragsstrafe in einer gesonderten Vereinbarung vorgesehen werden.', L, W);
-
-    // § 18 Schlussbestimmungen
-    sectionHeading(doc, 18, 'Schlussbestimmungen', L, W);
-    subPoint(doc, 18, 1, '\u00C4nderungen und Erg\u00E4nzungen dieses Vertrages bed\u00FCrfen der Textform. Dies gilt auch f\u00FCr die \u00C4nderung dieser Klausel, soweit gesetzlich zul\u00E4ssig.', L, W);
-    subPoint(doc, 18, 2, 'Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.', L, W);
-    subPoint(doc, 18, 3, 'Ist der Auftraggeber Kaufmann, juristische Person des \u00F6ffentlichen Rechts oder \u00F6ffentlich-rechtliches Sonderverm\u00F6gen, ist ausschlie\u00DFlicher Gerichtsstand f\u00FCr alle Streitigkeiten aus und im Zusammenhang mit diesem Vertrag der Sitz des Auftragnehmers.', L, W);
-    subPoint(doc, 18, 4, 'Sollten einzelne Bestimmungen dieses Vertrages ganz oder teilweise unwirksam, undurchf\u00FChrbar oder nicht durchsetzbar sein oder werden, bleibt die Wirksamkeit der \u00FCbrigen Bestimmungen unber\u00FChrt.', L, W);
+    // § 16 Schlussbestimmungen
+    sectionHeading(doc, 16, 'Schlussbestimmungen', L, W);
+    subPoint(doc, 16, 1, '\u00C4nderungen und Erg\u00E4nzungen dieses Vertrages bed\u00FCrfen der Textform. Dies gilt auch f\u00FCr die \u00C4nderung dieser Klausel, soweit gesetzlich zul\u00E4ssig.', L, W);
+    subPoint(doc, 16, 2, 'Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.', L, W);
+    subPoint(doc, 16, 3, 'Ist der Auftraggeber Kaufmann, juristische Person des \u00F6ffentlichen Rechts oder \u00F6ffentlich-rechtliches Sonderverm\u00F6gen, ist ausschlie\u00DFlicher Gerichtsstand f\u00FCr alle Streitigkeiten aus und im Zusammenhang mit diesem Vertrag der Sitz des Auftragnehmers.', L, W);
+    subPoint(doc, 16, 4, 'Sollten einzelne Bestimmungen dieses Vertrages ganz oder teilweise unwirksam, undurchf\u00FChrbar oder nicht durchsetzbar sein oder werden, bleibt die Wirksamkeit der \u00FCbrigen Bestimmungen unber\u00FChrt.', L, W);
 
     // ════════════════════════════════════════════════════
     // SIGNATURES — check space, new page if needed
