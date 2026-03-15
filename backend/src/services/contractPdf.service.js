@@ -236,7 +236,7 @@ async function generateContractPdf(contract) {
     sectionHeading(doc, 8, 'Vertraulichkeit', L, W);
     subPoint(doc, 8, 1, 'Beide Parteien verpflichten sich, alle ihnen im Zusammenhang mit diesem Vertrag bekannt gewordenen vertraulichen Informationen der jeweils anderen Partei streng vertraulich zu behandeln. Als vertraulich gelten insbesondere technische, betriebliche und kaufm\u00E4nnische Informationen, Projektinhalte, Entwicklungsst\u00E4nde, Personal- und Kostendaten sowie Unterlagen, Kalkulationen, Antr\u00E4ge, Entw\u00FCrfe und Bescheide.', L, W);
     subPoint(doc, 8, 2, 'Die Vertraulichkeitsverpflichtung gilt nicht f\u00FCr Informationen, die allgemein bekannt sind oder ohne Versto\u00DF gegen diesen Vertrag allgemein bekannt werden, der empfangenden Partei bereits rechtm\u00E4\u00DFig bekannt waren, von einem berechtigten Dritten rechtm\u00E4\u00DFig erlangt wurden oder aufgrund gesetzlicher Vorschriften offengelegt werden m\u00FCssen.', L, W);
-    subPoint(doc, 8, 3, 'Die Verpflichtung besteht \u00FCber die Beendigung des Vertrages hinaus f\u00FCr f\u00FCnf Jahre fort; Gesch\u00E4ftsgeheimnisse sind dar\u00FCber hinaus so lange zu sch\u00FCtzen, wie ihr Geheimnischarakter besteht.', L, W);
+    subPoint(doc, 8, 3, 'Die Verpflichtung besteht \u00FCber die Beendigung des Vertrages hinaus f\u00FCr f\u00FCnf Jahre fort; Gesch\u00E4ftsgeheimnisse sind dar\u00FCber hinaus so lange zu sch\u00FCtzen, wie ihr Geheimnischarakter besteht. Ausgenommen es wurde eine Geheimhaltungsvereinbarung getroffen, welche dieser Frist vorrangig ist.', L, W);
 
     // \u00A7 9 Datenschutz (was \u00A7 10)
     sectionHeading(doc, 9, 'Datenschutz', L, W);
@@ -270,7 +270,12 @@ async function generateContractPdf(contract) {
     subPoint(doc, 13, 3, 'Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.', L, W);
     subPoint(doc, 13, 4, 'Ist der Auftraggeber Kaufmann, juristische Person des \u00F6ffentlichen Rechts oder \u00F6ffentlich-rechtliches Sonderverm\u00F6gen, ist ausschlie\u00DFlicher Gerichtsstand f\u00FCr alle Streitigkeiten aus und im Zusammenhang mit diesem Vertrag der Sitz des Auftragnehmers.', L, W);
     subPoint(doc, 13, 5, 'Sollten einzelne Bestimmungen dieses Vertrages ganz oder teilweise unwirksam, undurchf\u00FChrbar oder nicht durchsetzbar sein oder werden, bleibt die Wirksamkeit der \u00FCbrigen Bestimmungen unber\u00FChrt.', L, W);
-    subPoint(doc, 13, 6, 'Der Auftragnehmer ist nur mit vorheriger ausdr\u00FCcklicher Zustimmung des Auftraggebers berechtigt, dessen Firma und Logo als Referenz zu verwenden. Die Zustimmung kann jederzeit mit Wirkung f\u00FCr die Zukunft widerrufen werden.', L, W);
+    subPoint(doc, 13, 6, 'Mit Ihrer Unterschrift erkl\u00E4ren Sie sich damit einverstanden, dass wir Ihr Logo zu Referenzzwecken verwenden d\u00FCrfen. Sollten Sie damit nicht einverstanden sein, kreuzen Sie bitte hier an:', L, W);
+    // Checkbox after 13.6
+    const cbSize = 10;
+    const cbX = L + 24 + doc.widthOfString('Sollten Sie damit nicht einverstanden sein, kreuzen Sie bitte hier an: ', { font: 'Helvetica', fontSize: 8.5 });
+    const cbY = doc.y - 4;
+    doc.rect(L + W - cbSize - 2, cbY, cbSize, cbSize).strokeColor(dark).lineWidth(0.8).stroke();
 
     // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
     // LAST PAGE \u2014 Berechnungsbeispiel + Signatures
