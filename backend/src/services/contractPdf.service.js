@@ -124,7 +124,7 @@ async function generateContractPdf(contract) {
     doc.fontSize(9).font('Helvetica').fillColor(body)
       .text(
         `Die Vertragslaufzeit beträgt ${dur} ab Unterzeichnung. Der Vertrag verlängert sich ` +
-        `automatisch um jeweils ein weiteres Jahr, sofern er nicht mit einer Frist von drei Monaten ` +
+        `automatisch um jeweils ein weiteres Jahr, sofern er nicht mit einer Frist von einem Monat ` +
         `zum Ende der jeweiligen Laufzeit schriftlich gekündigt wird.`,
         L, doc.y + 4, { width: W, lineGap: 2.5 }
       );
@@ -152,9 +152,98 @@ async function generateContractPdf(contract) {
     doc.text(`Sämtliche Rechnungen sind zahlbar innerhalb von ${zf} Tagen ab Rechnungsdatum ohne Abzug.`, { lineGap: 2.5 });
 
     // ════════════════════════════════════════════════════
-    // CALCULATION EXAMPLE — Two-column layout
+    // PAGE 2 — always start fresh page for remaining sections
     // ════════════════════════════════════════════════════
+    doc.addPage();
+    drawPageBands(doc, navy, cyan);
+    doc.y = 30;
+
+    // ── § 5  Leistungsumfang des Auftragnehmers ──
+    heading(doc, '§ 5  Leistungsumfang des Auftragnehmers', navy, cyan, L, W);
+    doc.fontSize(9).font('Helvetica').fillColor(body);
+    doc.text('Der Auftragnehmer erbringt insbesondere folgende Leistungen:', L, doc.y + 4, { width: W, lineGap: 2 });
+    [
+      'Analyse und Identifizierung förderfähiger Forschungs- und Entwicklungsvorhaben.',
+      'Erstellung und Aufbereitung der vollständigen Antragsunterlagen für die BSFZ.',
+      'Begleitung des Bewilligungsverfahrens und Kommunikation mit den zuständigen Stellen.',
+      'Unterstützung bei der Einreichung der Forschungszulage beim zuständigen Finanzamt.',
+    ].forEach(t => doc.text(`    •  ${t}`, { lineGap: 2 }));
+
+    // ── § 6  Pflichten des Auftraggebers ──
     doc.y += 10;
+    heading(doc, '§ 6  Pflichten des Auftraggebers', navy, cyan, L, W);
+    doc.fontSize(9).font('Helvetica').fillColor(body);
+    doc.text('Der Auftraggeber verpflichtet sich:', L, doc.y + 4, { width: W, lineGap: 2 });
+    [
+      'Alle erforderlichen Unterlagen und Informationen rechtzeitig und vollständig bereitzustellen.',
+      'Änderungen an laufenden F&E-Vorhaben unverzüglich mitzuteilen.',
+      'Die erstellten Unterlagen vor Einreichung zu prüfen und freizugeben.',
+      'Einen festen Ansprechpartner für die Dauer der Zusammenarbeit zu benennen.',
+    ].forEach(t => doc.text(`    •  ${t}`, { lineGap: 2 }));
+
+    // ── § 7  Haftung ──
+    doc.y += 10;
+    heading(doc, '§ 7  Haftung', navy, cyan, L, W);
+    doc.fontSize(9).font('Helvetica').fillColor(body)
+      .text(
+        'Der Auftragnehmer haftet für Schäden nur bei Vorsatz und grober Fahrlässigkeit. ' +
+        'Die Haftung für mittelbare Schäden und entgangenen Gewinn ist ausgeschlossen. ' +
+        'Der Auftragnehmer übernimmt keine Garantie für die Bewilligung der Forschungszulage, ' +
+        'da die Entscheidung im Ermessen der zuständigen Behörden liegt.',
+        L, doc.y + 4, { width: W, lineGap: 2.5 }
+      );
+
+    // ── § 8  Vertraulichkeit ──
+    doc.y += 10;
+    heading(doc, '§ 8  Vertraulichkeit', navy, cyan, L, W);
+    doc.fontSize(9).font('Helvetica').fillColor(body)
+      .text(
+        'Beide Parteien verpflichten sich, alle im Rahmen dieses Vertrages erhaltenen vertraulichen ' +
+        'Informationen, insbesondere Geschäfts- und Betriebsgeheimnisse, streng vertraulich zu behandeln ' +
+        'und nicht an Dritte weiterzugeben. Diese Verpflichtung besteht auch nach Beendigung des Vertrages fort.',
+        L, doc.y + 4, { width: W, lineGap: 2.5 }
+      );
+
+    // ── § 9  Schlussbestimmungen ──
+    doc.y += 10;
+    heading(doc, '§ 9  Schlussbestimmungen', navy, cyan, L, W);
+    doc.fontSize(9).font('Helvetica').fillColor(body)
+      .text(
+        'Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist der Sitz des Auftragnehmers. ' +
+        'Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform. Sollten einzelne Bestimmungen ' +
+        'dieses Vertrages unwirksam sein oder werden, so wird die Wirksamkeit der übrigen Bestimmungen ' +
+        'hiervon nicht berührt.',
+        L, doc.y + 4, { width: W, lineGap: 2.5 }
+      );
+
+    // ── Signatures — pinned to lower area of page 2 ──
+    const sigTop = doc.page.height - 130;
+
+    doc.moveTo(L, sigTop).lineTo(R, sigTop).strokeColor(border).lineWidth(0.5).stroke();
+
+    const sW = (W - 40) / 2;
+    const sY = sigTop + 18;
+
+    // Left
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
+      .text('AUFTRAGGEBER', L, sY, { lineBreak: false });
+    doc.moveTo(L, sY + 40).lineTo(L + sW, sY + 40).strokeColor(border).lineWidth(0.5).stroke();
+    doc.fontSize(7.5).font('Helvetica').fillColor(light)
+      .text('Ort, Datum, Unterschrift', L, sY + 44, { lineBreak: false });
+
+    // Right
+    const sR = L + sW + 40;
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
+      .text('AUFTRAGNEHMER', sR, sY, { lineBreak: false });
+    doc.moveTo(sR, sY + 40).lineTo(sR + sW, sY + 40).strokeColor(border).lineWidth(0.5).stroke();
+    doc.fontSize(7.5).font('Helvetica').fillColor(light)
+      .text('Ort, Datum, Unterschrift', sR, sY + 44, { lineBreak: false });
+
+    // ════════════════════════════════════════════════════
+    // PAGE 3 — Berechnungsbeispiel
+    // ════════════════════════════════════════════════════
+    doc.addPage();
+    drawPageBands(doc, navy, cyan);
 
     const exAmt = 1000000;
     const forschungszulage = exAmt * (fq / 100);
@@ -164,11 +253,11 @@ async function generateContractPdf(contract) {
 
     const bx = L;
     const bw = W;
-    const bt = doc.y;
+    const bt = 30;
     const bp = 14;
     const colGap = 14;
-    const innerPad = bp + 8; // left accent + padding
-    const iw = bw - innerPad - bp; // inner width
+    const innerPad = bp + 8;
+    const iw = bw - innerPad - bp;
     const colW = (iw - colGap) / 2;
     const bh = 248;
 
@@ -280,99 +369,9 @@ async function generateContractPdf(contract) {
     doc.fontSize(9.5).font('Helvetica-Bold').fillColor(navy)
       .text(fmtEur(fee), rightX, ry, { width: colW - 8, align: 'right' });
 
-    // Footnote — only applies to Novaris fee (right column)
+    // Footnote
     doc.fontSize(7).font('Helvetica-Oblique').fillColor(light)
       .text('Vergütung netto zzgl. gesetzlicher USt.', rightX + 8, bt + bh - bp - 4);
-
-    doc.y = bt + bh + 12;
-
-    // ════════════════════════════════════════════════════
-    // PAGE 2 — always start fresh page for remaining sections
-    // ════════════════════════════════════════════════════
-    doc.addPage();
-    drawPageBands(doc, navy, cyan);
-    doc.y = 30;
-
-    // ── § 5  Leistungsumfang des Auftragnehmers ──
-    heading(doc, '§ 5  Leistungsumfang des Auftragnehmers', navy, cyan, L, W);
-    doc.fontSize(9).font('Helvetica').fillColor(body);
-    doc.text('Der Auftragnehmer erbringt insbesondere folgende Leistungen:', L, doc.y + 4, { width: W, lineGap: 2 });
-    [
-      'Analyse und Identifizierung förderfähiger Forschungs- und Entwicklungsvorhaben.',
-      'Erstellung und Aufbereitung der vollständigen Antragsunterlagen für die BSFZ.',
-      'Begleitung des Bewilligungsverfahrens und Kommunikation mit den zuständigen Stellen.',
-      'Unterstützung bei der Einreichung der Forschungszulage beim zuständigen Finanzamt.',
-    ].forEach(t => doc.text(`    •  ${t}`, { lineGap: 2 }));
-
-    // ── § 6  Pflichten des Auftraggebers ──
-    doc.y += 10;
-    heading(doc, '§ 6  Pflichten des Auftraggebers', navy, cyan, L, W);
-    doc.fontSize(9).font('Helvetica').fillColor(body);
-    doc.text('Der Auftraggeber verpflichtet sich:', L, doc.y + 4, { width: W, lineGap: 2 });
-    [
-      'Alle erforderlichen Unterlagen und Informationen rechtzeitig und vollständig bereitzustellen.',
-      'Änderungen an laufenden F&E-Vorhaben unverzüglich mitzuteilen.',
-      'Die erstellten Unterlagen vor Einreichung zu prüfen und freizugeben.',
-      'Einen festen Ansprechpartner für die Dauer der Zusammenarbeit zu benennen.',
-    ].forEach(t => doc.text(`    •  ${t}`, { lineGap: 2 }));
-
-    // ── § 7  Haftung ──
-    doc.y += 10;
-    heading(doc, '§ 7  Haftung', navy, cyan, L, W);
-    doc.fontSize(9).font('Helvetica').fillColor(body)
-      .text(
-        'Der Auftragnehmer haftet für Schäden nur bei Vorsatz und grober Fahrlässigkeit. ' +
-        'Die Haftung für mittelbare Schäden und entgangenen Gewinn ist ausgeschlossen. ' +
-        'Der Auftragnehmer übernimmt keine Garantie für die Bewilligung der Forschungszulage, ' +
-        'da die Entscheidung im Ermessen der zuständigen Behörden liegt.',
-        L, doc.y + 4, { width: W, lineGap: 2.5 }
-      );
-
-    // ── § 8  Vertraulichkeit ──
-    doc.y += 10;
-    heading(doc, '§ 8  Vertraulichkeit', navy, cyan, L, W);
-    doc.fontSize(9).font('Helvetica').fillColor(body)
-      .text(
-        'Beide Parteien verpflichten sich, alle im Rahmen dieses Vertrages erhaltenen vertraulichen ' +
-        'Informationen, insbesondere Geschäfts- und Betriebsgeheimnisse, streng vertraulich zu behandeln ' +
-        'und nicht an Dritte weiterzugeben. Diese Verpflichtung besteht auch nach Beendigung des Vertrages fort.',
-        L, doc.y + 4, { width: W, lineGap: 2.5 }
-      );
-
-    // ── § 9  Schlussbestimmungen ──
-    doc.y += 10;
-    heading(doc, '§ 9  Schlussbestimmungen', navy, cyan, L, W);
-    doc.fontSize(9).font('Helvetica').fillColor(body)
-      .text(
-        'Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist der Sitz des Auftragnehmers. ' +
-        'Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform. Sollten einzelne Bestimmungen ' +
-        'dieses Vertrages unwirksam sein oder werden, so wird die Wirksamkeit der übrigen Bestimmungen ' +
-        'hiervon nicht berührt.',
-        L, doc.y + 4, { width: W, lineGap: 2.5 }
-      );
-
-    // ── Signatures — pinned to lower area of page 2 ──
-    const sigTop = doc.page.height - 130;
-
-    doc.moveTo(L, sigTop).lineTo(R, sigTop).strokeColor(border).lineWidth(0.5).stroke();
-
-    const sW = (W - 40) / 2;
-    const sY = sigTop + 18;
-
-    // Left
-    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
-      .text('AUFTRAGGEBER', L, sY, { lineBreak: false });
-    doc.moveTo(L, sY + 40).lineTo(L + sW, sY + 40).strokeColor(border).lineWidth(0.5).stroke();
-    doc.fontSize(7.5).font('Helvetica').fillColor(light)
-      .text('Ort, Datum, Unterschrift', L, sY + 44, { lineBreak: false });
-
-    // Right
-    const sR = L + sW + 40;
-    doc.fontSize(7).font('Helvetica-Bold').fillColor(gray)
-      .text('AUFTRAGNEHMER', sR, sY, { lineBreak: false });
-    doc.moveTo(sR, sY + 40).lineTo(sR + sW, sY + 40).strokeColor(border).lineWidth(0.5).stroke();
-    doc.fontSize(7.5).font('Helvetica').fillColor(light)
-      .text('Ort, Datum, Unterschrift', sR, sY + 44, { lineBreak: false });
 
     // ── Footer on every page ──
     const range = doc.bufferedPageRange();
