@@ -13,6 +13,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const DownloadsPage = lazy(() => import('./pages/DownloadsPage'));
 const FZulGWhitepaper = lazy(() => import('./pages/FZulGWhitepaper'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="chat" element={<ChatPage />} />
           <Route path="downloads" element={<DownloadsPage />} />
           <Route path="downloads/fzulg" element={<FZulGWhitepaper />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
