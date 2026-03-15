@@ -14,7 +14,7 @@ router.use(authenticate);
 
 // POST /api/contracts — create contract + generate PDF
 router.post('/', asyncHandler(async (req, res) => {
-  const { companyId, durationMonths, commissionRate, foerderquote, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt } = req.body;
+  const { companyId, durationMonths, commissionRate, foerderquote, street, streetNumber, zipCode, city, country, paymentBewilligung, paymentFinanzamt, zahlungsfrist } = req.body;
 
   if (!companyId) return res.status(400).json({ error: 'Firma ist erforderlich.' });
   if (!durationMonths || durationMonths < 1) return res.status(400).json({ error: 'Vertragslaufzeit ist erforderlich.' });
@@ -37,6 +37,7 @@ router.post('/', asyncHandler(async (req, res) => {
     country: country?.trim() || 'Deutschland',
     paymentBewilligung: parseInt(paymentBewilligung) || 50,
     paymentFinanzamt: parseInt(paymentFinanzamt) || 50,
+    zahlungsfrist: parseInt(zahlungsfrist) || 14,
   }, req.user.id);
 
   // Generate PDF

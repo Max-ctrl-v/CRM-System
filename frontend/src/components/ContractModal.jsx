@@ -26,6 +26,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
     foerderquote: 25,
     paymentBewilligung: 50,
     paymentFinanzamt: 50,
+    zahlungsfrist: 14,
     street: '',
     streetNumber: '',
     zipCode: '',
@@ -62,6 +63,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
         foerderquote: parseFloat(form.foerderquote),
         paymentBewilligung: parseInt(form.paymentBewilligung),
         paymentFinanzamt: parseInt(form.paymentFinanzamt),
+        zahlungsfrist: parseInt(form.zahlungsfrist),
         street: form.street,
         streetNumber: form.streetNumber,
         zipCode: form.zipCode,
@@ -287,7 +289,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 </span>
                 <div className="flex-1 h-px" style={{ background: dark ? '#2a2d3d' : '#e5e7eb' }} />
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
                   <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                     % bei Bewilligung
@@ -305,7 +307,7 @@ export default function ContractModal({ company, onClose, onComplete }) {
                 </div>
                 <div>
                   <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                    % bei Einreichung Finanzamt
+                    % bei Einreichung FA
                   </label>
                   <input
                     type="number"
@@ -316,6 +318,22 @@ export default function ContractModal({ company, onClose, onComplete }) {
                     max="100"
                     required
                     className="input-field w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-body font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Zahlungsfrist (Tage)
+                  </label>
+                  <input
+                    type="number"
+                    name="zahlungsfrist"
+                    value={form.zahlungsfrist}
+                    onChange={handleChange}
+                    min="1"
+                    max="365"
+                    required
+                    className="input-field w-full"
+                    placeholder="14"
                   />
                 </div>
               </div>

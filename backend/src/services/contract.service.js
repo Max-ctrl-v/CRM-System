@@ -28,6 +28,7 @@ async function create(data, userId) {
       country: data.country || 'Deutschland',
       paymentBewilligung: data.paymentBewilligung ?? 50,
       paymentFinanzamt: data.paymentFinanzamt ?? 50,
+      zahlungsfrist: data.zahlungsfrist ?? 14,
       companyId: data.companyId,
       createdById: userId,
     },

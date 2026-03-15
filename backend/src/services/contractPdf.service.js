@@ -148,7 +148,8 @@ async function generateContractPdf(contract) {
     doc.text(`    •  ${pctB}% fällig nach Bewilligung durch die BSFZ`, L, doc.y + 2, { lineGap: 2 });
     doc.text(`    •  ${pctF}% fällig nach Einreichung beim Finanzamt`, { lineGap: 2 });
     doc.y += 2;
-    doc.text('Zahlung jeweils innerhalb von 14 Tagen nach Rechnungsstellung.', { lineGap: 2.5 });
+    const zf = contract.zahlungsfrist || 14;
+    doc.text(`Sämtliche Rechnungen sind zahlbar innerhalb von ${zf} Tagen ab Rechnungsdatum ohne Abzug.`, { lineGap: 2.5 });
 
     // ════════════════════════════════════════════════════
     // CALCULATION EXAMPLE — Two-column layout
